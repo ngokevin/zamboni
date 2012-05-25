@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 
 import jingo
 
@@ -30,7 +31,7 @@ def stats_report(request, addon, report):
                         })
 
 
-def get_series(model, primary_field=None, extra_fields=[], **filters):
+def get_series(model, group, primary_field=None, extra_fields=None, **filters):
     """
     Get a generator of dicts for the stats model given by the filters.
 
@@ -38,18 +39,22 @@ def get_series(model, primary_field=None, extra_fields=[], **filters):
     extra_fields takes a list of fields that can be found in the index
     on top of date and count and can be seen in the output
     """
-    # Put a slice on it so we get more than 10 (the default), but limit to 365.
+    if not extra_fields:
+        extra_fields = []
+
+    # Pull data out of ES
     qs = (model.search().order_by('-date').filter(**filters)
           .values_dict('date', 'count', primary_field, *extra_fields))[:365]
+    qs = pad_missing_stats(qs, group, primary_field, extra_fields, filters)
+
+    # Generate dictionary with options from ES document
     for val in qs:
         # Convert the datetimes to a date.
         date_ = date(*val['date'].timetuple()[:3])
-
         if primary_field:
             rv = dict(count=val[primary_field], date=date_, end=date_)
         else:
             rv = dict(count=val['count'], date=date_, end=date_)
-
         for extra_field in extra_fields:
             rv[extra_field] = val[extra_field]
         yield rv
@@ -62,20 +67,8 @@ def overview_series(request, addon, group, start, end, format):
     date_range = check_series_params_or_404(group, start, end, format)
     check_stats_permission(request, addon)
 
-    return fake_app_stats(request, addon, group, start, end, format)
-
-    series = get_series(Installed, addon=addon.id, date__range=date_range)
-
-    return render_json(request, addon, series)
-
-
-@addon_view
-def installs_series(request, addon, group, start, end, format):
-    """Generate install counts grouped by ``group`` in ``format``."""
-    date_range = check_series_params_or_404(group, start, end, format)
-    check_stats_permission(request, addon)
-
-    series = get_series(Installed, addon=addon.id, date__range=date_range)
+    series = get_series(Installed, group, addon=addon.id,
+                        date__range=date_range)
 
     if format == 'csv':
         return render_csv(request, addon, series, ['date', 'count'])
@@ -84,11 +77,28 @@ def installs_series(request, addon, group, start, end, format):
 
 
 @addon_view
+def installs_series(request, addon, group, start, end, format):
+    """Generate install counts grouped by ``group`` in ``format``."""
+    date_range = check_series_params_or_404(group, start, end, format)
+    check_stats_permission(request, addon)
+
+    series = get_series(Installed, group, addon=addon.id,
+                        date__range=date_range)
+
+    if format == 'csv':
+        return render_csv(request, addon, series, ['date', 'count'])
+    elif format == 'json':
+        return render_json(request, addon, series)
+
+
+#TODO: real data
+@addon_view
 def usage_series(request, addon, group, start, end, format):
     date_range = check_series_params_or_404(group, start, end, format)
     check_stats_permission(request, addon)
 
-    series = get_series(UpdateCount, addon=addon.id, date__range=date_range)
+    series = get_series(UpdateCount, group, addon=addon.id,
+                        date__range=date_range)
 
     if format == 'csv':
         return render_csv(request, addon, series, ['date', 'count'])
@@ -101,7 +111,7 @@ def revenue_series(request, addon, group, start, end, format):
     date_range = check_series_params_or_404(group, start, end, format)
     check_stats_permission(request, addon, for_contributions=True)
 
-    series = get_series(Contribution, primary_field='revenue',
+    series = get_series(Contribution, group, primary_field='revenue',
         addon=addon.id, date__range=date_range)
 
     if format == 'csv':
@@ -118,7 +128,8 @@ def sales_series(request, addon, group, start, end, format):
     date_range = check_series_params_or_404(group, start, end, format)
     check_stats_permission(request, addon, for_contributions=True)
 
-    series = get_series(Contribution, addon=addon.id, date__range=date_range)
+    series = get_series(Contribution, group, addon=addon.id,
+                        date__range=date_range)
 
     if format == 'csv':
         return render_csv(request, addon, series, ['date', 'count'])
@@ -131,7 +142,7 @@ def refunds_series(request, addon, group, start, end, format):
     date_range = check_series_params_or_404(group, start, end, format)
     check_stats_permission(request, addon, for_contributions=True)
 
-    series = get_series(Contribution, primary_field='refunds',
+    series = get_series(Contribution, group, primary_field='refunds',
         addon=addon.id, date__range=date_range)
 
     if format == 'csv':
@@ -159,3 +170,63 @@ def fake_app_stats(request, addon, group, start, end, format):
         }})
         val += .01
     return faked
+
+
+def pad_missing_stats(qs, group, primary_field, extra_fields, filters):
+    """
+    Bug 758480: represent missing stats as 0
+    Pad missing dates with dummy dicts with values of 0
+    Make the data represent the whole date range, not just range from first to
+    last data points
+    """
+    data_list = list(qs)
+
+    # Add 0s for missing daily stats (so frontend represents empty stats as 0).
+    days = sorted(set([d['date'].date() for d in data_list]))
+
+    # Make sure whole date range is padded so data doesn't just start at first
+    # data point returned from ES.
+    if 'date__range' in filters:
+        start, end = filters['date__range']
+        if start not in days:
+            days.insert(0, start)
+        if end not in days:
+            days.append(end)
+
+    if group == 'day':
+        max_delta = timedelta(1)
+        group_delta = relativedelta(days=1)
+    elif group == 'week':
+        max_delta = timedelta(7)
+        group_delta = relativedelta(weeks=1)
+    elif group == 'month':
+        max_delta = timedelta(31)
+        group_delta = relativedelta(months=1)
+
+    for day in enumerate(days):
+        # Find missing dates between two dates in the list of days.
+        try:
+            # Pad based on the group (e.g don't insert days in a week view).
+            if days[day[0] + 1] - day[1] > max_delta:
+                dummy_date = day[1] + group_delta
+                dummy_dict = {'date': dummy_date, 'count': 0}
+
+                if primary_field:
+                    dummy_dict[primary_field] = 0
+                for extra_field in extra_fields:
+                    dummy_dict[extra_field] = 0
+
+                # Insert dummy day into current iterated list to find more
+                # empty spots.
+                days.insert(day[0] + 1, dummy_dict['date'])
+                data_list.append(dummy_dict)
+        except IndexError:
+            break
+    return data_list
+
+
+def dbg(s):
+    """
+    Debug information to a file, useful to debug ajax functions (get_series)
+    """
+    open('debug', 'a').write('\n' + str(s) + '\n')
