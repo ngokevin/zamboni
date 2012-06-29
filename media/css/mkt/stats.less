@@ -17,7 +17,93 @@
     left: 20px;
 }
 
+.primary.statistics {
+    margin-left: 210px;
+}
 .secondary {
+    float: left;
+    width: 180px;
+
+    ul, ol {
+      list-style: none;
+    }
+    ul, ol, section {
+      color: #666;
+      font-size: 12px;
+      line-height: 16px;
+      margin-bottom: 28px;
+    }
+    ul ul {
+        margin-bottom: 0;
+        li {
+            border-top: 0;
+            a {
+                padding-left: 1em;
+            }
+        }
+    }
+    li {
+        border: 1px solid @border-black;
+        border-width: 0 0 1px 0;
+        position: relative;
+        &:first-child {
+            border-top-width: 1px;
+        }
+        a {
+            &.selected {
+                color: #333;
+                font-weight: bold;
+            }
+            &.selected,
+            &:hover {
+                background: #ECF5FE;
+            }
+        }
+    }
+    nav li {
+        a {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            padding-right: 12px;
+            white-space: nowrap;
+        }
+        a:after {
+            content: '\203a';
+            position: absolute;
+            right: 6px;
+            top: 4px;
+            font-family: Georgia;
+            font-weight: normal;
+            font-size: 18px;
+            color: #dadada;
+            color: rgba(0,0,0, .125);
+        }
+        a:hover:after,
+        a:focus:after,
+        a.selected:after {
+            color: inherit;
+        }
+    }
+    li a {
+        display: block;
+        padding: 6px;
+        text-decoration: none;
+    }
+    p {
+        padding: 0 6px;
+    }
+    p {
+        margin-bottom: 8px;
+        &.note {
+            color: #666;
+            line-height: 1.2em;
+            padding: 10px 0 0 0;
+        }
+    }
+    section section {
+        margin: 0;
+    }
+
     .island {
         float: none;
     }
@@ -422,7 +508,7 @@ table.stats-aggregate tbody span.change.minus {
 }
 
 #side-nav .active a {
-    background-color: @link;
+    background-color: rgb(200, 200, 200);
     color: @dark-gray;
     font-weight: bold;
     &:after {

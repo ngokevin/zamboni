@@ -1,0 +1,26 @@
+{% set urls = [
+  (addon.get_stats_url(action='overview'), _('Overview')),
+  (addon.get_stats_url(action='installs'), _('Installs')),
+] %}
+{% if check_contrib_stats_perms(addon) %}
+  {% do urls.append(
+    (addon.get_stats_url(action='revenue'), _('Amount Earned'))
+  ) %}
+  {% do urls.append(
+    (addon.get_stats_url(action='sales'), _('Units Sold'))
+  ) %}
+  {% do urls.append(
+    (addon.get_stats_url(action='refunds'), _('Units Refunded'))
+  ) %}
+{% endif %}
+
+<section class="secondary manage" role="complementary">
+  <div class="island report-menu" id="side-nav">
+    <ul class="refinements">
+      {% for url, title in urls %}
+        <li{% if request.path.startswith(url) %} class="selected active"{% endif %}>
+          <a href="{{ url }}">{{ title }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
