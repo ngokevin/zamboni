@@ -19,7 +19,11 @@
 
       {% if (addon.is_premium() and check_contrib_stats_perms(addon)) or inapps %}
         {% for action, link, title in sales_filters %}
-          <li{% if url_quote(request.path) == link %} class="selected active"{% endif %}>
+          {% set match_links = [
+            link, stats_url(action, metric='currency'),
+            stats_url(action, metric='source'),
+          ] %}
+          <li{% if url_quote(request.path) in match_links %} class="selected active"{% endif %}>
             <a href="{{ link }}">{{ title }}</a></li>
 
           <li class="secondary-nav
