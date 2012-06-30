@@ -4,9 +4,9 @@
 ] %}
 
 {% set sales_filters = [
-    (addon.get_stats_url(action='revenue'), _('Amount Earned')),
-    (addon.get_stats_url(action='sales'), _('Units Sold')),
-    (addon.get_stats_url(action='refunds'), _('Units Refunded'))
+    ('revenue', addon.get_stats_url(action='revenue'), _('Amount Earned')),
+    ('sales', addon.get_stats_url(action='sales'), _('Units Sold')),
+    ('refunds', addon.get_stats_url(action='refunds'), _('Units Refunded'))
 ] %}
 
 <section class="secondary">
@@ -17,14 +17,28 @@
           <a href="{{ link }}">{{ title }}</a></li>
       {% endfor %}
 
-      {% if check_contrib_stats_perms(addon) %}
+      {% if (addon.is_premium() and check_contrib_stats_perms(addon)) or inapps %}
         {% block sales_filters %}
-          {% for link, title in sales_filters %}
+          {% for action, link, title in sales_filters %}
             <li{% if url_quote(request.path) == link %} class="selected active"{% endif %}>
               <a href="{{ link }}">{{ title }}</a></li>
+
+            <li class="secondary-nav
+             {% if url_quote(request.path) == addon.get_stats_url(action='currency_' + action) %}
+               selected active
+             {% endif %}">
+              <a href="{{ addon.get_stats_url(action='currency_' + action)}}">{{ _('by Currency') }}</a>
+            </li>
+            <li class="secondary-nav
+             {% if url_quote(request.path) == addon.get_stats_url(action='source_' + action) %}
+               selected active
+             {% endif %}">
+              <a href="{{ addon.get_stats_url(action='source_' + action)}}">{{_('by Source') }}</a>
+            </li>
           {% endfor %}
         {% endblock %}
       {% endif %}
+
     </ul>
   </div>
 </section>
