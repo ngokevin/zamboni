@@ -4,7 +4,7 @@
 ] %}
 
 {% set sales_filters = [
-    ('revenue', addon.get_stats_url(action='revenue'), _('Amount Earned')),
+    ('revenue', stats_url('revenue'), _('Amount Earned')),
     ('sales', addon.get_stats_url(action='sales'), _('Units Sold')),
     ('refunds', addon.get_stats_url(action='refunds'), _('Units Refunded'))
 ] %}

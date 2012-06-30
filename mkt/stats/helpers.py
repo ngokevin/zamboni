@@ -16,5 +16,16 @@ def check_contrib_stats_perms(context, addon):
 
 
 @register.function
+@jinja2.contextfunction
+def stats_url(context, action, breakdown=None):
+    addon = context['addon']
+    if breakdown:
+        action = '%s_%s' % (breakdown, action)
+    if 'inapp' in context:
+        action += '_inapp'
+    return addon.get_stats_url(action=action)
+
+
+@register.function
 def url_quote(url):
     return urlquote(url)

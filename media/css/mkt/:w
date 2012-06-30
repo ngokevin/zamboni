@@ -1,9 +1,5 @@
 @import 'lib';
 
-h1 {
-    display: inline;
-}
-
 .statistics {
     .island {
         float: none;
@@ -66,11 +62,6 @@ h1 {
             }
         }
     }
-    li.secondary-nav {
-        a {
-            padding-left: 18px;
-        }
-    }
     nav li {
         a {
             text-overflow: ellipsis;
@@ -99,6 +90,9 @@ h1 {
         display: block;
         padding: 6px;
         text-decoration: none;
+    }
+    li.secondary-nav a {
+        padding-left: 14px;
     }
     p {
         padding: 0 6px;
@@ -129,6 +123,8 @@ h1 {
 **/
 
 .island.criteria {
+    padding: 0 0 0 12px;
+    margin: 0 0 0 1em;
     z-index: 1000;
     float: right;
     text-transform: lowercase;
@@ -526,14 +522,6 @@ table.stats-aggregate tbody span.change.minus {
         color: inherit;
     }
 }
-#side-nav li.secondary-nav.active a {
-    background: #ECF5FE;
-    color: @dark-gray;
-    font-weight: bold;
-    &:after {
-        color: inherit;
-    }
-}
 
 #popup-container {
     display: none;
@@ -560,9 +548,4 @@ table.stats-aggregate tbody span.change.minus {
             background-color: #c40000;
         }
     }
-}
-
-.product-select {
-    float: right;
-    margin-top: 15px;
 }
