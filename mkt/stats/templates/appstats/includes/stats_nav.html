@@ -1,12 +1,12 @@
 {% set urls = [
-  (addon.get_stats_url(action='overview'), _('Overview')),
-  (addon.get_stats_url(action='installs'), _('Installs')),
+  (stats_url('overview'), _('Overview')),
+  (stats_url('installs'), _('Installs')),
 ] %}
 
 {% set sales_filters = [
-    ('revenue', stats_url('revenue'), _('Amount Earned')),
-    ('sales', addon.get_stats_url(action='sales'), _('Units Sold')),
-    ('refunds', addon.get_stats_url(action='refunds'), _('Units Refunded'))
+  ('revenue', stats_url('revenue'), _('Amount Earned')),
+  ('sales', stats_url('sales'), _('Units Sold')),
+  ('refunds', stats_url('refunds'), _('Units Refunded'))
 ] %}
 
 <section class="secondary">
@@ -18,25 +18,23 @@
       {% endfor %}
 
       {% if (addon.is_premium() and check_contrib_stats_perms(addon)) or inapps %}
-        {% block sales_filters %}
-          {% for action, link, title in sales_filters %}
-            <li{% if url_quote(request.path) == link %} class="selected active"{% endif %}>
-              <a href="{{ link }}">{{ title }}</a></li>
+        {% for action, link, title in sales_filters %}
+          <li{% if url_quote(request.path) == link %} class="selected active"{% endif %}>
+            <a href="{{ link }}">{{ title }}</a></li>
 
-            <li class="secondary-nav
-             {% if url_quote(request.path) == addon.get_stats_url(action='currency_' + action) %}
-               selected active
-             {% endif %}">
-              <a href="{{ addon.get_stats_url(action='currency_' + action)}}">{{ _('by Currency') }}</a>
-            </li>
-            <li class="secondary-nav
-             {% if url_quote(request.path) == addon.get_stats_url(action='source_' + action) %}
-               selected active
-             {% endif %}">
-              <a href="{{ addon.get_stats_url(action='source_' + action)}}">{{_('by Source') }}</a>
-            </li>
-          {% endfor %}
-        {% endblock %}
+          <li class="secondary-nav
+           {% if url_quote(request.path) == stats_url(action, metric='currency') %}
+             selected active
+           {% endif %}">
+            <a href="{{ stats_url(action=action, metric='currency')}}">{{ _('by Currency') }}</a>
+          </li>
+          <li class="secondary-nav
+           {% if url_quote(request.path) == stats_url(action=action, metric='source') %}
+             selected active
+           {% endif %}">
+            <a href="{{ stats_url(action=action, metric='source')}}">{{_('by Source') }}</a>
+          </li>
+        {% endfor %}
       {% endif %}
 
     </ul>
