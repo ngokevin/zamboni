@@ -17,27 +17,31 @@
           <a href="{{ link }}">{{ title }}</a></li>
       {% endfor %}
 
-      {% if (addon.is_premium() and check_contrib_stats_perms(addon)) or inapps %}
+      {% if ((addon.is_premium() or inapps) and check_contrib_stats_perms(addon)) %}
+
         {% for action, link, title in sales_filters %}
           {% set match_links = [
             link, stats_url(action, metric='currency'),
             stats_url(action, metric='source'),
           ] %}
+
+          {# If a breakdown view is selected, the parent view is still active. #}
           <li{% if url_quote(request.path) in match_links %} class="selected active"{% endif %}>
             <a href="{{ link }}">{{ title }}</a></li>
 
-          <li class="secondary-nav
-           {% if url_quote(request.path) == stats_url(action, metric='currency') %}
-             selected active
-           {% endif %}">
-            <a href="{{ stats_url(action=action, metric='currency')}}">{{ _('by Currency') }}</a>
-          </li>
-          <li class="secondary-nav
-           {% if url_quote(request.path) == stats_url(action=action, metric='source') %}
-             selected active
-           {% endif %}">
-            <a href="{{ stats_url(action=action, metric='source')}}">{{_('by Source') }}</a>
-          </li>
+          {% set breakdown_links = [
+            (stats_url(action, metric='currency'), _('by Currency')),
+            (stats_url(action, metric='source'), _('by Source')),
+          ] %}
+          {% for link, title in breakdown_links %}
+            <li class="secondary-nav
+             {% if url_quote(request.path) == link %}
+               selected active
+             {% endif %}">
+              <a href="{{ link }}">{{ title }}</a>
+            </li>
+          {% endfor %}
+
         {% endfor %}
       {% endif %}
 

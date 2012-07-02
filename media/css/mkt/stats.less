@@ -29,19 +29,19 @@ h1 {
     width: 180px;
 
     a {
-      color: rgb(45, 135, 202);
+        color: rgb(45, 135, 202);
     }
 
     ul, ol {
-      padding: 0;
-      list-style: none;
-      margin-top: 3px;
+        padding: 0;
+        list-style: none;
+        margin-top: 3px;
     }
     ul, ol, section {
-      color: #666;
-      font-size: 13px;
-      line-height: 16px;
-      margin-bottom: 28px;
+        color: @medium-gray;
+        font-size: 13px;
+        line-height: 16px;
+        margin-bottom: 28px;
     }
     ul ul {
         margin-bottom: 0;
@@ -54,19 +54,19 @@ h1 {
     }
     li {
         border: 1px solid @border-black;
-        border-width: 0 0 1px 0;
+        border-width: 0 0 1px;
         position: relative;
         &:first-child {
             border-top-width: 1px;
         }
         a {
             &.selected {
-                color: #333;
+                color: @dark-gray;
                 font-weight: bold;
             }
             &.selected,
             &:hover {
-                background: #ECF5FE;
+                background: @faint-blue;
             }
         }
     }
@@ -82,16 +82,13 @@ h1 {
             padding-right: 12px;
             white-space: nowrap;
         }
-        a:after {
+        &:after {
             content: '\203a';
             position: absolute;
             right: 6px;
             top: 4px;
-            font-family: Georgia;
-            font-weight: normal;
-            font-size: 18px;
-            color: #dadada;
-            color: rgba(0,0,0, .125);
+            font: normal 18px, Georgia;
+            color: #DADADA;
         }
         a:hover:after,
         a:focus:after,
@@ -112,7 +109,7 @@ h1 {
         &.note {
             color: #666;
             line-height: 1.2em;
-            padding: 10px 0 0 0;
+            padding: 10px 0 0;
         }
     }
     section section {
@@ -523,7 +520,7 @@ table.stats-aggregate tbody span.change.minus {
 }
 
 #side-nav .active a {
-    background-color: rgb(200, 200, 200);
+    background-color: @light-gray;
     color: @dark-gray;
     font-weight: bold;
     &:after {
@@ -531,7 +528,7 @@ table.stats-aggregate tbody span.change.minus {
     }
 }
 #side-nav li.secondary-nav.active a {
-    background: #ECF5FE;
+    background: @faint-blue;
     color: @dark-gray;
     font-weight: bold;
     &:after {
