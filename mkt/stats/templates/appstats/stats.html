@@ -168,7 +168,7 @@
       </div>
     {% endblock %}
     {% if waffle.switch('app-stats') %}
-    <div id="stats-permissions">
+    <div id="stats-permissions" class="c">
       {% if addon.public_stats %}
         <p>{{ _('This dashboard is currently <b>public</b>.') }}</p>
         {% if request.check_ownership(addon) %}

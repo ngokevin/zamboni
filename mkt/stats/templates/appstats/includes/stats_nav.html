@@ -34,10 +34,7 @@
             (stats_url(action, metric='source'), _('by Source')),
           ] %}
           {% for link, title in breakdown_links %}
-            <li class="secondary-nav
-             {% if url_quote(request.path) == link %}
-               selected active
-             {% endif %}">
+            <li class="secondary-nav {{ 'selected active' if url_quote(request.path) == link }}">
               <a href="{{ link }}">{{ title }}</a>
             </li>
           {% endfor %}

@@ -26,10 +26,10 @@ h1 {
 }
 .secondary {
     float: left;
-    width: 180px;
+    .width(3);
 
     a {
-        color: rgb(45, 135, 202);
+        color: @link;
     }
 
     ul, ol {
@@ -40,77 +40,36 @@ h1 {
     ul, ol, section {
         color: @medium-gray;
         font-size: 13px;
-        line-height: 16px;
-        margin-bottom: 28px;
+        line-height: 20px;
+        margin-bottom: 30px;
     }
-    ul ul {
-        margin-bottom: 0;
-        li {
-            border-top: 0;
-            a {
-                padding-left: 1em;
-            }
-        }
+    ul ul li a {
+        padding-left: 1em;
     }
     li {
         border: 1px solid @border-black;
         border-width: 0 0 1px;
         position: relative;
-        &:first-child {
-            border-top-width: 1px;
+        &:last-child {
+            border-width: 0;
         }
         a {
             &.selected {
                 color: @dark-gray;
                 font-weight: bold;
             }
-            &.selected,
-            &:hover {
+            &.selected, &:hover {
                 background: @faint-blue;
             }
         }
     }
-    li.secondary-nav {
-        a {
-            padding-left: 18px;
-        }
-    }
-    nav li {
-        a {
-            text-overflow: ellipsis;
-            overflow: hidden;
-            padding-right: 12px;
-            white-space: nowrap;
-        }
-        &:after {
-            content: '\203a';
-            position: absolute;
-            right: 6px;
-            top: 4px;
-            font: normal 18px, Georgia;
-            color: #DADADA;
-        }
-        a:hover:after,
-        a:focus:after,
-        a.selected:after {
-            color: inherit;
-        }
+    li.secondary-nav a {
+        padding-left: 18px;
     }
     li a {
         display: block;
         padding: 6px;
         text-decoration: none;
-    }
-    p {
-        padding: 0 6px;
-    }
-    p {
-        margin-bottom: 8px;
-        &.note {
-            color: #666;
-            line-height: 1.2em;
-            padding: 10px 0 0;
-        }
     }
     section section {
         margin: 0;
