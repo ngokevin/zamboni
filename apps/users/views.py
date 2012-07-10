@@ -565,6 +565,15 @@ def profile(request, user_id):
             review.addon = addons.get(review.addon_id)
     reviews = user.reviews.transform(get_addons)
 
+    if settings.MARKETPLACE:
+        # Only show marketplace reviews for marketplace.
+        reviews = [review for review in reviews
+                   if review.addon.type == amo.ADDON_WEBAPP]
+    else:
+        # Don't show marketplace reviews for AMO (since that would break).
+        reviews = [review for review in reviews
+                   if review.addon.type != amo.ADDON_WEBAPP]
+
     data = {'profile': user, 'own_coll': own_coll, 'reviews': reviews,
             'fav_coll': fav_coll, 'edit_any_user': edit_any_user,
             'addons': addons, 'own_profile': own_profile,
