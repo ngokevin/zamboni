@@ -1,4 +1,6 @@
 from django.contrib.syndication.views import Feed
+from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404
 
 from tower import ugettext as _
@@ -42,7 +44,12 @@ class ReviewsRss(Feed):
 
     def item_link(self, review):
         """Link for a particular review (<item><link>)"""
-        return absolutify(shared_url('reviews.detail', self.addon, review.id))
+        if settings.MARKETPLACE:
+            return absolutify(reverse('ratings.detail',
+                                      args=[self.addon.app_slug, review.id]))
+        else:
+            return absolutify(shared_url('reviews.detail', self.addon,
+                                         review.id))
 
     def item_title(self, review):
         """Title for particular review (<item><title>)"""
@@ -61,8 +68,13 @@ class ReviewsRss(Feed):
 
     def item_guid(self, review):
         """Guid for a particuar review  (<item><guid>)"""
-        guid_url = absolutify(shared_url('reviews.list', self.addon))
-        return guid_url + urllib.quote(str(review.id))
+        if settings.MARKETPLACE:
+            guid_url = absolutify(reverse('ratings.list',
+                                      args=[self.addon.app_slug]))
+            return guid_url + urllib.quote(str(review.id))
+        else:
+            guid_url = absolutify(shared_url('reviews.list', self.addon))
+            return guid_url + urllib.quote(str(review.id))
 
     def item_author_name(self, review):
         """Author for a particuar review  (<item><dc:creator>)"""
