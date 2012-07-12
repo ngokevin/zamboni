@@ -279,4 +279,7 @@ JS = {
         'js/impala/suggestions.js',
         'js/mkt/lookup-tool.js',
     ),
+    'mkt/account': (
+        'js/mkt/ratings.js',
+    ),
 }
