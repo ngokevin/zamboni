@@ -375,6 +375,7 @@ INSTALLED_APPS = (
     'sharing',
     'stats',
     'tags',
+    'themesrq',
     'tower',  # for ./manage.py extract
     'translations',
     'users',
@@ -582,6 +583,9 @@ MINIFY_BUNDLES = {
             'css/zamboni/admin-mozilla.css',
             'css/zamboni/admin_features.css'
         ),
+        'zamboni/themesrq': {
+            'css/impala/themesrq.less'
+        }
     },
     'js': {
         # JS files common to the entire site (pre-impala).
@@ -864,6 +868,10 @@ MINIFY_BUNDLES = {
             'js/zamboni/admin.js',
             'js/zamboni/admin_features.js',
             'js/zamboni/admin_validation.js',
+        ),
+        'zamboni/themesrq': (
+            'js/impala/themesrq.js',
+            'js/lib/jquery.zoomBox.js',
         ),
         # This is included when DEBUG is True.  Bundle in <head>.
         'debug': (
