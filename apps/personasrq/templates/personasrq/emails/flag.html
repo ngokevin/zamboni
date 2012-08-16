@@ -1,0 +1,6 @@
+{% block content %}
+A reviewer has flagged Theme {{ persona.addon.name }} for further review. You may help review it at {{ url('personasrq.single', persona.addon.slug)|absolutify(base_url) }} .
+
+Comment: {{ comment }}
+
+{% endblock %}

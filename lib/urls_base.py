@@ -62,6 +62,9 @@ urlpatterns = patterns('',
     # AMO admin (not django admin).
     ('^admin/', include('zadmin.urls')),
 
+    # Themes review queue.
+    ('^editors/queue/themes/', include('personasrq.urls')),
+
     # Performance wall of shame.
     ('^performance/', include('perf.urls')),
 

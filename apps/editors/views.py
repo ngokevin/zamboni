@@ -340,7 +340,9 @@ def queue_counts(type=None, **kw):
                   Review.objects.exclude(addon__type=amo.ADDON_WEBAPP)
                                 .filter(reviewflag__isnull=False,
                                         editorreview=1).count),
-              'apps': Webapp.objects.pending().count}
+              'apps': Webapp.objects.pending().count,
+              'personas': Addon.objects.filter(
+                  type=amo.ADDON_PERSONA, status=amo.STATUS_UNREVIEWED).count}
     rv = {}
     if isinstance(type, basestring):
         return counts[type]()
