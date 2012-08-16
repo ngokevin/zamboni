@@ -1,0 +1,20 @@
+{% extends "personasrq/queue.html" %}
+
+{% block title %}
+  {{ _('Theme Review for') }} {{ persona.addon.name }}
+{% endblock %}
+
+{% block header %}
+  {{ _('Theme Review for') }} {{ persona.addon.name }}
+{% endblock %}
+
+{% block queue_options %}{% endblock %}
+
+{% block multi_theme_nav_shortcuts %}{% endblock %}
+
+{% block history %}{% endblock %}
+
+{% block review_history %}
+  <h2>{{ _('Review History') }}</h2>
+  {% include "personasrq/history_table.html" %}
+{% endblock %}

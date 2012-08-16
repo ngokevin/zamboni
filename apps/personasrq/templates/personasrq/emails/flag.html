@@ -1,0 +1,9 @@
+{% block content %}
+A reviewer has flagged a Firefox theme for further review.
+
+Comment: {{ comment }}
+
+Theme: {{ persona.addon.name }}
+Review URL: {{ url('personasrq.single', persona.addon.slug)|absolutify(base_url) }}
+Submission Date: {{ submission_date }}
+{% endblock %}

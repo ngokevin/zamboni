@@ -1,0 +1,9 @@
+{% block content %}
+A reviewer has a request or question about your recently submitted Firefox theme. Please respond to the reviewer at {{ reviewer_email }}.
+
+Comment: {{ comment }}
+
+Theme: {{ persona.addon.name }}
+URL: {{ persona.addon.get_detail_url()|absolutify(base_url) }}
+Submission Date: {{ submission_date }}
+{% endblock %}

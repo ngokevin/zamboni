@@ -833,6 +833,10 @@ class Addon(amo.models.OnChangeMixin, amo.models.ModelBase):
                 self.update(status=amo.STATUS_UNREVIEWED)
                 logit('no reviewed files')
 
+    def set_status(self, status):
+        self.status = status
+        self.save()
+
     @staticmethod
     def transformer(addons):
         if not addons:
