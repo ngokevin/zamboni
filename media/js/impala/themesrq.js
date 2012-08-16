@@ -15,13 +15,13 @@
 
 
 (function($) {
-	$.fn.personaQueue = function() {
+	$.fn.themeQueue = function() {
 		return this.each(function() {
 			var queue = this;
-			var currentPersona = 0;
+			var currenttheme = 0;
 			var cacheQueueHeight;
-			
-			var personas = $('.persona', queue).map(function() {
+
+			var themes = $('.theme', queue).map(function() {
 				return {
 					element: this,
 					top: 0
@@ -30,87 +30,87 @@
 
 			$(window).scroll(function() {
 				updateMetrics();
-				var i = findCurrentPersona();
-				if (i != currentPersona) {
-					switchPersona( findCurrentPersona() );
+				var i = findCurrenttheme();
+				if (i != currenttheme) {
+					switchtheme( findCurrenttheme() );
 				}
 			});
 
-			$('.persona .choices button', this).click(function(e) {
-				var i = getPersonaParent(e.currentTarget);
-				personaActions.approve(i);
+			$('.theme .choices button', this).click(function(e) {
+				var i = getthemeParent(e.currentTarget);
+				themeActions.approve(i);
 				return false;
 			});
-			
+
 			$(document).keyup(function(e) {
 				if (!$(queue).hasClass('shortcuts')) return;
-				
+
 				var key = String.fromCharCode(e.which).toLowerCase();
 				var action = keymap[key];
 				if (action && !e.ctrlKey && !e.altKey && !e.metaKey) {
-					personaActions[action](currentPersona);
+					themeActions[action](currenttheme);
 					return false;
 				}
 			});
 
-			$('.persona', queue).removeClass('active');
+			$('.theme', queue).removeClass('active');
 			updateMetrics();
-			switchPersona( findCurrentPersona() );
-			
-			
+			switchtheme( findCurrenttheme() );
+
+
 			function updateMetrics()
 			{
 				var queueHeight = $(queue).height();
 				if (queueHeight === cacheQueueHeight) return;
 				cacheQueueHeight = queueHeight;
-				
-				$.each(personas, function(i, obj) {
+
+				$.each(themes, function(i, obj) {
 					var elem = $(obj.element);
 					obj.top = elem.offset().top + elem.outerHeight()/2;
 				});
 			}
-			
-			function getPersonaParent(elem)
+
+			function getthemeParent(elem)
 			{
-				var parent = $(elem).closest('.persona').get(0);
-				for (var i = 0; i < personas.length; i++) {
-					if (personas[i].element == parent) {
+				var parent = $(elem).closest('.theme').get(0);
+				for (var i = 0; i < themes.length; i++) {
+					if (themes[i].element == parent) {
 						return i;
 					}
 				}
 				return -1;
 			}
-			
-			function gotoPersona(i, delay, duration)
+
+			function gototheme(i, delay, duration)
 			{
 				delay = delay || 0;
 				duration = duration || 250;
-				
+
 				setTimeout(function() {
 					if (i < 0) {
 						alert('Previous Page');
-					} else if (i >= personas.length) {
+					} else if (i >= themes.length) {
 						alert('Next Page');
 					} else {
-						$(personas[i].element).scrollTo({ duration: duration, marginTop: 20 });
+						$(themes[i].element).scrollTo({ duration: duration, marginTop: 20 });
 					}
 				}, delay);
 			}
 
-			function switchPersona(i)
+			function switchtheme(i)
 			{
-				$(personas[currentPersona].element).removeClass('active');
-				$(personas[i].element).addClass('active');
-				currentPersona = i;
+				$(themes[currenttheme].element).removeClass('active');
+				$(themes[i].element).addClass('active');
+				currenttheme = i;
 			}
 
-			function findCurrentPersona()
+			function findCurrenttheme()
 			{
 				var pageTop = $(window).scrollTop();
 
-				if (pageTop <= personas[currentPersona].top) {
-					for (var i = currentPersona-1; i >= 0; i--) {
-						if (personas[i].top < pageTop) {
+				if (pageTop <= themes[currenttheme].top) {
+					for (var i = currenttheme-1; i >= 0; i--) {
+						if (themes[i].top < pageTop) {
 							break;
 						}
 					}
@@ -118,25 +118,25 @@
 				}
 
 				else {
-					for (var i = currentPersona; i < personas.length-1; i++) {
-						if (pageTop <= personas[i].top) {
+					for (var i = currenttheme; i < themes.length-1; i++) {
+						if (pageTop <= themes[i].top) {
 							break;
 						}
 					}
 					return i;
 				}
 			}
-			
-			
-			var personaActions = {
-				'next': function (i) { gotoPersona(i+1); },
-				'prev': function (i) { gotoPersona(i-1); },
-				
+
+
+			var themeActions = {
+				'next': function (i) { gototheme(i+1); },
+				'prev': function (i) { gototheme(i-1); },
+
 				'approve': function (i) {
-					$('.status', personas[i].element).addClass('reviewed');
-					
+					$('.status', themes[i].element).addClass('reviewed');
+
 					if ($(queue).hasClass('advance')) {
-						gotoPersona(i+1, 500);
+						gototheme(i+1, 500);
 					}
 				}
 			};
@@ -152,15 +152,15 @@
 			};
 		});
 	};
-	
-	$.fn.personaQueueOptions = function(queueSelector) {
+
+	$.fn.themeQueueOptions = function(queueSelector) {
 		return this.each(function() {
 			var self = this;
-			
+
 			$('input', self).click(onChange);
 			$('select', self).change(onChange);
 			onChange();
-			
+
 			function onChange(e)
 			{
 				var category = $('#rq-category', self).val();
@@ -168,13 +168,13 @@
 				var advance = $('#rq-advance:checked', self).val();
 				var single = true /* $('#rq-single:checked', self).val() */;
 				var shortcuts = true /* $('#rq-shortcuts:checked', self).val() */;
-				
+
 				$(queueSelector)
 					.toggleClass('details', details !== undefined)
 					.toggleClass('advance', advance !== undefined)
 					.toggleClass('single', single !== undefined)
 					.toggleClass('shortcuts', shortcuts !== undefined);
-					
+
 				$('.shortcuts', self).toggle(shortcuts);
 			}
 		});
@@ -183,10 +183,7 @@
 
 
 $(document).ready(function() {
-	var personas = $('.persona-queue .persona');
-	for (var i = 1; i < 3; i++) personas.clone().appendTo('.persona-queue');
-	
 	$('.zoombox').zoomBox();
-	$('.persona-queue').personaQueue();
-	$('.sidebar').personaQueueOptions('.persona-queue');
+	$('.theme-queue').themeQueue();
+	$('.sidebar').themeQueueOptions('.theme-queue');
 });
