@@ -15,13 +15,13 @@
 
 
 (function($) {
-	$.fn.themeQueue = function() {
+	$.fn.personaQueue = function() {
 		return this.each(function() {
 			var queue = this;
-			var currenttheme = 0;
+			var currentpersona = 0;
 			var cacheQueueHeight;
 
-			var themes = $('.theme', queue).map(function() {
+			var personas = $('.persona', queue).map(function() {
 				return {
 					element: this,
 					top: 0
@@ -30,15 +30,15 @@
 
 			$(window).scroll(function() {
 				updateMetrics();
-				var i = findCurrenttheme();
-				if (i != currenttheme) {
-					switchtheme( findCurrenttheme() );
+				var i = findCurrentpersona();
+				if (i != currentpersona) {
+					switchpersona( findCurrentpersona() );
 				}
 			});
 
-			$('.theme .choices button', this).click(function(e) {
-				var i = getthemeParent(e.currentTarget);
-				themeActions.approve(i);
+			$('.persona .choices button', this).click(function(e) {
+				var i = getpersonaParent(e.currentTarget);
+				personaActions.approve(i);
 				return false;
 			});
 
@@ -48,14 +48,14 @@
 				var key = String.fromCharCode(e.which).toLowerCase();
 				var action = keymap[key];
 				if (action && !e.ctrlKey && !e.altKey && !e.metaKey) {
-					themeActions[action](currenttheme);
+					personaActions[action](currentpersona);
 					return false;
 				}
 			});
 
-			$('.theme', queue).removeClass('active');
+			$('.persona', queue).removeClass('active');
 			updateMetrics();
-			switchtheme( findCurrenttheme() );
+			switchpersona( findCurrentpersona() );
 
 
 			function updateMetrics()
@@ -64,24 +64,24 @@
 				if (queueHeight === cacheQueueHeight) return;
 				cacheQueueHeight = queueHeight;
 
-				$.each(themes, function(i, obj) {
+				$.each(personas, function(i, obj) {
 					var elem = $(obj.element);
 					obj.top = elem.offset().top + elem.outerHeight()/2;
 				});
 			}
 
-			function getthemeParent(elem)
+			function getpersonaParent(elem)
 			{
-				var parent = $(elem).closest('.theme').get(0);
-				for (var i = 0; i < themes.length; i++) {
-					if (themes[i].element == parent) {
+				var parent = $(elem).closest('.persona').get(0);
+				for (var i = 0; i < personas.length; i++) {
+					if (personas[i].element == parent) {
 						return i;
 					}
 				}
 				return -1;
 			}
 
-			function gototheme(i, delay, duration)
+			function gotopersona(i, delay, duration)
 			{
 				delay = delay || 0;
 				duration = duration || 250;
@@ -89,28 +89,28 @@
 				setTimeout(function() {
 					if (i < 0) {
 						alert('Previous Page');
-					} else if (i >= themes.length) {
+					} else if (i >= personas.length) {
 						alert('Next Page');
 					} else {
-						$(themes[i].element).scrollTo({ duration: duration, marginTop: 20 });
+						$(personas[i].element).scrollTo({ duration: duration, marginTop: 20 });
 					}
 				}, delay);
 			}
 
-			function switchtheme(i)
+			function switchpersona(i)
 			{
-				$(themes[currenttheme].element).removeClass('active');
-				$(themes[i].element).addClass('active');
-				currenttheme = i;
+				$(personas[currentpersona].element).removeClass('active');
+				$(personas[i].element).addClass('active');
+				currentpersona = i;
 			}
 
-			function findCurrenttheme()
+			function findCurrentpersona()
 			{
 				var pageTop = $(window).scrollTop();
 
-				if (pageTop <= themes[currenttheme].top) {
-					for (var i = currenttheme-1; i >= 0; i--) {
-						if (themes[i].top < pageTop) {
+				if (pageTop <= personas[currentpersona].top) {
+					for (var i = currentpersona-1; i >= 0; i--) {
+						if (personas[i].top < pageTop) {
 							break;
 						}
 					}
@@ -118,8 +118,8 @@
 				}
 
 				else {
-					for (var i = currenttheme; i < themes.length-1; i++) {
-						if (pageTop <= themes[i].top) {
+					for (var i = currentpersona; i < personas.length-1; i++) {
+						if (pageTop <= personas[i].top) {
 							break;
 						}
 					}
@@ -128,15 +128,15 @@
 			}
 
 
-			var themeActions = {
-				'next': function (i) { gototheme(i+1); },
-				'prev': function (i) { gototheme(i-1); },
+			var personaActions = {
+				'next': function (i) { gotopersona(i+1); },
+				'prev': function (i) { gotopersona(i-1); },
 
 				'approve': function (i) {
-					$('.status', themes[i].element).addClass('reviewed');
+					$('.status', personas[i].element).addClass('reviewed');
 
 					if ($(queue).hasClass('advance')) {
-						gototheme(i+1, 500);
+						gotopersona(i+1, 500);
 					}
 				}
 			};
@@ -153,7 +153,7 @@
 		});
 	};
 
-	$.fn.themeQueueOptions = function(queueSelector) {
+	$.fn.personaQueueOptions = function(queueSelector) {
 		return this.each(function() {
 			var self = this;
 
@@ -184,6 +184,6 @@
 
 $(document).ready(function() {
 	$('.zoombox').zoomBox();
-	$('.theme-queue').themeQueue();
-	$('.sidebar').themeQueueOptions('.theme-queue');
+	$('.persona-queue').personaQueue();
+	$('.sidebar').personaQueueOptions('.persona-queue');
 });

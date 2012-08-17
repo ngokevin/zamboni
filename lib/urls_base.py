@@ -63,7 +63,7 @@ urlpatterns = patterns('',
     ('^admin/', include('zadmin.urls')),
 
     # Themes review queue.
-    ('^themesrq/', include('themesrq.urls')),
+    ('^personasrq/', include('personasrq.urls')),
 
     # Performance wall of shame.
     ('^performance/', include('perf.urls')),
