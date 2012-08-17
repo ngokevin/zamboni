@@ -432,4 +432,4 @@ REVIEWED_SCORES = {
 MKT_CUT = .70
 
 # Themes review queue constants.
-MAX_LOCKED = 30
+MAX_LOCKS = 30
