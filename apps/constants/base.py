@@ -21,6 +21,7 @@ STATUS_PURGATORY = 10  # A temporary home; bug 614686
 STATUS_DELETED = 11
 STATUS_REJECTED = 12  # This applies only to apps (for now)
 STATUS_PUBLIC_WAITING = 13  # bug 740967
+STATUS_BEING_REVIEWED = 14
 
 STATUS_CHOICES = {
     STATUS_NULL: _(u'Incomplete'),
@@ -40,6 +41,7 @@ STATUS_CHOICES = {
     # Approved, but the developer would like to put it public when they want.
     # The need to go to the marketplace and actualy make it public.
     STATUS_PUBLIC_WAITING: _('Approved but waiting'),
+    STATUS_BEING_REVIEWED: _('Currently being reviewed'),
 }
 
 # We need to expose nice values that aren't localisable.

@@ -4,8 +4,8 @@ from users.models import UserForeignKey
 
 
 class PersonaLock(models.Model):
-    persona_lock_id = models.PositiveIntegerField(db_index=True)
     persona = models.OneToOneField('addons.Persona')
+    persona_lock_id = models.PositiveIntegerField(db_index=True)
     reviewer = UserForeignKey()
     expiry = models.DateTimeField()
 
