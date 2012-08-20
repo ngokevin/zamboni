@@ -41,34 +41,21 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         self.client.login(username=email, password='password')
         return reviewer
 
-    def get_and_check_personas(self):
+    def get_and_check_personas(self, reviewer):
         doc = pq(self.client.get(reverse('personasrq.personasrq')).content)
         if self.free_personas > amo.MAX_LOCKS:
             expected_queue_length = amo.MAX_LOCKS
         else:
             expected_queue_length = self.free_personas
-        eq_(doc('.persona').length, expected_queue_length)
         self.free_personas -= expected_queue_length
 
-    def test_one_reviewer_filled_queue(self):
-        self.free_personas = self.persona_count
-        reviewer = self.create_and_become_reviewer()
-        self.get_and_check_personas()
+        eq_(doc('.persona').length, expected_queue_length)
+        eq_(PersonaLock.objects.filter(reviewer=reviewer).count(),
+            expected_queue_length)
 
-    def test_multi_reviewers_filled_queue(self):
+    def test_queue_counts(self):
+        # Have 5 reviewers take personas from the pool and into the queue.
         self.free_personas = self.persona_count
-        for i in range(2):
+        for i in range(5):
             reviewer = self.create_and_become_reviewer()
-            self.get_and_check_personas()
-
-    def test_multi_reviewers_part_queue(self):
-        self.free_personas = self.persona_count
-        for i in range(3):
-            reviewer = self.create_and_become_reviewer()
-            self.get_and_check_personas()
-
-    def test_multi_reviewers_empty_queue(self):
-        self.free_personas = self.persona_count
-        for i in range(4):
-            reviewer = self.create_and_become_reviewer()
-            self.get_and_check_personas()
+            self.get_and_check_personas(reviewer)

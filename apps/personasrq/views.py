@@ -11,7 +11,8 @@ from personasrq.models import PersonaLock
 
 
 def personasrq(request):
-    # from users.models import UserProfile ; reviewer = UserProfile.objects.get(username='kngo')
+    # from users.models import UserProfile
+    # reviewer = UserProfile.objects.get(username='kngo')
     reviewer = request.amo_user
 
     personas_to_review = PersonaLock.objects.filter(reviewer=reviewer)
