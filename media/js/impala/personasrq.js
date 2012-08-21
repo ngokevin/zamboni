@@ -35,19 +35,13 @@
                 }
             });
 
-            $('.persona .choices button', this).click(function(e) {
-                var i = getpersonaParent(e.currentTarget);
-                personaActions.approve(i);
-                return false;
-            });
-
             $(document).keyup(function(e) {
                 if (!$(queue).hasClass('shortcuts')) return;
 
                 var key = String.fromCharCode(e.which).toLowerCase();
                 var action = keymap[key];
                 if (action && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                    personaActions[action](currentpersona);
+                    personaActions[action[0]](currentpersona, action[1]);
                     return false;
                 }
             });
@@ -84,9 +78,9 @@
 
                 setTimeout(function() {
                     if (i < 0) {
-                        alert('Previous Page');
+                        // alert('Previous Page');
                     } else if (i >= personas.length) {
-                        alert('Next Page');
+                        // alert('Next Page');
                     } else {
                         $(personas[i].element).scrollTo({ duration: duration, marginTop: 20 });
                     }
@@ -121,8 +115,18 @@
                 }
             }
 
-            function setReviewed(i) {
-                $('.status', personas[i].element).addClass('reviewed');
+            var keymap = {
+                'j': ['next', null],
+                'k': ['prev', null],
+                'a': ['approve', null],
+                'r': ['reject', null],
+                'd': ['duplicate', null],
+                'f': ['flag', null],
+                'm': ['moreInfo', null]
+            };
+
+            function setReviewed(i, text) {
+                $('.status', personas[i].element).addClass('reviewed').text(text);
                 if ($(queue).hasClass('advance')) {
                     gotopersona(i+1, 500);
                 }
@@ -133,20 +137,48 @@
                 'prev': function (i) { gotopersona(i-1); },
 
                 'approve': function (i) {
-                    setReviewed(i);
                     $('div.persona:eq(' + i + ') input.action').val('approve');
+                    setReviewed(i, 'Approved');
+                },
+
+                'reject': function (i) {
+                    // Open up dropdown of rejection reasons and set up
+                    // key and click-bindings for choosing a reason. This
+                    // function does not actually do the rejecting.
+                    $('div.persona:eq(' + i + ') .reject_reason_dropdown').toggle();
+                    for (var j = 0; j <= 9; j++) {
+                        keymap[j + ''] = ['reject_reason', j];
+                    }
+
+                    var reject_reason = this.reject_reason;
+                    $('li.reject_reason').click(function(e) {
+                        reject_reason(i, $(this).data('id'));
+                    });
+                },
+
+                'reject_reason': function(i, reject_reason) {
+                    // Given the rejection reason, does the actual rejection of
+                    // the Persona.
+                    $('div.persona:eq(' + i + ') input.action').val('reject');
+                    $('div.persona:eq(' + i + ') input.reject_reason').val(reject_reason);
+                    setReviewed(i, 'Rejected');
+
+                    // Remove key and click-bindings now that rejection is
+                    // complete.
+                    for (var i = 0; i <= 9; i++) {
+                        delete keymap[i + ''];
+                    }
+                    $('li.reject_reason').unbind('click');
                 }
             };
 
-            var keymap = {
-                'j': 'next',
-                'k': 'prev',
-                'a': 'approve',
-                'r': 'reject',
-                'd': 'duplicate',
-                'f': 'flag',
-                'm': 'moreInfo'
-            };
+            $('button.approve', this).click(_pd(function(e) {
+                personaActions.approve(getpersonaParent(e.currentTarget));
+            }));
+            $('button.reject', this).click(_pd(function(e) {
+                personaActions.reject(getpersonaParent(e.currentTarget));
+            }));
+
         });
     };
 

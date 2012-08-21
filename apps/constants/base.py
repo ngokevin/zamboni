@@ -436,7 +436,7 @@ MKT_CUT = .70
 # Persona review queue constants.
 MAX_LOCKS = 30
 
-PERSONA_REJECTION_REASONS = {
+PERSONA_REJECT_REASONS = {
     1: _('Sexual or pornographic content'),
     2: _('Inappropriate or offensive content'),
     3: _('Violence, war, or weaponry images'),

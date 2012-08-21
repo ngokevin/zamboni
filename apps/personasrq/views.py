@@ -55,5 +55,6 @@ def personasrq(request):
         initial=[{'persona': persona.id} for persona in personas])
 
     return jingo.render(request, 'personasrq/index.html', {
-        'persona_formset': zip(personas, formset)
+        'persona_formset': zip(personas, formset),
+        'reject_reasons': amo.PERSONA_REJECT_REASONS.items()
     })

@@ -20,7 +20,7 @@ class PersonaReviewForm(happyforms.Form):
         widget=forms.HiddenInput(attrs={'class': 'action'})
     )
     reject_reason = forms.ChoiceField(
-        choices=amo.PERSONA_REJECTION_REASONS.items(),
+        choices=amo.PERSONA_REJECT_REASONS.items(),
         widget=forms.HiddenInput(attrs={'class': 'reject_reason'})
     )
     comment = forms.CharField(required=False,
