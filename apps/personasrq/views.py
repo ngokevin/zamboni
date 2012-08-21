@@ -14,16 +14,16 @@ def personasrq(request):
     # from users.models import UserProfile
     # reviewer = UserProfile.objects.get(username='kngo')
     reviewer = request.amo_user
+    persona_locks = PersonaLock.objects.filter(reviewer=reviewer)
 
-    personas_to_review = PersonaLock.objects.filter(reviewer=reviewer)
-
-    if not personas_to_review:
+    if not persona_locks:
         # Check out personas from the pool if none checked out.
-        personas_to_review = (Persona.objects
+        personas = (Persona.objects
             .filter(addon__status=amo.STATUS_PENDING)
             [:amo.MAX_LOCKS])
+
         # Set a lock on the checked-out personas
-        for persona in personas_to_review:
+        for persona in personas:
             PersonaLock.objects.create(persona=persona, reviewer=reviewer,
                                        expiry=datetime.datetime.now() +
                                        datetime.timedelta(minutes=30),
@@ -32,22 +32,26 @@ def personasrq(request):
             persona.addon.save()
 
         # Empty pool? Go look for some expired locks.
-        if not personas_to_review:
-            personas_to_review = (PersonaLock.objects
+        if not personas:
+            expired_locks = (PersonaLock.objects
                 .filter(expiry__lte=datetime.datetime.now())
                 [:amo.MAX_LOCKS])
             # Steal expired locks.
-            for persona in personas_to_review:
-                personas_to_review.update(reviewer=reviewer,
-                    expiry=datetime.datetime.now() +
-                    datetime.timedelta(minutes=30))
+            for persona_lock in expired_locks:
+                persona_lock.reviewer = reviewer
+                persona_lock.expiry = (datetime.datetime.now() +
+                                       datetime.timedelta(minutes=30))
+                persona_lock.save()
+                personas = [persona_lock.persona for persona_lock
+                            in expired_locks]
     else:
         # Update the expiry on currently checked-out personas.
-        personas_to_review.update(
+        persona_locks.update(
             expiry=datetime.datetime.now() + datetime.timedelta(minutes=30))
+        personas = [persona_lock.persona for persona_lock in persona_locks]
 
     return jingo.render(request, 'personasrq/index.html', {
-        'personas': personas_to_review
+        'personas': personas
     })
 
 

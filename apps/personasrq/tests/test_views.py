@@ -1,3 +1,6 @@
+import datetime
+import time
+
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 
@@ -39,10 +42,14 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         GroupUser.objects.create(group_id=50002, user=user)
 
         self.client.login(username=email, password='password')
-        return reviewer
+        return user
+
+    def get_personas(self):
+        # It doesn't mean what you think it means.
+        return self.client.get(reverse('personasrq.personasrq')).content
 
     def get_and_check_personas(self, reviewer):
-        doc = pq(self.client.get(reverse('personasrq.personasrq')).content)
+        doc = pq(self.get_personas())
         if self.free_personas > amo.MAX_LOCKS:
             expected_queue_length = amo.MAX_LOCKS
         else:
@@ -53,9 +60,40 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         eq_(PersonaLock.objects.filter(reviewer=reviewer).count(),
             expected_queue_length)
 
-    def test_queue_counts(self):
+    def test_basic_queue(self):
         # Have 5 reviewers take personas from the pool and into the queue.
         self.free_personas = self.persona_count
         for i in range(5):
             reviewer = self.create_and_become_reviewer()
             self.get_and_check_personas(reviewer)
+
+    def test_expiry(self):
+        # Test that reviewers who want personas from an empty pool can steal
+        # checked-out personas from other reviewers whose locks have expired.
+        PersonaLock.objects.all().delete()
+
+        for i in range(3):
+            reviewer = self.create_and_become_reviewer()
+            self.get_personas()
+
+        # Reviewer wants personas, but empty pool.
+        reviewer = self.create_and_become_reviewer()
+        self.get_personas()
+        eq_(PersonaLock.objects.filter(reviewer=reviewer).count(), 0)
+
+        # Manually expire a lock and see if it's reassigned.
+        expired_persona_lock = PersonaLock.objects.all()[0]
+        expired_persona_lock.expiry = datetime.datetime.now()
+        expired_persona_lock.save()
+        self.get_personas()
+        eq_(PersonaLock.objects.filter(reviewer=reviewer).count(), 1)
+
+    def test_expiry_update(self):
+        # Test expiry is updated when reviewer reloads his queue.
+        reviewer = self.create_and_become_reviewer()
+        self.get_personas()
+        expiry = PersonaLock.objects.filter(reviewer=reviewer)[0].expiry
+        time.sleep(1)
+        self.client.get(reverse('personasrq.personasrq'))
+        eq_(PersonaLock.objects.filter(reviewer=reviewer)[0].expiry > expiry,
+            True)
