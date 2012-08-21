@@ -82,45 +82,49 @@
 </div></div>
 
 <div class="persona-queue details single">
-  {% for persona in personas %}
-    <div class="persona"><div class="persona-inner">
-      <h3><a href="#">{{ persona.addon.name }}</a></h3>
-      <div class="status">Reviewed</div>
-      <ul class="meta">
-        <li><strong>Submitted: </strong>{{ persona.addon.created.strftime('%Y-%m-%d') }}</li>
-        <li><strong>Artist: </strong><a href="#">{{ persona.author }}</a></li>
-        <li><strong>Category: </strong><a href="#">{{ persona.addon.categories.all()[0] if persona.addon.categories.all() }}</a></li>
-        <li><a href="#">{{ persona.license }}</a></li>
-      </ul>
+  <form method="post">
+    {{ csrf() }}
+    {% for persona, form in persona_formset %}
+      <div class="persona" data-id="{{ persona.persona_id }}"><div class="persona-inner">
+        <h3><a href="#">{{ persona.addon.name }}</a></h3>
+        <div class="status">Reviewed</div>
+        <ul class="meta">
+          <li><strong>Submitted: </strong>{{ persona.addon.created.strftime('%Y-%m-%d') }}</li>
+          <li><strong>Artist: </strong><a href="#">{{ persona.author }}</a></li>
+          <li><strong>Category: </strong><a href="#">{{ persona.addon.categories.all()[0] if persona.addon.categories.all() }}</a></li>
+          <li><a href="#">{{ persona.license }}</a></li>
+        </ul>
 
-      <div class="preview">
-        <img src="{{ persona.header_url }}" width="1250" height="100" />
-      </div>
-      <div class="header zoombox">
-        <img src="{{ persona.header_url }}" width="2500" height="200" />
-      </div>
-      <div class="footer zoombox">
-        <img src="{{ persona.footer_url }}" width="2500" height="100" />
-      </div>
+        <div class="preview">
+          <img src="{{ persona.header_url }}" width="1250" height="100" />
+        </div>
+        <div class="header zoombox">
+          <img src="{{ persona.header_url }}" width="2500" height="200" />
+        </div>
+        <div class="footer zoombox">
+          <img src="{{ persona.footer_url }}" width="2500" height="100" />
+        </div>
 
-      <div class="desc"><strong>Description: </strong>{{ persona.addon.description }}</div>
+        <div class="desc"><strong>Description: </strong>{{ persona.addon.description }}</div>
 
-      <div class="choices">
-        <div class="group">
-          <button data-id="{{ persona.persona_id }}">Approve</button>
+        <div class="choices">
+          {{ form }}
+          <div class="group">
+            <button data-id="{{ persona.persona_id }}">Request More Info  &#9662;</button>
+          </div>
+          <div class="group">
+            <button data-id="{{ persona.persona_id }}">Duplicate &#9662;</button>
+            <button data-id="{{ persona.persona_id }}">Flag &#9662;</button>
+            <button data-id="{{ persona.persona_id }}">Reject &#9662;</button>
+          </div>
+          <div class="group">
+            <button data-id="{{ persona.persona_id }}">Approve</button>
+          </div>
         </div>
-        <div class="group">
-          <button data-id="{{ persona.persona_id }}">Reject &#9662;</button>
-          <button data-id="{{ persona.persona_id }}">Duplicate &#9662;</button>
-          <button data-id="{{ persona.persona_id }}">Flag &#9662;</button>
-        </div>
-        <div class="group">
-          <button data-id="{{ persona.persona_id }}">Request More Info  &#9662;</button>
-        </div>
-        <a class="history" href="#">Review History</a>
-      </div>
-    </div></div>
-  {% endfor %}
+        <div class="c"></div>
+      </div></div>
+    {% endfor %}
+  </form>
 </div>
 {% endblock %}
 

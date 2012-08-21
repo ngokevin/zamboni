@@ -433,5 +433,18 @@ REVIEWED_SCORES = {
 # Percentage of what developers earn after Marketplace's cut.
 MKT_CUT = .70
 
-# Themes review queue constants.
+# Persona review queue constants.
 MAX_LOCKS = 30
+
+PERSONA_REJECTION_REASONS = {
+    1: _('Sexual or pornographic content'),
+    2: _('Inappropriate or offensive content'),
+    3: _('Violence, war, or weaponry images'),
+    4: _('Nazi or other hate content'),
+    5: _('Defamatory content'),
+    6: _('Online gambling'),
+    7: _('Spam content'),
+    8: _('Low-quality, stretched, or blank image'),
+    9: _('Header image alignment problem'),
+    0: _('Other rejection reason'),
+}

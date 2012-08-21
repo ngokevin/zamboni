@@ -4,5 +4,5 @@ from personasrq import views
 
 
 urlpatterns = patterns('',
-    url('^$', views.personasrq, name='personasrq.personasrq')
+    url('^$', views.personasrq, name='personasrq.personasrq'),
 )

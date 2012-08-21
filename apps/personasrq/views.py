@@ -2,17 +2,17 @@
 # with old code, but they're actually themes now.
 import datetime
 
+from django.forms.formsets import formset_factory
+
 import jingo
 
 import amo
-from amo.decorators import json_view
 from addons.models import Persona
+from personasrq.forms import PersonaReviewForm
 from personasrq.models import PersonaLock
 
 
 def personasrq(request):
-    # from users.models import UserProfile
-    # reviewer = UserProfile.objects.get(username='kngo')
     reviewer = request.amo_user
     persona_locks = PersonaLock.objects.filter(reviewer=reviewer)
 
@@ -50,16 +50,10 @@ def personasrq(request):
             expiry=datetime.datetime.now() + datetime.timedelta(minutes=30))
         personas = [persona_lock.persona for persona_lock in persona_locks]
 
+    PersonaReviewFormset = formset_factory(PersonaReviewForm)
+    formset = PersonaReviewFormset(
+        initial=[{'persona': persona.id} for persona in personas])
+
     return jingo.render(request, 'personasrq/index.html', {
-        'personas': personas
+        'persona_formset': zip(personas, formset)
     })
-
-
-@json_view
-def approve(request):
-    pass
-
-
-@json_view
-def reject(request):
-    pass
