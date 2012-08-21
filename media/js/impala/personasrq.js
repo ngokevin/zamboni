@@ -20,7 +20,7 @@
             var currentpersona = 0;
             var cacheQueueHeight;
 
-            var personas = $('.persona', queue).map(function() {
+            var personas = $('div.persona', queue).map(function() {
                 return {
                     element: this,
                     top: 0
@@ -134,6 +134,7 @@
 
                 'approve': function (i) {
                     setReviewed(i);
+                    $('div.persona:eq(' + i + ') input.action').val('approve');
                 }
             };
 

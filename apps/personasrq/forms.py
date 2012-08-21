@@ -7,7 +7,8 @@ import amo
 
 
 class PersonaReviewForm(happyforms.Form):
-    persona = forms.IntegerField(widget=forms.HiddenInput())
+    persona = forms.IntegerField(
+        widget=forms.HiddenInput(attrs={'class': 'persona_id'}))
     action = forms.ChoiceField(
         choices={
             'moreinfo': _('Request More Info'),
@@ -16,10 +17,11 @@ class PersonaReviewForm(happyforms.Form):
             'reject': _('Reject'),
             'approve': _('Approve')
         }.items(),
-        widget=forms.HiddenInput()
+        widget=forms.HiddenInput(attrs={'class': 'action'})
     )
     reject_reason = forms.ChoiceField(
         choices=amo.PERSONA_REJECTION_REASONS.items(),
-        widget=forms.HiddenInput()
+        widget=forms.HiddenInput(attrs={'class': 'reject_reason'})
     )
-    comment = forms.CharField(required=False, widget=forms.HiddenInput())
+    comment = forms.CharField(required=False,
+        widget=forms.HiddenInput(attrs={'class': 'comment'}))
