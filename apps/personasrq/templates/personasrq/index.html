@@ -90,10 +90,12 @@
         <h3><a href="#">{{ persona.addon.name }}</a></h3>
         <div class="status"></div>
         <ul class="meta">
-          <li><strong>Submitted</strong>: {{ persona.addon.created.strftime('%Y-%m-%d') }}</li>
           <li><strong>Artist</strong>: <a href="#">{{ persona.author }}</a></li>
           <li><strong>Category</strong>: <a href="#">{{ persona.addon.categories.all()[0] if persona.addon.categories.all() }}</a></li>
-          <li><a href="#">{{ persona.license }}</a></li>
+          <li><strong>Submitted</strong>: {{ persona.addon.created.strftime('%Y-%m-%d') }}</li>
+        </ul>
+        <ul class="meta">
+          <li><strong>License</strong>: <a href="#">{{ persona.license }}</a></li>
         </ul>
 
         <div class="preview">
