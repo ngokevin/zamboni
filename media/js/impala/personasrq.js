@@ -37,9 +37,16 @@
 
             $(document).keyup(function(e) {
                 if (!$(queue).hasClass('shortcuts')) return;
-                if ($('textarea').is(':focus')) return;
+                if ($('textarea').is(':focus') && e.which != '13') return;
+
+                // For using Enter to submit textareas.
+                if (e.which == '13' && '13' in keymap) {
+                    keymap['13']();
+                }
 
                 var key = String.fromCharCode(e.which).toLowerCase();
+                if (!key in keymap) return;
+
                 var action = keymap[key];
                 if (action && !e.ctrlKey && !e.altKey && !e.metaKey) {
                     personaActions[action[0]](currentpersona, action[1]);
@@ -47,10 +54,15 @@
                 }
             });
 
+            $('textarea').keypress(function(e) {
+                if (e.keyCode == 13) {
+                    e.preventDefault();
+                }
+            });
+
             $('.persona', queue).removeClass('active');
             updateMetrics();
             switchpersona( findCurrentpersona() );
-
 
             function updateMetrics() {
                 var queueHeight = $(queue).height();
@@ -87,6 +99,7 @@
                     }
                 }, delay);
 
+                delete keymap['13'];
                 $('.rq-dropdown').hide();
             }
 
@@ -125,7 +138,7 @@
                 'r': ['reject', null],
                 'd': ['duplicate', null],
                 'f': ['flag', null],
-                'm': ['moreInfo', null]
+                'm': ['moreinfo', null]
             };
 
             function setReviewed(i, text) {
@@ -177,10 +190,13 @@
                     var textArea = $('div.persona:eq(' + i + ') .other-reject-reason-dropdown textarea').focus();
 
                     // Submit link/URL of the duplicate.
-                    $('.other-reject-reason-dropdown button').click(_pd(function(e) {
+                    var submit = function() {
                         $('div.persona:eq(' + i + ') input.comment').val(textArea.val());
+                        textArea.blur();
                         personaActions.reject_reason(i, 0);
-                    }));
+                    };
+                    keymap['13'] = submit;
+                    $('.other-reject-reason-dropdown button').click(_pd(submit));
                 },
 
                 'reject_reason': function(i, reject_reason) {
@@ -205,12 +221,32 @@
                     var textArea = $('div.persona:eq(' + i + ') .duplicate-dropdown textarea').focus();
 
                     // Submit link/URL of the duplicate.
-                    $('.duplicate-dropdown button').click(_pd(function() {
+                    var submit = function() {
                         $('div.persona:eq(' + i + ') input.action').val('reject');
                         $('div.persona:eq(' + i + ') input.reject_reason').val('duplicate');
                         $('div.persona:eq(' + i + ') input.comment').val(textArea.val());
+                        textArea.blur();
                         setReviewed(i, 'Duplicate');
-                    }));
+                    };
+                    keymap['13'] = submit;
+                    $('.duplicate-dropdown button').click(_pd(submit));
+                },
+
+                'moreinfo': function(i) {
+                    // Open up dropdown to enter ID/URL of moreinfo.
+                    $('.rq-dropdown:not(.moreinfo-dropdown)').hide();
+                    $('div.persona:eq(' + i + ') .moreinfo-dropdown').toggle();
+                    var textArea = $('div.persona:eq(' + i + ') .moreinfo-dropdown textarea').focus();
+
+                    // Submit link/URL of the moreinfo.
+                    var submit = function() {
+                        $('div.persona:eq(' + i + ') input.action').val('moreinfo');
+                        $('div.persona:eq(' + i + ') input.comment').val(textArea.val());
+                        textArea.blur();
+                        setReviewed(i, 'Requested Info');
+                    };
+                    keymap['13'] = submit;
+                    $('.moreinfo-dropdown button').click(_pd(submit));
                 }
             };
 
@@ -223,6 +259,9 @@
             $('button.duplicate', this).click(_pd(function(e) {
                 e.preventDefault(); // _pd wasn't working...
                 personaActions.duplicate(getpersonaParent(e.currentTarget));
+            }));
+            $('button.moreinfo', this).click(_pd(function(e) {
+                personaActions.moreinfo(getpersonaParent(e.currentTarget));
             }));
 
         });

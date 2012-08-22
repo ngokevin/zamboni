@@ -218,11 +218,12 @@
     }
     textarea {
         float: left;
+        margin-top: 6px;
     }
     button {
         clear: left;
         float: right;
-        margin-top: 6px;
+        margin-top: 12px;
     }
 }
 .duplicate-dropdown {
@@ -259,5 +260,23 @@
     }
     textarea {
         height: 48px;
+    }
+}
+.moreinfo-dropdown {
+    right: 28em;
+    &:before {
+        right: 12px;
+    }
+    span:first-child {
+        margin-bottom: 12px;
+        span {
+            color: @link;
+            display: inline;
+            margin-bottom: 0;
+        }
+    }
+    textarea {
+        height: 48px;
+        margin-top: 12px;
     }
 }
