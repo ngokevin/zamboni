@@ -27,6 +27,11 @@
                 };
             }).get();
 
+            var personasList = $('div.persona', queue);
+            function nthPersona(i) {
+                return personasList[i];
+            }
+
             $(window).scroll(function() {
                 updateMetrics();
                 var i = findCurrentpersona();
@@ -142,6 +147,7 @@
             };
 
             function setReviewed(i, text) {
+                $(nthPersona(i)).addClass('reviewed');
                 $('.status', personas[i].element).addClass('reviewed').text(text);
                 if ($(queue).hasClass('advance')) {
                     gotopersona(i+1, 500);
@@ -153,7 +159,7 @@
                 'prev': function (i) { gotopersona(i-1); },
 
                 'approve': function (i) {
-                    $('div.persona:eq(' + i + ') input.action').val('approve');
+                    $('input.action', nthPersona(i)).val('approve');
                     setReviewed(i, 'Approved');
                 },
 
@@ -163,7 +169,7 @@
                     // function does not actually do the rejecting as the
                     // rejecting is only done once a reason is supplied.
                     $('.rq-dropdown:not(.reject-reason-dropdown)').hide();
-                    $('div.persona:eq(' + i + ') .reject-reason-dropdown').toggle();
+                    $('.reject-reason-dropdown', nthPersona(i)).toggle();
 
                     // Dynamically add key-mapping, 0 opens up another dropdown
                     // to enter a exceptional reason for rejection.
@@ -186,8 +192,8 @@
 
                 'other_reject_reason': function(i) {
                     $('.rq-dropdown:not(.other-reject-reason-dropdown)').hide();
-                    $('div.persona:eq(' + i + ') .other-reject-reason-dropdown').toggle();
-                    var textArea = $('div.persona:eq(' + i + ') .other-reject-reason-dropdown textarea').focus();
+                    $('.other-reject-reason-dropdown', nthPersona(i)).toggle();
+                    var textArea = $('.other-reject-reason-dropdown textarea', nthPersona(i)).focus();
 
                     // Submit link/URL of the duplicate.
                     var submit = function() {
@@ -202,8 +208,8 @@
                 'reject_reason': function(i, reject_reason) {
                     // Given the rejection reason, does the actual rejection of
                     // the Persona.
-                    $('div.persona:eq(' + i + ') input.action').val('reject');
-                    $('div.persona:eq(' + i + ') input.reject_reason').val(reject_reason);
+                    $('input.action', nthPersona(i)).val('reject');
+                    $('input.reject_reason', nthPersona(i)).val(reject_reason);
                     setReviewed(i, 'Rejected');
 
                     // Remove key and click-bindings now that rejection is
@@ -217,14 +223,14 @@
                 'duplicate': function(i) {
                     // Open up dropdown to enter ID/URL of duplicate.
                     $('.rq-dropdown:not(.duplicate-dropdown)').hide();
-                    $('div.persona:eq(' + i + ') .duplicate-dropdown').toggle();
-                    var textArea = $('div.persona:eq(' + i + ') .duplicate-dropdown textarea').focus();
+                    $('.duplicate-dropdown', nthPersona(i)).toggle();
+                    var textArea = $('.duplicate-dropdown textarea', nthPersona(i)).focus();
 
                     // Submit link/URL of the duplicate.
                     var submit = function() {
-                        $('div.persona:eq(' + i + ') input.action').val('reject');
-                        $('div.persona:eq(' + i + ') input.reject_reason').val('duplicate');
-                        $('div.persona:eq(' + i + ') input.comment').val(textArea.val());
+                        $('input.action', nthPersona(i)).val('reject');
+                        $('input.reject_reason', nthPersona(i)).val('duplicate');
+                        $('input.comment', nthPersona(i)).val(textArea.val());
                         textArea.blur();
                         setReviewed(i, 'Duplicate');
                     };
@@ -235,13 +241,13 @@
                 'flag': function(i) {
                     // Open up dropdown to enter reason for flagging.
                     $('.rq-dropdown:not(.flag-dropdown)').hide();
-                    $('div.persona:eq(' + i + ') .flag-dropdown').toggle();
-                    var textArea = $('div.persona:eq(' + i + ') .flag-dropdown textarea').focus();
+                    $('.flag-dropdown', nthPersona(i)).toggle();
+                    var textArea = $('.flag-dropdown textarea', nthPersona(i)).focus();
 
                     // Submit link/URL of the flag.
                     var submit = function() {
-                        $('div.persona:eq(' + i + ') input.action').val('flag');
-                        $('div.persona:eq(' + i + ') input.comment').val(textArea.val());
+                        $('input.action', nthPersona(i)).val('flag');
+                        $('input.comment', nthPersona(i)).val(textArea.val());
                         textArea.blur();
                         setReviewed(i, 'Flagged');
                     };
@@ -252,13 +258,13 @@
                 'moreinfo': function(i) {
                     // Open up dropdown to enter ID/URL of moreinfo.
                     $('.rq-dropdown:not(.moreinfo-dropdown)').hide();
-                    $('div.persona:eq(' + i + ') .moreinfo-dropdown').toggle();
-                    var textArea = $('div.persona:eq(' + i + ') .moreinfo-dropdown textarea').focus();
+                    $('.moreinfo-dropdown', nthPersona(i)).toggle();
+                    var textArea = $('.moreinfo-dropdown textarea', nthPersona(i)).focus();
 
                     // Submit link/URL of the moreinfo.
                     var submit = function() {
-                        $('div.persona:eq(' + i + ') input.action').val('moreinfo');
-                        $('div.persona:eq(' + i + ') input.comment').val(textArea.val());
+                        $('input.action', nthPersona(i)).val('moreinfo');
+                        $('input.comment', nthPersona(i)).val(textArea.val());
                         textArea.blur();
                         setReviewed(i, 'Requested Info');
                     };
@@ -283,7 +289,6 @@
             $('button.moreinfo', this).click(_pd(function(e) {
                 personaActions.moreinfo(getpersonaParent(e.currentTarget));
             }));
-
         });
     };
 
@@ -319,4 +324,7 @@ $(document).ready(function() {
     $('.zoombox').zoomBox();
     $('.persona-queue').personaQueue();
     $('.sidebar').personaQueueOptions('.persona-queue');
+    $('button#commit', this).click(_pd(function(e) {
+        $('#persona-queue-form').submit();
+    }));
 });

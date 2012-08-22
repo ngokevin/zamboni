@@ -79,11 +79,16 @@
       <li><strong>M</strong> <span>{{ _('Request More Info') }}</span></li>
     </ul>
   </div>
+  <button id="commit" type="submit">Commit</button>
+  <div id="queue-details">
+    <span id="reviewed">0</span><span> {{ _('out of') }} </span><span id="total">{{ persona_count }}</span> {{ _('reviewed') }}</span>
+  </div>
 </div></div>
 
 <div class="persona-queue details single">
-  <form method="post">
+  <form id="persona-queue-form" method="post">
     {{ csrf() }}
+    {{ formset.management_form }}
     {% for persona, form in persona_formset %}
       <div class="persona" data-id="{{ persona.persona_id }}"><div class="persona-inner">
         {{ form }}
@@ -108,7 +113,9 @@
           <img src="{{ persona.footer_url }}" width="2500" height="100" />
         </div>
 
-        <div class="desc"><strong>{{ _('Description ') }}:</strong>{{ persona.addon.description }}</div>
+        {% if persona.addon.description %}
+          <div class="desc"><strong>{{ _('Description ') }}: </strong>{{ persona.addon.description }}</div>
+        {% endif %}
 
         <div class="choices">
           <div class="group">

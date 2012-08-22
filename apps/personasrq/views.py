@@ -13,6 +13,10 @@ from personasrq.models import PersonaLock
 
 
 def personasrq(request):
+    PersonaReviewFormset = formset_factory(PersonaReviewForm)
+    if request.method == 'POST':
+        formset = PersonaReviewFormset(request.POST)
+
     reviewer = request.amo_user
     persona_locks = PersonaLock.objects.filter(reviewer=reviewer)
 
@@ -51,11 +55,12 @@ def personasrq(request):
             expiry=datetime.datetime.now() + datetime.timedelta(minutes=30))
         personas = [persona_lock.persona for persona_lock in persona_locks]
 
-    PersonaReviewFormset = formset_factory(PersonaReviewForm)
     formset = PersonaReviewFormset(
         initial=[{'persona': persona.id} for persona in personas])
 
     return jingo.render(request, 'personasrq/index.html', {
+        'formset': formset,
         'persona_formset': zip(personas, formset),
-        'reject_reasons': amo.PERSONA_REJECT_REASONS.items()
+        'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),
+        'persona_count': len(personas)
     })
