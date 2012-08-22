@@ -211,6 +211,22 @@
         font-weight: bold;
         margin: 3px 0 6px 0;
     }
+    textarea {
+        float: left;
+    }
+    button {
+        clear: left;
+        float: right;
+        margin-top: 6px;
+    }
+}
+.duplicate-dropdown {
+    &:before {
+        right: 92px;
+    }
+    textarea {
+        height: 24px;
+    }
 }
 .reject-reason-dropdown {
     &:before {
@@ -232,12 +248,11 @@
         background: @inset-blue;
     }
 }
-.duplicate-dropdown {
+.other-reject-reason-dropdown {
     &:before {
-        right: 92px;
+        right: 12px;
     }
-    button {
-        display: block;
-        float: right;
+    textarea {
+        height: 48px;
     }
 }

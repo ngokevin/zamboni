@@ -37,6 +37,7 @@
 
             $(document).keyup(function(e) {
                 if (!$(queue).hasClass('shortcuts')) return;
+                if ($('textarea').is(':focus')) return;
 
                 var key = String.fromCharCode(e.which).toLowerCase();
                 var action = keymap[key];
@@ -151,15 +152,35 @@
                     $('.rq-dropdown:not(.reject-reason-dropdown)').hide();
                     $('div.persona:eq(' + i + ') .reject-reason-dropdown').toggle();
 
-                    // Dynamically add key-mapping.
-                    for (var j = 0; j <= 9; j++) {
+                    // Dynamically add key-mapping, 0 opens up another dropdown
+                    // to enter a exceptional reason for rejection.
+                    keymap['0'] = ['other_reject_reason', 0];
+                    for (var j = 1; j <= 9; j++) {
                         keymap[j + ''] = ['reject_reason', j];
                     }
 
                     var reject_reason = this.reject_reason;
+                    var other_reject_reason = this.other_reject_reason;
                     $('li.reject_reason').click(function(e) {
-                        reject_reason(i, $(this).data('id'));
+                        var rejectId = $(this).data('id');
+                        if (rejectId == '0') {
+                            other_reject_reason(i);
+                        } else {
+                            reject_reason(i, $(this).data('id'));
+                        }
                     });
+                },
+
+                'other_reject_reason': function(i) {
+                    $('.rq-dropdown:not(.other-reject-reason-dropdown)').hide();
+                    $('div.persona:eq(' + i + ') .other-reject-reason-dropdown').toggle();
+                    var textArea = $('div.persona:eq(' + i + ') .other-reject-reason-dropdown textarea').focus();
+
+                    // Submit link/URL of the duplicate.
+                    $('.other-reject-reason-dropdown button').click(_pd(function(e) {
+                        $('div.persona:eq(' + i + ') input.comment').val(textArea.val());
+                        personaActions.reject_reason(i, 0);
+                    }));
                 },
 
                 'reject_reason': function(i, reject_reason) {
@@ -179,10 +200,17 @@
 
                 'duplicate': function(i) {
                     // Open up dropdown to enter ID/URL of duplicate.
-                    // Does not actually do the rejecting as the
-                    // rejecting is only done once a duplicate is specified.
                     $('.rq-dropdown:not(.duplicate-dropdown)').hide();
                     $('div.persona:eq(' + i + ') .duplicate-dropdown').toggle();
+                    var textArea = $('div.persona:eq(' + i + ') .duplicate-dropdown textarea').focus();
+
+                    // Submit link/URL of the duplicate.
+                    $('.duplicate-dropdown button').click(_pd(function() {
+                        $('div.persona:eq(' + i + ') input.action').val('reject');
+                        $('div.persona:eq(' + i + ') input.reject_reason').val('duplicate');
+                        $('div.persona:eq(' + i + ') input.comment').val(textArea.val());
+                        setReviewed(i, 'Duplicate');
+                    }));
                 }
             };
 
@@ -191,6 +219,10 @@
             }));
             $('button.reject', this).click(_pd(function(e) {
                 personaActions.reject(getpersonaParent(e.currentTarget));
+            }));
+            $('button.duplicate', this).click(_pd(function(e) {
+                e.preventDefault(); // _pd wasn't working...
+                personaActions.duplicate(getpersonaParent(e.currentTarget));
             }));
 
         });

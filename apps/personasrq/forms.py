@@ -13,7 +13,6 @@ class PersonaReviewForm(happyforms.Form):
         choices={
             'moreinfo': _('Request More Info'),
             'flag': _('Flag'),
-            'duplicate': _('Duplicate'),
             'reject': _('Reject'),
             'approve': _('Approve')
         }.items(),
