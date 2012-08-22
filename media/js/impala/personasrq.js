@@ -232,6 +232,23 @@
                     $('.duplicate-dropdown button').click(_pd(submit));
                 },
 
+                'flag': function(i) {
+                    // Open up dropdown to enter reason for flagging.
+                    $('.rq-dropdown:not(.flag-dropdown)').hide();
+                    $('div.persona:eq(' + i + ') .flag-dropdown').toggle();
+                    var textArea = $('div.persona:eq(' + i + ') .flag-dropdown textarea').focus();
+
+                    // Submit link/URL of the flag.
+                    var submit = function() {
+                        $('div.persona:eq(' + i + ') input.action').val('flag');
+                        $('div.persona:eq(' + i + ') input.comment').val(textArea.val());
+                        textArea.blur();
+                        setReviewed(i, 'Flagged');
+                    };
+                    keymap['13'] = submit;
+                    $('.flag-dropdown button').click(_pd(submit));
+                },
+
                 'moreinfo': function(i) {
                     // Open up dropdown to enter ID/URL of moreinfo.
                     $('.rq-dropdown:not(.moreinfo-dropdown)').hide();
@@ -259,6 +276,9 @@
             $('button.duplicate', this).click(_pd(function(e) {
                 e.preventDefault(); // _pd wasn't working...
                 personaActions.duplicate(getpersonaParent(e.currentTarget));
+            }));
+            $('button.flag', this).click(_pd(function(e) {
+                personaActions.flag(getpersonaParent(e.currentTarget));
             }));
             $('button.moreinfo', this).click(_pd(function(e) {
                 personaActions.moreinfo(getpersonaParent(e.currentTarget));

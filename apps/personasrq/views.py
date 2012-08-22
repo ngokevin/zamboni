@@ -19,7 +19,8 @@ def personasrq(request):
     if not persona_locks:
         # Check out personas from the pool if none checked out.
         personas = (Persona.objects
-            .filter(addon__status=amo.STATUS_PENDING)
+            .filter(addon__status__in=[amo.STATUS_UNREVIEWED,
+                                       amo.STATUS_PENDING])
             [:amo.MAX_LOCKS])
 
         # Set a lock on the checked-out personas

@@ -103,7 +103,7 @@
     &.active {
         .box-shadow(0px 0px 4px 4px @shadow-blue);
         .persona-inner {
-	        background: white url(img/active-bg.png) repeat-x 0 bottom;
+            .gradient-two-color(@faded-blue, white);
         	border-color: @border-blue;
         }
     }
@@ -114,7 +114,7 @@
     .preview, .header, .footer {
 	    margin: 1em 0;
     	border: 3px solid @border-blue;
-    	background: @inset-blue;
+    	background: @faded-blue;
     }
     .preview {
         position: relative;
@@ -218,12 +218,18 @@
     }
     textarea {
         float: left;
+        height: 48px;
         margin-top: 6px;
     }
     button {
         clear: left;
         float: right;
         margin-top: 12px;
+    }
+}
+.flag-dropdown {
+    &:before {
+        right: 191px;
     }
 }
 .duplicate-dropdown {
@@ -277,6 +283,5 @@
     }
     textarea {
         height: 48px;
-        margin-top: 12px;
     }
 }
