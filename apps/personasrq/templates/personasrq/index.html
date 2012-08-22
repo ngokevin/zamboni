@@ -113,7 +113,6 @@
             <button class="moreinfo" data-id="{{ persona.persona_id }}">Request More Info  &#9662;</button>
           </div>
           <div class="group">
-            <button class="duplicate" data-id="{{ persona.persona_id }}">Duplicate &#9662;</button>
             <button class="flag" data-id="{{ persona.persona_id }}">Flag &#9662;</button>
             <button class="reject" data-id="{{ persona.persona_id }}">Reject &#9662;</button>
           </div>
@@ -123,10 +122,11 @@
         </div>
         <div class="c"></div>
         <div class="reject_reason_dropdown">
+          <span>Choose a Reason for Rejection</span>
           <ul>
             {% for reject_reason in reject_reasons %}
               <li class="reject_reason" data-id="{{ reject_reason[0] }}">
-                <strong>{{ reject_reason[0]}}</strong>:
+                <strong>{{ reject_reason[0]}}: </strong>
                 <span>{{ reject_reason[1] }}</span>
               </li>
             {% endfor %}

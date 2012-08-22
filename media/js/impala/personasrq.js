@@ -85,6 +85,8 @@
                         $(personas[i].element).scrollTo({ duration: duration, marginTop: 20 });
                     }
                 }, delay);
+
+                $('.reject_reason_dropdown').hide();
             }
 
             function switchpersona(i) {
@@ -144,8 +146,11 @@
                 'reject': function (i) {
                     // Open up dropdown of rejection reasons and set up
                     // key and click-bindings for choosing a reason. This
-                    // function does not actually do the rejecting.
+                    // function does not actually do the rejecting as the
+                    // rejecting is only done once a reason is supplied.
                     $('div.persona:eq(' + i + ') .reject_reason_dropdown').toggle();
+
+                    // Dynamically add key-mapping.
                     for (var j = 0; j <= 9; j++) {
                         keymap[j + ''] = ['reject_reason', j];
                     }
@@ -169,6 +174,13 @@
                         delete keymap[i + ''];
                     }
                     $('li.reject_reason').unbind('click');
+                },
+
+                'duplicate': function(i) {
+                    // Special case for duplicate since 'D' can trigger a
+                    // duplicate rejection.
+                    // 10 is the rejection reason's id for duplicate.
+                    this.reject_reason(i, 10);
                 }
             };
 

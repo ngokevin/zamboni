@@ -174,7 +174,7 @@
         }
         .group {
             display: inline;
-        	margin-left: .5em;
+        	margin-left: 1em;
             &:first-child {
                 margin-left: 0;
             }
@@ -200,16 +200,27 @@
         content: "";
         height: 14px;
         position: absolute;
-        right: 6px;
+        right: 12px;
         top: -7px;
         .transform(rotate(45deg));
         width: 14px;
         z-index: 0;
     }
+    span:first-child {
+        color: @dark-gray;
+        display: block;
+        font-weight: bold;
+        margin: 3px 0 6px 0;
+    }
     li {
         padding: .3em;
+        strong {
+            float: left;
+        }
         span {
             color: @link;
+            display: block;
+            margin-left: 1.5em;
         }
     }
     li:hover {
