@@ -182,7 +182,7 @@
     }
 }
 
-.reject_reason_dropdown {
+.rq-dropdown {
     background: white;
     border: 1px solid @border-blue;
     .box-shadow(0 1px 4px rgba(0, 0, 0, 0.5));
@@ -200,7 +200,6 @@
         content: "";
         height: 14px;
         position: absolute;
-        right: 12px;
         top: -7px;
         .transform(rotate(45deg));
         width: 14px;
@@ -211,6 +210,11 @@
         display: block;
         font-weight: bold;
         margin: 3px 0 6px 0;
+    }
+}
+.reject-reason-dropdown {
+    &:before {
+        right: 12px;
     }
     li {
         padding: .3em;
@@ -226,5 +230,14 @@
     li:hover {
         cursor: pointer;
         background: @inset-blue;
+    }
+}
+.duplicate-dropdown {
+    &:before {
+        right: 92px;
+    }
+    button {
+        display: block;
+        float: right;
     }
 }

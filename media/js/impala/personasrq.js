@@ -86,7 +86,7 @@
                     }
                 }, delay);
 
-                $('.reject_reason_dropdown').hide();
+                $('.rq-dropdown').hide();
             }
 
             function switchpersona(i) {
@@ -148,7 +148,8 @@
                     // key and click-bindings for choosing a reason. This
                     // function does not actually do the rejecting as the
                     // rejecting is only done once a reason is supplied.
-                    $('div.persona:eq(' + i + ') .reject_reason_dropdown').toggle();
+                    $('.rq-dropdown:not(.reject-reason-dropdown)').hide();
+                    $('div.persona:eq(' + i + ') .reject-reason-dropdown').toggle();
 
                     // Dynamically add key-mapping.
                     for (var j = 0; j <= 9; j++) {
@@ -177,10 +178,11 @@
                 },
 
                 'duplicate': function(i) {
-                    // Special case for duplicate since 'D' can trigger a
-                    // duplicate rejection.
-                    // 10 is the rejection reason's id for duplicate.
-                    this.reject_reason(i, 10);
+                    // Open up dropdown to enter ID/URL of duplicate.
+                    // Does not actually do the rejecting as the
+                    // rejecting is only done once a duplicate is specified.
+                    $('.rq-dropdown:not(.duplicate-dropdown)').hide();
+                    $('div.persona:eq(' + i + ') .duplicate-dropdown').toggle();
                 }
             };
 

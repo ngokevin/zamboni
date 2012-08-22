@@ -114,6 +114,7 @@
           </div>
           <div class="group">
             <button class="flag" data-id="{{ persona.persona_id }}">Flag &#9662;</button>
+            <button class="duplicate" data-id="{{ persona.persona_id }}">Duplicate &#9662;</button>
             <button class="reject" data-id="{{ persona.persona_id }}">Reject &#9662;</button>
           </div>
           <div class="group">
@@ -121,7 +122,11 @@
           </div>
         </div>
         <div class="c"></div>
-        <div class="reject_reason_dropdown">
+        <div class="duplicate-dropdown rq-dropdown">
+          <span>Enter the ID or URL of the Duplicate</span>
+          <button>Continue</button>
+        </div>
+        <div class="reject-reason-dropdown rq-dropdown">
           <span>Choose a Reason for Rejection</span>
           <ul>
             {% for reject_reason in reject_reasons %}

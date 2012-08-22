@@ -447,5 +447,4 @@ PERSONA_REJECT_REASONS = {
     8: _('Low-quality, stretched, or blank image'),
     9: _('Header image alignment problem'),
     0: _('Other rejection reason'),
-    'D': _('Duplicate')
 }
