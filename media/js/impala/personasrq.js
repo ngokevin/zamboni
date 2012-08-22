@@ -149,6 +149,7 @@
             function setReviewed(i, text) {
                 $(nthPersona(i)).addClass('reviewed');
                 $('.status', personas[i].element).addClass('reviewed').text(text);
+                $('#reviewed-count').text($('div.persona.reviewed').length);
                 if ($(queue).hasClass('advance')) {
                     gotopersona(i+1, 500);
                 }
