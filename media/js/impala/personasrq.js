@@ -140,7 +140,7 @@
                 'j': ['next', null],
                 'k': ['prev', null],
                 'a': ['approve', null],
-                'r': ['reject', null],
+                'r': ['reject_reason', null],
                 'd': ['duplicate', null],
                 'f': ['flag', null],
                 'm': ['moreinfo', null]
@@ -164,7 +164,7 @@
                     setReviewed(i, 'Approved');
                 },
 
-                'reject': function (i) {
+                'reject_reason': function (i) {
                     // Open up dropdown of rejection reasons and set up
                     // key and click-bindings for choosing a reason. This
                     // function does not actually do the rejecting as the
@@ -174,43 +174,37 @@
 
                     // Dynamically add key-mapping, 0 opens up another dropdown
                     // to enter a exceptional reason for rejection.
-                    keymap['0'] = ['other_reject_reason', 0];
                     for (var j = 1; j <= 9; j++) {
-                        keymap[j + ''] = ['reject_reason', j];
+                        keymap[j + ''] = ['reject_reason_detail', j];
                     }
 
-                    var reject_reason = this.reject_reason;
-                    var other_reject_reason = this.other_reject_reason;
+                    var reject_reason_detail = this.reject_reason_detail;
                     $('li.reject_reason').click(function(e) {
                         var rejectId = $(this).data('id');
-                        if (rejectId == '0') {
-                            other_reject_reason(i);
-                        } else {
-                            reject_reason(i, $(this).data('id'));
-                        }
+                        reject_reason_detail(i);
                     });
                 },
 
-                'other_reject_reason': function(i) {
-                    $('.rq-dropdown:not(.other-reject-reason-dropdown)').hide();
-                    $('.other-reject-reason-dropdown', nthPersona(i)).toggle();
-                    var textArea = $('.other-reject-reason-dropdown textarea', nthPersona(i)).focus();
+                'reject_reason_detail': function(i) {
+                    $('.rq-dropdown:not(.reject-reason-detail-dropdown)').hide();
+                    $('.reject-reason-detail-dropdown', nthPersona(i)).toggle();
+                    var textArea = $('.reject-reason-detail-dropdown textarea', nthPersona(i)).focus();
 
                     // Submit link/URL of the duplicate.
                     var submit = function() {
                         if (textArea.val()) {
                             $('input.comment', nthPersona(i)).val(textArea.val());
                             textArea.blur();
-                            personaActions.reject_reason(i, 0);
+                            personaActions.reject(i, 0);
                         } else {
-                            $('.other-reject-reason-dropdown .error-required').show();
+                            $('.reject-reason-detail-dropdown .error-required').show();
                         }
                     };
                     keymap['13'] = submit;
-                    $('.other-reject-reason-dropdown button').click(_pd(submit));
+                    $('.reject-reason-detail-dropdown button').click(_pd(submit));
                 },
 
-                'reject_reason': function(i, reject_reason) {
+                'reject': function(i, reject_reason) {
                     // Given the rejection reason, does the actual rejection of
                     // the Persona.
                     $('input.action', nthPersona(i)).val('reject');
@@ -294,7 +288,7 @@
                 personaActions.approve(getpersonaParent(e.currentTarget));
             }));
             $('button.reject', this).click(_pd(function(e) {
-                personaActions.reject(getpersonaParent(e.currentTarget));
+                personaActions.reject_reason(getpersonaParent(e.currentTarget));
             }));
             $('button.duplicate', this).click(_pd(function(e) {
                 e.preventDefault(); // _pd wasn't working...
