@@ -2,6 +2,8 @@
 # with old code, but they're actually themes now.
 import datetime
 
+from django.core.urlresolvers import reverse
+from django.shortcuts import redirect
 from django.forms.formsets import formset_factory
 from django.utils.datastructures import MultiValueDictKeyError
 
@@ -34,6 +36,7 @@ def personasrq(request):
                 except MultiValueDictKeyError:
                     # Django's formset metadata off-by-one, ignore extra form.
                     pass
+        return redirect(reverse('personasrq.personasrq'))
 
     persona_locks = PersonaLock.objects.filter(reviewer=reviewer)
     if not persona_locks:

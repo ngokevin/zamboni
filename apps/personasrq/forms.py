@@ -56,7 +56,6 @@ class PersonaReviewForm(happyforms.Form):
         return self.cleaned_data['comment']
 
     def save(self):
-        print self.cleaned_data
         try:
             persona = Persona.objects.get(
                 persona_id=self.cleaned_data['persona'])
@@ -97,7 +96,7 @@ class PersonaReviewForm(happyforms.Form):
 
         elif action == 'duplicate':
             subject = 'Theme Submission Update: %s' % persona.addon.name
-            template = 'personasrq/emails/reject.html'
+            template = 'personasrq/emails/duplicate.html'
             persona.addon.set_status(amo.STATUS_REJECTED)
 
         elif action == 'flag':
