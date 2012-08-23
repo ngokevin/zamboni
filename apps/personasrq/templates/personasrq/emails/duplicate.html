@@ -1,0 +1,9 @@
+{% block content %}
+A reviewer has looked over your Firefox theme submission. Because your theme has either already been submitted or is a duplicate of another theme, your theme will not be made public.
+
+Duplicate Theme: {{ comment }}
+
+Theme: {{ persona.addon.name }}
+URL: {{ persona.addon.get_detail_url()|absolutify(base_url) }}
+Submission Date: {{ submission_date }}
+{% endblock %}

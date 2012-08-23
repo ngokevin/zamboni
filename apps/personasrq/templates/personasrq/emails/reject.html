@@ -1,0 +1,10 @@
+{% block content %}
+A reviewer has looked over your Firefox theme submission and found things that need to be addressed before it can be approved. Please address the remarks below and resubmit your theme.
+
+Issue: {{ reason }}
+Comment: {{ comment }}
+
+Theme: {{ persona.addon.name }}
+URL: {{ persona.addon.get_detail_url()|absolutify(base_url) }}
+Submission Date: {{ submission_date }}
+{% endblock %}

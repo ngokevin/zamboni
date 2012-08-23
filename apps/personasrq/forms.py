@@ -1,11 +1,14 @@
+import datetime
+
 from django import forms
+from django.conf import settings
 
 import happyforms
 from tower import ugettext_lazy as _
 
 from addons.models import Persona
 import amo
-from amo.utils import raise_required
+from amo.utils import raise_required, send_mail_jinja
 from personasrq.models import PersonaLock
 
 
@@ -62,26 +65,52 @@ class PersonaReviewForm(happyforms.Form):
             return
 
         action = self.cleaned_data['action']
+        reason = None
         if self.cleaned_data['reject_reason']:
             reason = (amo.PERSONA_REJECT_REASONS[int(
                       self.cleaned_data['reject_reason'])])
         comment = self.cleaned_data['comment']
 
+        # author_emails = persona.addon.authors.values_list('email', flat=True)
+        author_emails = ['kngo@mozilla.com']
+        dt = persona.submit
+        context = {
+            'persona': persona,
+            'base_url': settings.SITE_URL,
+            'submission_date': '%04d-%02d-%02d' % (dt.year, dt.month, dt.day),
+            'reason': reason,
+            'comment': comment
+        }
+
         if action == 'approve':
+            subject = 'Theme Submission Approved: %s' % persona.addon.name
+            template = 'personasrq/emails/approve.html'
             persona.addon.set_status(amo.STATUS_PUBLIC)
 
         elif action == 'reject':
+            subject = 'Theme Submission Update: %s' % persona.addon.name
+            template = 'personasrq/emails/reject.html'
             persona.addon.set_status(amo.STATUS_REJECTED)
             reason = (amo.PERSONA_REJECT_REASONS[int(
                       self.cleaned_data['reject_reason'])])
 
         elif action == 'duplicate':
+            subject = 'Theme Submission Update: %s' % persona.addon.name
+            template = 'personasrq/emails/reject.html'
             persona.addon.set_status(amo.STATUS_REJECTED)
 
         elif action == 'flag':
             persona.addon.set_status(amo.STATUS_PENDING)
 
         elif action == 'moreinfo':
+            subject = 'Theme Submission Update: %s' % persona.addon.name
+            template = 'personasrq/emails/moreinfo.html'
             persona.addon.set_status(amo.STATUS_PENDING)
 
+        persona.approve = datetime.datetime.now()
+        persona.save()
         persona_lock.delete()
+
+        settings.SEND_REAL_EMAIL = True
+        send_mail_jinja(subject, template, context,
+                        recipient_list=author_emails)
