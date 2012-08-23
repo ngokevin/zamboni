@@ -17,7 +17,7 @@ class PersonaReviewForm(happyforms.Form):
         widget=forms.HiddenInput(attrs={'class': 'action'})
     )
     reject_reason = forms.ChoiceField(
-        choices=amo.PERSONA_REJECT_REASONS.items(),
+        choices=amo.PERSONA_REJECT_REASONS.items() + [('duplicate', '')],
         widget=forms.HiddenInput(attrs={'class': 'reject_reason'}),
         required=False
     )
@@ -58,7 +58,7 @@ class PersonaReviewForm(happyforms.Form):
                 persona_id=self.cleaned_data['persona'])
             persona_lock = PersonaLock.objects.get(persona=persona)
         except (Persona.DoesNotExist, PersonaLock.DoesNotExist):
-            print "Persona does not exist"
+            # This shouldn't happen so just discard the review.
             return
 
         action = self.cleaned_data['action']

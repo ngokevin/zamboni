@@ -228,8 +228,7 @@
                     // Submit link/URL of the duplicate.
                     var submit = function() {
                         if (textArea.val()) {
-                            $('input.action', nthPersona(i)).val('reject');
-                            $('input.reject_reason', nthPersona(i)).val('duplicate');
+                            $('input.action', nthPersona(i)).val('duplicate');
                             $('input.comment', nthPersona(i)).val(textArea.val());
                             textArea.blur();
                             setReviewed(i, 'Duplicate');
