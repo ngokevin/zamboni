@@ -27,6 +27,7 @@ class PersonaReviewForm(happyforms.Form):
     def clean_persona(self):
         if not Persona.objects.get(id=self.cleaned_data['persona']):
             raise forms.ValidationError('Persona does not exist.')
+        return self.cleaned_data['persona']
 
     def clean_action(self):
         if ('action' in self.cleaned_data and
@@ -49,15 +50,21 @@ class PersonaReviewForm(happyforms.Form):
              d['action'] == 'moreinfo' or d['action'] == 'reject')
             and not d['comment']):
             raise_required()
-        return self.cleaned_data['reject_reason']
+        return self.cleaned_data['comment']
 
     def save(self):
-        persona = Persona.objects.get(id=self.cleaned_data['persona'])
-        persona_lock = PersonaLock.objects.get(persona=persona)
+        try:
+            persona = Persona.objects.get(
+                persona_id=self.cleaned_data['persona'])
+            persona_lock = PersonaLock.objects.get(persona=persona)
+        except (Persona.DoesNotExist, PersonaLock.DoesNotExist):
+            print "Persona does not exist"
+            return
 
         action = self.cleaned_data['action']
-        reason = (amo.PERSONA_REJECT_REASONS[int(
-                  self.cleaned_data['reject_reason'])])
+        if self.cleaned_data['reject_reason']:
+            reason = (amo.PERSONA_REJECT_REASONS[int(
+                      self.cleaned_data['reject_reason'])])
         comment = self.cleaned_data['comment']
 
         if action == 'approve':
@@ -76,3 +83,5 @@ class PersonaReviewForm(happyforms.Form):
 
         elif action == 'moreinfo':
             persona.addon.set_status(amo.STATUS_PENDING)
+
+        persona_lock.delete()

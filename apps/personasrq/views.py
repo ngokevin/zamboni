@@ -3,6 +3,7 @@
 import datetime
 
 from django.forms.formsets import formset_factory
+from django.utils.datastructures import MultiValueDictKeyError
 
 import jingo
 
@@ -13,20 +14,32 @@ from personasrq.models import PersonaLock
 
 
 def personasrq(request):
+    reviewer = request.amo_user
+
     PersonaReviewFormset = formset_factory(PersonaReviewForm)
     if request.method == 'POST':
         formset = PersonaReviewFormset(request.POST)
         for form in formset:
-            print form.is_valid()
+            if form.is_valid() and form.cleaned_data:
+                form.save()
+            else:
+                # If invalid data somehow got past client-side validation,
+                # ignore the offending review and discard the lock.
+                try:
+                    persona_lock = PersonaLock.objects.filter(
+                        persona=form.data[form.prefix + '-persona'],
+                        reviewer=reviewer)
+                    if persona_lock:
+                        persona_lock.delete()
+                except MultiValueDictKeyError:
+                    # Django's formset metadata off-by-one, ignore extra form.
+                    pass
 
-    reviewer = request.amo_user
     persona_locks = PersonaLock.objects.filter(reviewer=reviewer)
-
     if not persona_locks:
         # Check out personas from the pool if none checked out.
         personas = (Persona.objects
-            .filter(addon__status__in=[amo.STATUS_UNREVIEWED,
-                                       amo.STATUS_PENDING])
+            .filter(addon__status=amo.STATUS_UNREVIEWED)
             [:amo.MAX_LOCKS])
 
         # Set a lock on the checked-out personas
@@ -35,8 +48,7 @@ def personasrq(request):
                                        expiry=datetime.datetime.now() +
                                        datetime.timedelta(minutes=30),
                                        persona_lock_id=persona.persona_id)
-            persona.addon.status = amo.STATUS_BEING_REVIEWED
-            persona.addon.save()
+            persona.addon.set_status(amo.STATUS_PENDING)
 
         # Empty pool? Go look for some expired locks.
         if not personas:
@@ -58,7 +70,7 @@ def personasrq(request):
         personas = [persona_lock.persona for persona_lock in persona_locks]
 
     formset = PersonaReviewFormset(
-        initial=[{'persona': persona.id} for persona in personas])
+        initial=[{'persona': persona.persona_id} for persona in personas])
 
     return jingo.render(request, 'personasrq/index.html', {
         'formset': formset,
