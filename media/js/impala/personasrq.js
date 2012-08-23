@@ -172,20 +172,19 @@
                     $('.rq-dropdown:not(.reject-reason-dropdown)').hide();
                     $('.reject-reason-dropdown', nthPersona(i)).toggle();
 
-                    // Dynamically add key-mapping, 0 opens up another dropdown
-                    // to enter a exceptional reason for rejection.
-                    for (var j = 1; j <= 9; j++) {
+                    // Dynamically add key-mapping.
+                    for (var j = 0; j <= 9; j++) {
                         keymap[j + ''] = ['reject_reason_detail', j];
                     }
 
                     var reject_reason_detail = this.reject_reason_detail;
                     $('li.reject_reason').click(function(e) {
                         var rejectId = $(this).data('id');
-                        reject_reason_detail(i);
+                        reject_reason_detail(i, rejectId);
                     });
                 },
 
-                'reject_reason_detail': function(i) {
+                'reject_reason_detail': function(i, rejectId) {
                     $('.rq-dropdown:not(.reject-reason-detail-dropdown)').hide();
                     $('.reject-reason-detail-dropdown', nthPersona(i)).toggle();
                     var textArea = $('.reject-reason-detail-dropdown textarea', nthPersona(i)).focus();
@@ -195,7 +194,7 @@
                         if (textArea.val()) {
                             $('input.comment', nthPersona(i)).val(textArea.val());
                             textArea.blur();
-                            personaActions.reject(i, 0);
+                            personaActions.reject(i, rejectId);
                         } else {
                             $('.reject-reason-detail-dropdown .error-required').show();
                         }
@@ -204,11 +203,11 @@
                     $('.reject-reason-detail-dropdown button').click(_pd(submit));
                 },
 
-                'reject': function(i, reject_reason) {
+                'reject': function(i, rejectId) {
                     // Given the rejection reason, does the actual rejection of
                     // the Persona.
                     $('input.action', nthPersona(i)).val('reject');
-                    $('input.reject_reason', nthPersona(i)).val(reject_reason);
+                    $('input.reject_reason', nthPersona(i)).val(rejectId);
                     setReviewed(i, 'Rejected');
 
                     // Remove key and click-bindings now that rejection is

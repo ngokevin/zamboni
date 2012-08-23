@@ -56,6 +56,7 @@ class PersonaReviewForm(happyforms.Form):
         return self.cleaned_data['comment']
 
     def save(self):
+        print self.cleaned_data
         try:
             persona = Persona.objects.get(
                 persona_id=self.cleaned_data['persona'])
