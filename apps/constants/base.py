@@ -436,6 +436,14 @@ MKT_CUT = .70
 # Persona review queue constants.
 MAX_LOCKS = 30
 
+REVIEW_CHOICES = {
+    'moreinfo': _('Request More Info'),
+    'flag': _('Flag'),
+    'duplicate': _('Duplicate'),
+    'reject': _('Reject'),
+    'approve': _('Approve')
+}
+
 PERSONA_REJECT_REASONS = {
     1: _('Sexual or pornographic content'),
     2: _('Inappropriate or offensive content'),
@@ -448,3 +456,4 @@ PERSONA_REJECT_REASONS = {
     9: _('Header image alignment problem'),
     0: _('Other rejection reason'),
 }
+REASON_OTHER = 0

@@ -16,6 +16,8 @@ def personasrq(request):
     PersonaReviewFormset = formset_factory(PersonaReviewForm)
     if request.method == 'POST':
         formset = PersonaReviewFormset(request.POST)
+        for form in formset:
+            print form.is_valid()
 
     reviewer = request.amo_user
     persona_locks = PersonaLock.objects.filter(reviewer=reviewer)

@@ -1,4 +1,5 @@
 {% extends "impala/base_shared.html" %}
+{% from 'includes/forms.html' import required %}
 
 {% block extrahead %}
   {{ css('zamboni/personasrq') }}
@@ -134,6 +135,7 @@
         <div class="duplicate-dropdown rq-dropdown">
           <span>{{ _('Enter the ID or URL of the duplicate') }}:</span>
           <textarea></textarea>
+          <strong class="error-required">{{ required() }} Field required</strong>
           <button>Continue</button>
         </div>
         <div class="reject-reason-dropdown rq-dropdown">
@@ -150,16 +152,19 @@
         <div class="other-reject-reason-dropdown rq-dropdown">
           <span>{{ _('Describe your reason for rejection') }}:</span>
           <textarea></textarea>
+          <strong class="error-required">{{ required() }} Field required</strong>
           <button>{{ _('Continue') }}</button>
         </div>
         <div class="moreinfo-dropdown rq-dropdown">
           <span>{{ _('Enter your request for') }} <span>{{ persona.author }}</span>:</span>
           <textarea></textarea>
+          <strong class="error-required">{{ required() }} Field required</strong>
           <button>{{ _('Continue') }}</button>
         </div>
         <div class="flag-dropdown rq-dropdown">
           <span>{{ _('Describe your reason for flagging') }}:</span>
           <textarea></textarea>
+          <strong class="error-required">{{ required() }} Field required</strong>
           <button>{{ _('Continue') }}</button>
         </div>
       </div></div>

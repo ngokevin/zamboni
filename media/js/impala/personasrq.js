@@ -198,9 +198,13 @@
 
                     // Submit link/URL of the duplicate.
                     var submit = function() {
-                        $('div.persona:eq(' + i + ') input.comment').val(textArea.val());
-                        textArea.blur();
-                        personaActions.reject_reason(i, 0);
+                        if (textArea.val()) {
+                            $('input.comment', nthPersona(i)).val(textArea.val());
+                            textArea.blur();
+                            personaActions.reject_reason(i, 0);
+                        } else {
+                            $('.other-reject-reason-dropdown .error-required').show();
+                        }
                     };
                     keymap['13'] = submit;
                     $('.other-reject-reason-dropdown button').click(_pd(submit));
@@ -229,11 +233,15 @@
 
                     // Submit link/URL of the duplicate.
                     var submit = function() {
-                        $('input.action', nthPersona(i)).val('reject');
-                        $('input.reject_reason', nthPersona(i)).val('duplicate');
-                        $('input.comment', nthPersona(i)).val(textArea.val());
-                        textArea.blur();
-                        setReviewed(i, 'Duplicate');
+                        if (textArea.val()) {
+                            $('input.action', nthPersona(i)).val('reject');
+                            $('input.reject_reason', nthPersona(i)).val('duplicate');
+                            $('input.comment', nthPersona(i)).val(textArea.val());
+                            textArea.blur();
+                            setReviewed(i, 'Duplicate');
+                        } else {
+                            $('.duplicate-dropdown .error-required').show();
+                        }
                     };
                     keymap['13'] = submit;
                     $('.duplicate-dropdown button').click(_pd(submit));
@@ -247,10 +255,14 @@
 
                     // Submit link/URL of the flag.
                     var submit = function() {
-                        $('input.action', nthPersona(i)).val('flag');
-                        $('input.comment', nthPersona(i)).val(textArea.val());
-                        textArea.blur();
-                        setReviewed(i, 'Flagged');
+                        if (textArea.val()) {
+                            $('input.action', nthPersona(i)).val('flag');
+                            $('input.comment', nthPersona(i)).val(textArea.val());
+                            textArea.blur();
+                            setReviewed(i, 'Flagged');
+                        } else {
+                            $('.flag-dropdown .error-required').show();
+                        }
                     };
                     keymap['13'] = submit;
                     $('.flag-dropdown button').click(_pd(submit));
@@ -264,10 +276,14 @@
 
                     // Submit link/URL of the moreinfo.
                     var submit = function() {
-                        $('input.action', nthPersona(i)).val('moreinfo');
-                        $('input.comment', nthPersona(i)).val(textArea.val());
-                        textArea.blur();
-                        setReviewed(i, 'Requested Info');
+                        if (textArea.val()) {
+                            $('input.action', nthPersona(i)).val('moreinfo');
+                            $('input.comment', nthPersona(i)).val(textArea.val());
+                            textArea.blur();
+                            setReviewed(i, 'Requested Info');
+                        } else {
+                            $('.moreinfo-dropdown .error-required').show();
+                        }
                     };
                     keymap['13'] = submit;
                     $('.moreinfo-dropdown button').click(_pd(submit));
