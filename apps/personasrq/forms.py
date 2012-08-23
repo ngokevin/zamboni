@@ -8,8 +8,9 @@ from tower import ugettext_lazy as _
 
 from addons.models import Persona
 import amo
-from amo.utils import raise_required, send_mail_jinja
+from amo.utils import raise_required
 from personasrq.models import PersonaLock
+from personasrq.tasks import send_mail
 
 
 class PersonaReviewForm(happyforms.Form):
@@ -111,6 +112,4 @@ class PersonaReviewForm(happyforms.Form):
         persona.save()
         persona_lock.delete()
 
-        settings.SEND_REAL_EMAIL = True
-        send_mail_jinja(subject, template, context,
-                        recipient_list=author_emails)
+        send_mail(subject, template, context, author_emails)
