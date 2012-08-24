@@ -434,7 +434,8 @@ REVIEWED_SCORES = {
 MKT_CUT = .70
 
 # Persona review queue constants.
-MAX_LOCKS = 30
+INITIAL_LOCKS = 5
+MAX_LOCKS = 20
 
 REVIEW_CHOICES = {
     'moreinfo': _('Request More Info'),

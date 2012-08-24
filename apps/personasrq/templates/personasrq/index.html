@@ -87,7 +87,10 @@
 </div></div>
 
 <div class="persona-queue details single">
-  <form id="persona-queue-form" method="post">
+  <span id="max-locks" data-max-locks="{{ max_locks }}"></span>
+  <span id="more-url" data-more-url="{{ more_url }}"></span>
+
+  <form id="persona-queue-form" action="{{ url('personasrq.commit') }}" method="post">
     {{ csrf() }}
     {{ formset.management_form }}
     {% for persona, form in persona_formset %}

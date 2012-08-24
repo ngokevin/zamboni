@@ -19,6 +19,8 @@
             var queue = this;
             var currentpersona = 0;
             var cacheQueueHeight;
+            var maxLocks = parseInt($('#max-locks').data('max-locks'), 10);
+            var moreUrl = $('#more-url').data('more-url');
 
             var personas = $('div.persona', queue).map(function() {
                 return {
@@ -33,6 +35,7 @@
             }
 
             $(window).scroll(function() {
+                endlessScroller();
                 updateMetrics();
                 var i = findCurrentpersona();
                 if (i != currentpersona) {
@@ -59,6 +62,7 @@
                 }
             });
 
+            // Pressing Enter in text field doesn't add carriage return.
             $('textarea').keypress(function(e) {
                 if (e.keyCode == 13) {
                     e.preventDefault();
@@ -133,6 +137,23 @@
                         }
                     }
                     return i;
+                }
+            }
+
+            function endlessScroller() {
+                // Don't do anything if max locks.
+                if (personasList.length >= maxLocks) {
+                    return;
+                }
+                // Initiate the endless scrolling when 85% down the page.
+                var documentHeight = $(document).height();
+                var windowHeight = $(window).height();
+                var scrollTop = $(window).scrollTop();
+                var scrollBot = scrollTop + windowHeight;
+                if (scrollBot / documentHeight >= 0.85 || scrollTop == documentHeight) {
+                    $.get(moreUrl, {}, function(data) {
+                        console.log(data);
+                    });
                 }
             }
 

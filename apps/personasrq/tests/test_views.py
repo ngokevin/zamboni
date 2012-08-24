@@ -20,8 +20,7 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
     fixtures = ['base/users', 'base/admin']
 
     def setUp(self):
-        amo.MAX_LOCKS = 2
-        self.persona_count = 5
+        self.persona_count = int(amo.INITIAL_LOCKS * 2.5)
         for x in range(self.persona_count):
             addon_factory(type=amo.ADDON_PERSONA, status=amo.STATUS_UNREVIEWED)
 
@@ -46,12 +45,12 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
 
     def get_personas(self):
         # It doesn't mean what you think it means.
-        return self.client.get(reverse('personasrq.personasrq')).content
+        return self.client.get(reverse('personasrq.queue')).content
 
     def get_and_check_personas(self, reviewer):
         doc = pq(self.get_personas())
-        if self.free_personas > amo.MAX_LOCKS:
-            expected_queue_length = amo.MAX_LOCKS
+        if self.free_personas > amo.INITIAL_LOCKS:
+            expected_queue_length = amo.INITIAL_LOCKS
         else:
             expected_queue_length = self.free_personas
         self.free_personas -= expected_queue_length
@@ -61,21 +60,23 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
             expected_queue_length)
 
     def test_basic_queue(self):
-        # Have 5 reviewers take personas from the pool and into the queue.
+        # Have reviewers take personas from the pool and into the queue.
         self.free_personas = self.persona_count
-        for i in range(5):
+        for i in range(self.persona_count):
             reviewer = self.create_and_become_reviewer()
             self.get_and_check_personas(reviewer)
 
     def test_top_off(self):
         # If reviewer has less than max locks, try to get more from pool.
         reviewer = self.create_and_become_reviewer()
-        amo.MAX_LOCKS = 7
 
         doc = pq(self.get_personas())
-        eq_(doc('div.persona').length, self.persona_count)
+        eq_(doc('div.persona').length, amo.INITIAL_LOCKS)
         eq_(PersonaLock.objects.filter(reviewer=reviewer).count(),
-            self.persona_count)
+            amo.INITIAL_LOCKS)
+
+        for persona_lock in PersonaLock.objects.filter(reviewer=reviewer)[:2]:
+            persona_lock.delete()
 
         # Add to the pool.
         for i in range(4):
@@ -83,11 +84,9 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
                           status=amo.STATUS_UNREVIEWED)
 
         doc = pq(self.get_personas())
-        eq_(doc('div.persona').length, amo.MAX_LOCKS)
+        eq_(doc('div.persona').length, amo.INITIAL_LOCKS)
         eq_(PersonaLock.objects.filter(reviewer=reviewer).count(),
-            amo.MAX_LOCKS)
-
-        amo.MAX_LOCKS = 2
+            amo.INITIAL_LOCKS)
 
     def test_expiry(self):
         # Test that reviewers who want personas from an empty pool can steal
@@ -116,6 +115,6 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         self.get_personas()
         expiry = PersonaLock.objects.filter(reviewer=reviewer)[0].expiry
         time.sleep(1)
-        self.client.get(reverse('personasrq.personasrq'))
+        self.client.get(reverse('personasrq.queue'))
         eq_(PersonaLock.objects.filter(reviewer=reviewer)[0].expiry > expiry,
             True)
