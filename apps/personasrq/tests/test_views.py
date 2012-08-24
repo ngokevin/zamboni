@@ -23,7 +23,7 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         amo.MAX_LOCKS = 2
         self.persona_count = 5
         for x in range(self.persona_count):
-            addon_factory(type=amo.ADDON_PERSONA, status=amo.STATUS_PENDING)
+            addon_factory(type=amo.ADDON_PERSONA, status=amo.STATUS_UNREVIEWED)
 
     def create_and_become_reviewer(self):
         pw = ('sha512$7b5436061f8c0902088c292c057be69fdb17312e2f71607c9c51641f'
@@ -56,7 +56,7 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
             expected_queue_length = self.free_personas
         self.free_personas -= expected_queue_length
 
-        eq_(doc('.persona').length, expected_queue_length)
+        eq_(doc('div.persona').length, expected_queue_length)
         eq_(PersonaLock.objects.filter(reviewer=reviewer).count(),
             expected_queue_length)
 
@@ -66,6 +66,28 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         for i in range(5):
             reviewer = self.create_and_become_reviewer()
             self.get_and_check_personas(reviewer)
+
+    def test_top_off(self):
+        # If reviewer has less than max locks, try to get more from pool.
+        reviewer = self.create_and_become_reviewer()
+        amo.MAX_LOCKS = 7
+
+        doc = pq(self.get_personas())
+        eq_(doc('div.persona').length, self.persona_count)
+        eq_(PersonaLock.objects.filter(reviewer=reviewer).count(),
+            self.persona_count)
+
+        # Add to the pool.
+        for i in range(4):
+            addon_factory(type=amo.ADDON_PERSONA,
+                          status=amo.STATUS_UNREVIEWED)
+
+        doc = pq(self.get_personas())
+        eq_(doc('div.persona').length, amo.MAX_LOCKS)
+        eq_(PersonaLock.objects.filter(reviewer=reviewer).count(),
+            amo.MAX_LOCKS)
+
+        amo.MAX_LOCKS = 2
 
     def test_expiry(self):
         # Test that reviewers who want personas from an empty pool can steal

@@ -10,6 +10,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 import jingo
 
 import amo
+from amo.decorators import json_view
 from addons.models import Persona
 from personasrq.forms import PersonaReviewForm
 from personasrq.models import PersonaLock
@@ -39,11 +40,11 @@ def personasrq(request):
         return redirect(reverse('personasrq.personasrq'))
 
     persona_locks = PersonaLock.objects.filter(reviewer=reviewer)
-    if not persona_locks:
-        # Check out personas from the pool if none checked out.
-        personas = (Persona.objects
+    if len(persona_locks) < amo.MAX_LOCKS:
+        # Check out personas from the pool if none or not enough checked out.
+        personas = list(Persona.objects
             .filter(addon__status=amo.STATUS_UNREVIEWED)
-            [:amo.MAX_LOCKS])
+            [:amo.MAX_LOCKS - len(persona_locks)])
 
         # Set a lock on the checked-out personas
         for persona in personas:
@@ -52,6 +53,9 @@ def personasrq(request):
                                        datetime.timedelta(minutes=30),
                                        persona_lock_id=persona.persona_id)
             persona.addon.set_status(amo.STATUS_PENDING)
+
+        # Combine currently checked-out personas with newly checked-out ones
+        personas += [persona_lock.persona for persona_lock in persona_locks]
 
         # Empty pool? Go look for some expired locks.
         if not personas:
@@ -81,3 +85,8 @@ def personasrq(request):
         'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),
         'persona_count': len(personas)
     })
+
+
+@json_view
+def get_more_personas(request):
+    pass
