@@ -22,20 +22,20 @@
             var maxLocks = parseInt($('#max-locks').data('max-locks'), 10);
             var moreUrl = $('#more-url').data('more-url');
 
-            var personas = $('div.persona', queue).map(function() {
+            var personasList = $('div.persona', queue);
+            var personas = personasList.map(function() {
                 return {
                     element: this,
                     top: 0
                 };
             }).get();
 
-            var personasList = $('div.persona', queue);
             function nthPersona(i) {
                 return personasList[i];
             }
 
             $(window).scroll(function() {
-                endlessScroller();
+                morePersonas();
                 updateMetrics();
                 var i = findCurrentpersona();
                 if (i != currentpersona) {
@@ -108,8 +108,7 @@
                     }
                 }, delay);
 
-                delete keymap['13'];
-                $('.rq-dropdown').hide();
+                delete keymap['13']; $('.rq-dropdown').hide();
             }
 
             function switchpersona(i) {
@@ -140,9 +139,14 @@
                 }
             }
 
-            function endlessScroller() {
-                // Don't do anything if max locks.
-                if (personasList.length >= maxLocks) {
+            var ajaxLockFlag = 0;
+            function morePersonas() {
+                // Don't do anything if max locks or currently making request
+                // or not all personas reviewed. Using a exposed DOM element to
+                // hold data, but we don't really care if they try to tamper
+                // with that.
+                if (personasList.length >= maxLocks || ajaxLockFlag ||
+                    parseInt($('#reviewed-count').text(), 10) != parseInt($('#total').text(), 10)) {
                     return;
                 }
                 // Initiate the endless scrolling when 85% down the page.
@@ -150,9 +154,42 @@
                 var windowHeight = $(window).height();
                 var scrollTop = $(window).scrollTop();
                 var scrollBot = scrollTop + windowHeight;
+
                 if (scrollBot / documentHeight >= 0.85 || scrollTop == documentHeight) {
+                    ajaxLockFlag = 1;
+
+                    var personaCount = $('#total').text();
                     $.get(moreUrl, {}, function(data) {
-                        console.log(data);
+                        // Update total.
+                        $('#total').text(data.count);
+
+                        // Insert the personas into the DOM.
+                        $('#persona-queue-form').append(data.html);
+                        personasList = $('div.persona', queue);
+                        personas = personasList.map(function() {
+                            return {
+                                element: this,
+                                top: 0
+                            };
+                        }).get();
+
+                        // Correct the new Django forms' prefixes
+                        // (id_form-x-field) to play well with the formset.
+                        var newPersonas = personasList.slice(personaCount, personasList.length);
+                        $(newPersonas).each(function(index, persona) {
+                            $('input', persona).each(function(index, input) {
+                                $input = $(input);
+                                $input.attr('id', $input.attr('id').replace(/-\d-/, '-' + personaCount + '-'));
+                                $input.attr('name', $input.attr('name').replace(/-\d-/, '-' + personaCount + '-'));
+                            });
+                            personaCount++;
+                        });
+
+                        // Update metadata on Django management form for
+                        // formset.
+                        $('#id_form-TOTAL_FORMS').val(personaCount + 1 + '');
+                        $('#id_form-INITIAL_FORMS').val(personaCount + '');
+                        ajaxLockFlag = 0;
                     });
                 }
             }

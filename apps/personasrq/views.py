@@ -24,6 +24,9 @@ def personasrq(request):
 
     if persona_locks_count < amo.INITIAL_LOCKS:
         personas = get_personas(reviewer, persona_locks, persona_locks_count)
+        # Combine currently checked-out personas with newly checked-out ones by
+        # re-evaluating persona_locks.
+        personas = [persona_lock.persona for persona_lock in persona_locks]
     else:
         # Update the expiry on currently checked-out personas.
         persona_locks.update(
@@ -57,9 +60,6 @@ def get_personas(reviewer, persona_locks, persona_locks_count):
                                    datetime.timedelta(minutes=30),
                                    persona_lock_id=persona.persona_id)
         persona.addon.set_status(amo.STATUS_PENDING)
-
-    # Combine currently checked-out personas with newly checked-out ones
-    personas = [persona_lock.persona for persona_lock in persona_locks]
 
     # Empty pool? Go look for some expired locks.
     if not personas:
@@ -115,4 +115,24 @@ def more(request):
                          'review at once. Please commit your outstanding '
                          'reviews.')}
 
-    return {'message': 'test message'}
+    # Adapt the third argument of get_personas to not take over than the max
+    # number of locks.
+    if persona_locks_count > amo.MAX_LOCKS - amo.INITIAL_LOCKS:
+        wanted_locks = amo.MAX_LOCKS - persona_locks_count
+    else:
+        wanted_locks = amo.INITIAL_LOCKS
+    personas = get_personas(reviewer, persona_locks,
+                            amo.INITIAL_LOCKS - wanted_locks)
+
+    # Create forms, which will need to be manipulated to fit with the currently
+    # existing forms.
+    PersonaReviewFormset = formset_factory(PersonaReviewForm)
+    formset = PersonaReviewFormset(
+        initial=[{'persona': persona.persona_id} for persona in personas])
+
+    html = jingo.render(request, 'personasrq/personas.html', {
+        'persona_formset': zip(personas, formset)
+    }).content
+
+    return {'html': html,
+            'count': PersonaLock.objects.filter(reviewer=reviewer).count()}

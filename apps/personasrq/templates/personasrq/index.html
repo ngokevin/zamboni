@@ -1,5 +1,4 @@
 {% extends "impala/base_shared.html" %}
-{% from 'includes/forms.html' import required %}
 
 {% block extrahead %}
   {{ css('zamboni/personasrq') }}
@@ -93,85 +92,7 @@
   <form id="persona-queue-form" action="{{ url('personasrq.commit') }}" method="post">
     {{ csrf() }}
     {{ formset.management_form }}
-    {% for persona, form in persona_formset %}
-      <div class="persona" data-id="{{ persona.persona_id }}"><div class="persona-inner">
-        {{ form }}
-        <h3><a href="#">{{ persona.addon.name }}</a></h3>
-        <div class="status"></div>
-        <ul class="meta">
-          <li><strong>{{ _('Artist') }}</strong>: <a href="#">{{ persona.author }}</a></li>
-          <li><strong>{{ _('Category') }}</strong>: <a href="#">{{ persona.addon.categories.all()[0] if persona.addon.categories.all() }}</a></li>
-          <li><strong>{{ _('Submitted') }}</strong>: {{ persona.addon.created.strftime('%Y-%m-%d') }}</li>
-        </ul>
-        <ul class="meta">
-          <li><strong>{{ _('License') }}</strong>: <a href="#">{{ persona.license }}</a></li>
-        </ul>
-
-        <div class="preview">
-          <img src="{{ persona.header_url }}" width="1250" height="100" />
-        </div>
-        <div class="header zoombox">
-          <img src="{{ persona.header_url }}" width="2500" height="200" />
-        </div>
-        <div class="footer zoombox">
-          <img src="{{ persona.footer_url }}" width="2500" height="100" />
-        </div>
-
-        {% if persona.addon.description %}
-          <div class="desc"><strong>{{ _('Description ') }}: </strong>{{ persona.addon.description }}</div>
-        {% endif %}
-
-        <div class="choices">
-          <div class="group">
-            <button class="moreinfo" data-id="{{ persona.persona_id }}">{{ _('Request More Info') }} &#9662;</button>
-          </div>
-          <div class="group">
-            <button class="flag" data-id="{{ persona.persona_id }}">{{ _('Flag') }} &#9662;</button>
-            <button class="duplicate" data-id="{{ persona.persona_id }}">{{ _('Duplicate') }} &#9662;</button>
-            <button class="reject" data-id="{{ persona.persona_id }}">{{ _('Reject') }} &#9662;</button>
-          </div>
-          <div class="group">
-            <button class="approve" data-id="{{ persona.persona_id }}">{{ _('Approve') }}</button>
-          </div>
-        </div>
-        <div class="c"></div>
-        <div class="duplicate-dropdown rq-dropdown">
-          <span>{{ _('Enter the ID or URL of the duplicate') }}:</span>
-          <textarea></textarea>
-          <strong class="error-required">{{ required() }} Field required</strong>
-          <button>Continue</button>
-        </div>
-        <div class="reject-reason-dropdown rq-dropdown">
-          <span>{{ _('Select a reason for rejection') }}:</span>
-          <ul>
-            {% for reject_reason in reject_reasons %}
-              <li class="reject_reason" data-id="{{ reject_reason[0] }}">
-                <strong>{{ reject_reason[0]}}: </strong>
-                <span>{{ reject_reason[1] }}</span>
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-        <div class="reject-reason-detail-dropdown rq-dropdown">
-          <span>{{ _('Describe your reason for rejection') }}:</span>
-          <textarea></textarea>
-          <strong class="error-required">{{ required() }} Field required</strong>
-          <button>{{ _('Continue') }}</button>
-        </div>
-        <div class="moreinfo-dropdown rq-dropdown">
-          <span>{{ _('Enter your request for') }} <span>{{ persona.author }}</span>:</span>
-          <textarea></textarea>
-          <strong class="error-required">{{ required() }} Field required</strong>
-          <button>{{ _('Continue') }}</button>
-        </div>
-        <div class="flag-dropdown rq-dropdown">
-          <span>{{ _('Describe your reason for flagging') }}:</span>
-          <textarea></textarea>
-          <strong class="error-required">{{ required() }} Field required</strong>
-          <button>{{ _('Continue') }}</button>
-        </div>
-      </div></div>
-    {% endfor %}
+    {% include 'personasrq/personas.html' %}
   </form>
 </div>
 {% endblock %}
