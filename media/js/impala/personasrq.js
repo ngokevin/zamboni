@@ -35,7 +35,6 @@
             }
 
             $(window).scroll(function() {
-                morePersonas();
                 updateMetrics();
                 var i = findCurrentpersona();
                 if (i != currentpersona) {
@@ -97,7 +96,6 @@
             function gotopersona(i, delay, duration) {
                 delay = delay || 0;
                 duration = duration || 250;
-
                 setTimeout(function() {
                     if (i < 0) {
                         // alert('Previous Page');
@@ -146,52 +144,46 @@
                 // hold data, but we don't really care if they try to tamper
                 // with that.
                 if (personasList.length >= maxLocks || ajaxLockFlag ||
-                    parseInt($('#reviewed-count').text(), 10) != parseInt($('#total').text(), 10)) {
+                    parseInt($('#reviewed-count').text(), 10) !== parseInt($('#total').text(), 10)) {
                     return;
                 }
-                // Initiate the endless scrolling when 85% down the page.
-                var documentHeight = $(document).height();
-                var windowHeight = $(window).height();
-                var scrollTop = $(window).scrollTop();
-                var scrollBot = scrollTop + windowHeight;
+                ajaxLockFlag = 1;
+                var personaCount = $('#total').text();
+                var i = personaCount;
+                $.get(moreUrl, {}, function(data) {
+                    // Update total.
+                    $('#total').text(data.count);
 
-                if (scrollBot / documentHeight >= 0.85 || scrollTop == documentHeight) {
-                    ajaxLockFlag = 1;
+                    // Insert the personas into the DOM.
+                    $('#persona-queue-form').append(data.html);
+                    personasList = $('div.persona', queue);
+                    personas = personasList.map(function() {
+                        return {
+                            element: this,
+                            top: 0
+                        };
+                    }).get();
 
-                    var personaCount = $('#total').text();
-                    $.get(moreUrl, {}, function(data) {
-                        // Update total.
-                        $('#total').text(data.count);
-
-                        // Insert the personas into the DOM.
-                        $('#persona-queue-form').append(data.html);
-                        personasList = $('div.persona', queue);
-                        personas = personasList.map(function() {
-                            return {
-                                element: this,
-                                top: 0
-                            };
-                        }).get();
-
-                        // Correct the new Django forms' prefixes
-                        // (id_form-x-field) to play well with the formset.
-                        var newPersonas = personasList.slice(personaCount, personasList.length);
-                        $(newPersonas).each(function(index, persona) {
-                            $('input', persona).each(function(index, input) {
-                                $input = $(input);
-                                $input.attr('id', $input.attr('id').replace(/-\d-/, '-' + personaCount + '-'));
-                                $input.attr('name', $input.attr('name').replace(/-\d-/, '-' + personaCount + '-'));
-                            });
-                            personaCount++;
+                    // Correct the new Django forms' prefixes
+                    // (id_form-x-field) to play well with the formset.
+                    var newPersonas = personasList.slice(personaCount, personasList.length);
+                    $(newPersonas).each(function(index, persona) {
+                        $('input', persona).each(function(index, input) {
+                            $input = $(input);
+                            $input.attr('id', $input.attr('id').replace(/-\d-/, '-' + personaCount + '-'));
+                            $input.attr('name', $input.attr('name').replace(/-\d-/, '-' + personaCount + '-'));
                         });
-
-                        // Update metadata on Django management form for
-                        // formset.
-                        $('#id_form-TOTAL_FORMS').val(personaCount + 1 + '');
-                        $('#id_form-INITIAL_FORMS').val(personaCount + '');
-                        ajaxLockFlag = 0;
+                        personaCount++;
                     });
-                }
+
+                    // Update metadata on Django management form for
+                    // formset.
+                    $('#id_form-TOTAL_FORMS').val(personaCount + 1 + '');
+                    $('#id_form-INITIAL_FORMS').val(personaCount + '');
+
+                    gotopersona(i, 500);
+                    ajaxLockFlag = 0;
+                });
             }
 
             var keymap = {
@@ -210,6 +202,9 @@
                 $('#reviewed-count').text($('div.persona.reviewed').length);
                 if ($(queue).hasClass('advance')) {
                     gotopersona(i+1, 500);
+                }
+                if ($('#reviewed-count').text() === $('#total').text()) {
+                    morePersonas();
                 }
             }
 
