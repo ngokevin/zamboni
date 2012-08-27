@@ -213,7 +213,7 @@
                 'prev': function (i) { gotopersona(i-1); },
 
                 'approve': function (i) {
-                    $('input.action', nthPersona(i)).val('approve');
+                    $('input.action', nthPersona(i)).val(4);
                     setReviewed(i, 'Approved');
                 },
 
@@ -259,7 +259,7 @@
                 'reject': function(i, rejectId) {
                     // Given the rejection reason, does the actual rejection of
                     // the Persona.
-                    $('input.action', nthPersona(i)).val('reject');
+                    $('input.action', nthPersona(i)).val(3);
                     $('input.reject_reason', nthPersona(i)).val(rejectId);
                     setReviewed(i, 'Rejected');
 
@@ -280,7 +280,7 @@
                     // Submit link/URL of the duplicate.
                     var submit = function() {
                         if (textArea.val()) {
-                            $('input.action', nthPersona(i)).val('duplicate');
+                            $('input.action', nthPersona(i)).val(2);
                             $('input.comment', nthPersona(i)).val(textArea.val());
                             textArea.blur();
                             setReviewed(i, 'Duplicate');
@@ -301,7 +301,7 @@
                     // Submit link/URL of the flag.
                     var submit = function() {
                         if (textArea.val()) {
-                            $('input.action', nthPersona(i)).val('flag');
+                            $('input.action', nthPersona(i)).val(1);
                             $('input.comment', nthPersona(i)).val(textArea.val());
                             textArea.blur();
                             setReviewed(i, 'Flagged');
@@ -322,7 +322,7 @@
                     // Submit link/URL of the moreinfo.
                     var submit = function() {
                         if (textArea.val()) {
-                            $('input.action', nthPersona(i)).val('moreinfo');
+                            $('input.action', nthPersona(i)).val('0');
                             $('input.comment', nthPersona(i)).val(textArea.val());
                             textArea.blur();
                             setReviewed(i, 'Requested Info');

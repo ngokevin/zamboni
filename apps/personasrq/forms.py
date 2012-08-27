@@ -9,7 +9,7 @@ from tower import ugettext_lazy as _
 from addons.models import Persona
 import amo
 from amo.utils import raise_required
-from personasrq.models import PersonaLock
+from personasrq.models import PersonaLock, PersonaReview
 from personasrq.tasks import send_mail
 
 
@@ -17,7 +17,7 @@ class PersonaReviewForm(happyforms.Form):
     persona = forms.IntegerField(
         widget=forms.HiddenInput(attrs={'class': 'persona_id'}))
     action = forms.ChoiceField(
-        choices=amo.REVIEW_CHOICES.items(),
+        choices=amo.REVIEW_ACTIONS.items(),
         widget=forms.HiddenInput(attrs={'class': 'action'})
     )
     reject_reason = forms.ChoiceField(
@@ -35,13 +35,13 @@ class PersonaReviewForm(happyforms.Form):
 
     def clean_action(self):
         if ('action' in self.cleaned_data and
-            self.cleaned_data['action'] not in amo.REVIEW_CHOICES.keys()):
+            int(self.cleaned_data['action']) not in amo.REVIEW_ACTIONS.keys()):
             raise forms.ValidationError('Action not recognized')
-        return self.cleaned_data['action']
+        return int(self.cleaned_data['action'])
 
     def clean_reject_reason(self):
         if ('action' in self.cleaned_data and
-            self.cleaned_data['action'] == 'reject'
+            self.cleaned_data['action'] == amo.ACTION_REJECT
             and not self.cleaned_data['reject_reason']):
             raise_required()
         return self.cleaned_data['reject_reason']
@@ -49,9 +49,7 @@ class PersonaReviewForm(happyforms.Form):
     def clean_comment(self):
         d = self.cleaned_data
         # Comment field needed for duplicate, flag, moreinfo, and reject.
-        if ('action' in self.cleaned_data and
-            (d['action'] == 'duplicate' or d['action'] == 'flag' or
-             d['action'] == 'moreinfo' or d['action'] == 'reject')
+        if ('action' in self.cleaned_data and d['action'] != amo.ACTION_APPROVE
             and not d['comment']):
             raise_required()
         return self.cleaned_data['comment']
@@ -83,30 +81,34 @@ class PersonaReviewForm(happyforms.Form):
             'comment': comment
         }
 
-        if action == 'approve':
+        if action == amo.ACTION_APPROVE:
             subject = 'Theme Submission Approved: %s' % persona.addon.name
             template = 'personasrq/emails/approve.html'
             persona.addon.set_status(amo.STATUS_PUBLIC)
 
-        elif action == 'reject':
+        elif action == amo.ACTION_REJECT:
             subject = 'Theme Submission Update: %s' % persona.addon.name
             template = 'personasrq/emails/reject.html'
             persona.addon.set_status(amo.STATUS_REJECTED)
             reason = (amo.PERSONA_REJECT_REASONS[int(
                       self.cleaned_data['reject_reason'])])
 
-        elif action == 'duplicate':
+        elif action == amo.ACTION_DUPLICATE:
             subject = 'Theme Submission Update: %s' % persona.addon.name
             template = 'personasrq/emails/duplicate.html'
             persona.addon.set_status(amo.STATUS_REJECTED)
 
-        elif action == 'flag':
+        elif action == amo.ACTION_FLAG:
             persona.addon.set_status(amo.STATUS_PENDING)
 
-        elif action == 'moreinfo':
+        elif action == amo.ACTION_MOREINFO:
             subject = 'Theme Submission Update: %s' % persona.addon.name
             template = 'personasrq/emails/moreinfo.html'
             persona.addon.set_status(amo.STATUS_PENDING)
+
+        PersonaReview.objects.create(reviewer=persona_lock.reviewer,
+                                     persona=persona, action=action,
+                                     reject_reason=reason, comment=comment)
 
         persona.approve = datetime.datetime.now()
         persona.save()

@@ -43,7 +43,8 @@ def personasrq(request):
         'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),
         'persona_count': len(personas),
         'max_locks': amo.MAX_LOCKS,
-        'more_url': reverse('personasrq.more')
+        'more_url': reverse('personasrq.more'),
+        'actions': amo.REVIEW_ACTIONS
     })
 
 
@@ -184,4 +185,5 @@ def single(request, persona_id):
         'persona_formset': zip([persona, ], formset),
         'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),
         'max_locks': 0,
+        'actions': amo.REVIEW_ACTIONS
     })

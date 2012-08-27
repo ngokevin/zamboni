@@ -437,12 +437,17 @@ MKT_CUT = .70
 INITIAL_LOCKS = 5
 MAX_LOCKS = 20
 
-REVIEW_CHOICES = {
-    'moreinfo': _('Request More Info'),
-    'flag': _('Flag'),
-    'duplicate': _('Duplicate'),
-    'reject': _('Reject'),
-    'approve': _('Approve')
+ACTION_MOREINFO = 0
+ACTION_FLAG = 1
+ACTION_DUPLICATE = 2
+ACTION_REJECT = 3
+ACTION_APPROVE = 4
+REVIEW_ACTIONS = {
+    ACTION_MOREINFO: _('Request More Info'),
+    ACTION_FLAG: _('Flag'),
+    ACTION_DUPLICATE: _('Duplicate'),
+    ACTION_REJECT: _('Reject'),
+    ACTION_APPROVE: _('Approve')
 }
 
 PERSONA_REJECT_REASONS = {
