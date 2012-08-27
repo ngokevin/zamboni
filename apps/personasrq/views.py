@@ -3,7 +3,7 @@
 import datetime
 
 from django.core.urlresolvers import reverse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.forms.formsets import formset_factory
 from django.utils.datastructures import MultiValueDictKeyError
 
@@ -136,3 +136,52 @@ def more(request):
 
     return {'html': html,
             'count': PersonaLock.objects.filter(reviewer=reviewer).count()}
+
+
+def single(request, persona_id):
+    """
+    Like a detail page, manually review a single persona if it is pending
+    and isn't locked.
+    """
+    reviewer = request.amo_user
+    error = False
+    msg = None
+
+    # Don't review an already reviewed theme.
+    persona = get_object_or_404(Persona, persona_id=persona_id)
+    if persona.addon.status not in [amo.STATUS_UNREVIEWED, amo.STATUS_PENDING]:
+        error = True
+        msg = _('This theme has already been reviewed.')
+
+    # Don't review a locked theme (that's not locked to self).
+    persona_lock = (PersonaLock.objects.filter(persona=persona)
+                    .exclude(reviewer=reviewer))
+    if persona_lock and persona_lock[0].expiry > datetime.datetime.now():
+        error = True
+        msg = _('This theme is currently being reviewed.')
+
+    if error:
+        return jingo.render(request, 'personasrq/error.html', {
+            'persona': persona,
+            'error': msg
+        })
+
+    # Create lock if not created.
+    if persona_lock == []:  # Passes on 'if not persona_lock' for some reason.
+        PersonaLock.objects.create(persona=persona, reviewer=reviewer,
+                                   expiry=datetime.datetime.now() +
+                                   datetime.timedelta(minutes=30),
+                                   persona_lock_id=persona.persona_id)
+        persona.addon.set_status(amo.STATUS_PENDING)
+
+    PersonaReviewFormset = formset_factory(PersonaReviewForm)
+    formset = PersonaReviewFormset(
+        initial=[{'persona': persona.persona_id}])
+
+    return jingo.render(request, 'personasrq/single.html', {
+        'formset': formset,
+        'persona': persona,
+        'persona_formset': zip([persona, ], formset),
+        'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),
+        'max_locks': 0,
+    })

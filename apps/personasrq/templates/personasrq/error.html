@@ -1,0 +1,17 @@
+{% extends "impala/base_shared.html" %}
+
+{% block extrahead %}
+  {{ css('zamboni/personasrq') }}
+{% endblock %}
+
+{% block title %}
+  {{ _('Theme Review Queue') }}
+{% endblock %}
+
+{% block content %}
+  <h1>{{ _('Theme Review for') }} {{ persona.addon.name }}</h1>
+  <h2>
+    {{ error }}
+      <a src="{{ url('personasrq.queue') }}">{{ _('Return to the review queue.') }}</a>
+  </h2>
+{% endblock %}

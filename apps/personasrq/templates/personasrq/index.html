@@ -10,68 +10,72 @@
 
 {% block content %}
 
-<h1>{{ _('Theme Review Queue') }}</h1>
+<h1>{% block header %}{{ _('Theme Review Queue') }}{% endblock %}</h1>
 
 <div class="sidebar"><div class="float">
-  <form class="box options">
-    <h2>{{ _('Review Options') }}</h2>
-    <fieldset>
-      <select id="rq-category">
-        <option>{{ _('All Categories') }}</option>
-        <option>{{ _('Abstract') }}</option>
-        <option>{{ _('Causes') }}</option>
-        <option>{{ _('Fashion') }}</option>
-        <option>{{ _('Film and TV') }}</option>
-        <option>{{ _('Firefox') }}</option>
-        <option>{{ _('Foxkeh') }}</option>
-        <option>{{ _('Holiday') }}</option>
-        <option>{{ _('Music') }}</option>
-        <option>{{ _('Nature') }}</option>
-        <option>{{ _('Scenery') }}</option>
-        <option>{{ _('Solid') }}</option>
-        <option>{{ _('Sports') }}</option>
-        <option>{{ _('Websites') }}</option>
-        <option>{{ _('Other') }}</option>
-      </select>
-    </fieldset>
+  {% block queue_options %}
+    <form class="box options">
+      <h2>{{ _('Review Options') }}</h2>
+      <fieldset>
+        <select id="rq-category">
+          <option>{{ _('All Categories') }}</option>
+          <option>{{ _('Abstract') }}</option>
+          <option>{{ _('Causes') }}</option>
+          <option>{{ _('Fashion') }}</option>
+          <option>{{ _('Film and TV') }}</option>
+          <option>{{ _('Firefox') }}</option>
+          <option>{{ _('Foxkeh') }}</option>
+          <option>{{ _('Holiday') }}</option>
+          <option>{{ _('Music') }}</option>
+          <option>{{ _('Nature') }}</option>
+          <option>{{ _('Scenery') }}</option>
+          <option>{{ _('Solid') }}</option>
+          <option>{{ _('Sports') }}</option>
+          <option>{{ _('Websites') }}</option>
+          <option>{{ _('Other') }}</option>
+        </select>
+      </fieldset>
 
-<!--
-    <fieldset>
-      <div class="option">
-        <input type="radio" id="rq-previews" name="rq-show" value="previews" />
-        <label for="rq-previews">Show previews only</label>
-      </div>
-      <div class="option">
-        <input type="radio" id="rq-details" name="rq-show" value="details" checked="checked" />
-        <label for="rq-details">Show all details</label>
-      </div>
-    </fieldset>
--->
+  <!--
+      <fieldset>
+        <div class="option">
+          <input type="radio" id="rq-previews" name="rq-show" value="previews" />
+          <label for="rq-previews">Show previews only</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="rq-details" name="rq-show" value="details" checked="checked" />
+          <label for="rq-details">Show all details</label>
+        </div>
+      </fieldset>
+  -->
 
-    <fieldset>
-      <div class="option">
-        <input type="checkbox" id="rq-advance" value="advance" checked="checked" />
-        <label for="rq-advance">{{ _('Auto-advance after review') }}</label>
-      </div>
-<!--
-      <div class="option">
-        <input type="checkbox" id="rq-single" value="single" checked="checked" />
-        <label for="rq-single">Show a single Theme</label>
-      </div>
-      <div class="option">
-        <input type="checkbox" id="rq-shortcuts" value="shortcuts" checked="checked" />
-        <label for="rq-shortcuts">Enable keyboard shortcuts</label>
-      </div>
--->
-    </fieldset>
-  </form>
+      <fieldset>
+        <div class="option">
+          <input type="checkbox" id="rq-advance" value="advance" checked="checked" />
+          <label for="rq-advance">{{ _('Auto-advance after review') }}</label>
+        </div>
+  <!--
+        <div class="option">
+          <input type="checkbox" id="rq-single" value="single" checked="checked" />
+          <label for="rq-single">Show a single Theme</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="rq-shortcuts" value="shortcuts" checked="checked" />
+          <label for="rq-shortcuts">Enable keyboard shortcuts</label>
+        </div>
+  -->
+      </fieldset>
+    </form>
+  {% endblock %}
 
   <div class="box shortcuts">
     <h2>{{ _('Keyboard Shortcuts') }}</h2>
     <ul>
-      <li><strong>J</strong> <span>{{ _('Next Theme') }}</span></li>
-      <li><strong>K</strong> <span>{{ _('Previous Theme') }}</span></li>
-      <li class="divider"></li>
+      {% block multi_theme_nav_shortcuts %}
+        <li><strong>J</strong> <span>{{ _('Next Theme') }}</span></li>
+        <li><strong>K</strong> <span>{{ _('Previous Theme') }}</span></li>
+        <li class="divider"></li>
+      {% endblock %}
       <li><strong>A</strong> <span>{{ _('Approve') }}</span></li>
       <li><strong>R</strong> <span>{{ _('Reject') }}</span></li>
       <li><strong>D</strong> <span>{{ _('Duplicate') }}</span></li>
@@ -80,9 +84,11 @@
     </ul>
   </div>
   <button id="commit" type="submit">Commit</button>
-  <div id="queue-details">
-    <span id="reviewed-count">0</span><span> {{ _('out of') }} </span><span id="total">{{ persona_count }}</span> {{ _('reviewed') }}</span>
-  </div>
+  {% block queue_details %}
+    <div id="queue-details">
+      <span id="reviewed-count">0</span><span> {{ _('out of') }} </span><span id="total">{{ persona_count }}</span> {{ _('reviewed') }}</span>
+    </div>
+  {% endblock %}
 </div></div>
 
 <div class="persona-queue details single">
