@@ -3,15 +3,17 @@
 {% for persona, form in persona_formset %}
   <div class="persona" data-id="{{ persona.persona_id }}"><div class="persona-inner">
     {{ form }}
-    <h3><a href="#">{{ persona.addon.name }}</a></h3>
+    <h3><a href="{{ persona.addon.get_detail_url() }}">{{ persona.addon.name }}</a></h3>
     <div class="status"></div>
     <ul class="meta">
-      <li><strong>{{ _('Artist') }}</strong>: <a href="#">{{ persona.author }}</a></li>
-      <li><strong>{{ _('Category') }}</strong>: <a href="#">{{ persona.addon.categories.all()[0] if persona.addon.categories.all() }}</a></li>
+      <li><strong>{{ _('Artist') }}</strong>: {{ persona.author }}</li>
+      <li><strong>{{ _('Category') }}</strong>: <a href="{{
+url('browse.personas', persona.addon.categories.all()[0].name) if
+persona.addon.categories.all() }}">{{ persona.addon.categories.all()[0] if persona.addon.categories.all() }}</a></li>
       <li><strong>{{ _('Submitted') }}</strong>: {{ persona.addon.created.strftime('%Y-%m-%d') }}</li>
     </ul>
     <ul class="meta">
-      <li><strong>{{ _('License') }}</strong>: <a href="#">{{ persona.license }}</a></li>
+      <li class="license"><strong>{{ _('License') }}</strong>: {{ license_link(persona.license) }}</li>
     </ul>
 
     <div class="preview">
