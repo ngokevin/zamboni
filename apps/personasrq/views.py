@@ -188,7 +188,8 @@ def single(request, persona_id):
         'formset': formset,
         'persona': persona,
         'persona_formset': zip([persona, ], formset),
-        'persona_reviews': PersonaReview.objects.filter(persona=persona),
+        'persona_reviews': PersonaReview.objects.filter(
+            persona=persona).order_by('-created'),
         'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),
         'max_locks': 0,
         'actions': amo.REVIEW_ACTIONS,

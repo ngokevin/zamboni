@@ -71,8 +71,7 @@ class PersonaReviewForm(happyforms.Form):
                       self.cleaned_data['reject_reason'])])
         comment = self.cleaned_data['comment']
 
-        # author_emails = persona.addon.authors.values_list('email', flat=True)
-        author_emails = ['kngo@mozilla.com']
+        emails = persona.addon.authors.values_list('email', flat=True)
         dt = persona.submit
         context = {
             'persona': persona,
@@ -101,6 +100,10 @@ class PersonaReviewForm(happyforms.Form):
             persona.addon.set_status(amo.STATUS_REJECTED)
 
         elif action == amo.ACTION_FLAG:
+            subject = ('Theme Submission Flagged for Review: %s'
+                       % persona.addon.name)
+            template = 'personasrq/emails/flag.html'
+            emails = [settings.SENIOR_EDITORS_EMAIL]
             persona.addon.set_status(amo.STATUS_PENDING)
 
         elif action == amo.ACTION_MOREINFO:
@@ -117,4 +120,4 @@ class PersonaReviewForm(happyforms.Form):
         persona_lock.delete()
 
         if subject:
-            send_mail(subject, template, context, author_emails)
+            send_mail(subject, template, context, emails)
