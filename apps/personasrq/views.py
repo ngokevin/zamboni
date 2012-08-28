@@ -88,20 +88,15 @@ def commit(request):
     formset = PersonaReviewFormset(request.POST)
 
     for form in formset:
-        if form.is_valid() and form.cleaned_data:
-            form.save()
-        else:
-            # If invalid data somehow got past client-side validation,
-            # ignore the offending review and discard the lock.
-            try:
-                persona_lock = PersonaLock.objects.filter(
-                    persona=form.data[form.prefix + '-persona'],
-                    reviewer=reviewer)
-                if persona_lock:
-                    persona_lock.delete()
-            except MultiValueDictKeyError:
-                # Django's formset metadata off-by-one, ignore extra form.
-                pass
+        try:
+            persona_lock = PersonaLock.objects.filter(
+                persona=form.data[form.prefix + '-persona'],
+                reviewer=reviewer)
+            if persona_lock and form.is_valid() and form.cleaned_data:
+                form.save()
+        except MultiValueDictKeyError:
+            # Address off-by-one error caused by management form.
+            continue
     return redirect(reverse('personasrq.queue'))
 
 

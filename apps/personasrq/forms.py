@@ -110,6 +110,7 @@ class PersonaReviewForm(happyforms.Form):
         elif action == amo.ACTION_MOREINFO:
             subject = 'Theme Submission Update: %s' % persona.addon.name
             template = 'personasrq/emails/moreinfo.html'
+            context['reviewer_email'] = persona_lock.reviewer.email
             persona.addon.set_status(amo.STATUS_PENDING)
 
         PersonaReview.objects.create(reviewer=persona_lock.reviewer,
