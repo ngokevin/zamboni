@@ -7,8 +7,8 @@ from django.core.urlresolvers import reverse
 from nose.tools import eq_
 from pyquery import PyQuery as pq
 
-from access.models import Group, GroupUser
-from addons.models import Addon, Persona
+from access.models import GroupUser
+from addons.models import Persona
 import amo
 import amo.tests
 from amo.tests import addon_factory
@@ -118,3 +118,23 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         self.client.get(reverse('personasrq.queue'))
         eq_(PersonaLock.objects.filter(reviewer=reviewer)[0].expiry > expiry,
             True)
+
+    def test_permissions_reviewer(self):
+        slug = Persona.objects.all()[1].addon.slug
+
+        eq_(self.client.get(reverse('personasrq.queue')).status_code, 302)
+        eq_(self.client.get(reverse('personasrq.single',
+                            args=[slug])).status_code, 302)
+        eq_(self.client.post(reverse('personasrq.commit')).status_code, 302)
+        eq_(self.client.post(reverse('personasrq.commit')).status_code, 302)
+        eq_(self.client.get(reverse('personasrq.more')).status_code, 302)
+
+        self.create_and_become_reviewer()
+
+        eq_(self.client.get(reverse('personasrq.queue')).status_code, 200)
+        eq_(self.client.get(reverse('personasrq.single',
+                            args=[slug])).status_code, 200)
+        eq_(self.client.get(reverse('personasrq.commit')).status_code, 405)
+        eq_(self.client.get(reverse('personasrq.more')).status_code, 200)
+
+        PersonaLock.objects.all().delete()

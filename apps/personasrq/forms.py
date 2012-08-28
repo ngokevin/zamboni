@@ -65,10 +65,11 @@ class PersonaReviewForm(happyforms.Form):
             return
 
         action = self.cleaned_data['action']
+        reject_reason = None
         reason = None
         if self.cleaned_data['reject_reason']:
-            reason = (amo.PERSONA_REJECT_REASONS[int(
-                      self.cleaned_data['reject_reason'])])
+            reject_reason = int(self.cleaned_data['reject_reason'])
+            reason = amo.PERSONA_REJECT_REASONS[reject_reason]
         comment = self.cleaned_data['comment']
 
         emails = persona.addon.authors.values_list('email', flat=True)
@@ -113,7 +114,8 @@ class PersonaReviewForm(happyforms.Form):
 
         PersonaReview.objects.create(reviewer=persona_lock.reviewer,
                                      persona=persona, action=action,
-                                     reject_reason=reason, comment=comment)
+                                     reject_reason=reject_reason,
+                                     comment=comment)
 
         persona.approve = datetime.datetime.now()
         persona.save()

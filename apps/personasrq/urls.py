@@ -4,8 +4,8 @@ from personasrq import views
 
 
 urlpatterns = patterns('',
-    url('^$', views.personasrq, name='personasrq.queue'),
+    url('^$', views.queue, name='personasrq.queue'),
     url('^commit/$', views.commit, name='personasrq.commit'),
     url('^more/$', views.more, name='personasrq.more'),
-    url('^(?P<persona_id>[\d]+)/$', views.single, name='personasrq.single'),
+    url('^(?P<slug>[^ /]+)/$', views.single, name='personasrq.single'),
 )

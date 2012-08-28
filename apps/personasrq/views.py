@@ -13,11 +13,13 @@ from tower import ugettext_lazy as _
 import amo
 from amo.decorators import json_view, post_required
 from addons.models import Persona
+from editors.views import reviewer_required
 from personasrq.forms import PersonaReviewForm
 from personasrq.models import PersonaLock, PersonaReview
 
 
-def personasrq(request):
+@reviewer_required('persona')
+def queue(request):
     reviewer = request.amo_user
     persona_locks = PersonaLock.objects.filter(reviewer=reviewer)
     persona_locks_count = persona_locks.count()
@@ -37,7 +39,7 @@ def personasrq(request):
     formset = PersonaReviewFormset(
         initial=[{'persona': persona.persona_id} for persona in personas])
 
-    return jingo.render(request, 'personasrq/index.html', {
+    return jingo.render(request, 'personasrq/queue.html', {
         'formset': formset,
         'persona_formset': zip(personas, formset),
         'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),
@@ -79,6 +81,7 @@ def get_personas(reviewer, persona_locks, persona_locks_count):
 
 
 @post_required
+@reviewer_required('persona')
 def commit(request):
     reviewer = request.amo_user
     PersonaReviewFormset = formset_factory(PersonaReviewForm)
@@ -103,6 +106,7 @@ def commit(request):
 
 
 @json_view
+@reviewer_required('persona')
 def more(request):
     reviewer = request.amo_user
     persona_locks = PersonaLock.objects.filter(reviewer=reviewer)
@@ -132,14 +136,16 @@ def more(request):
         initial=[{'persona': persona.persona_id} for persona in personas])
 
     html = jingo.render(request, 'personasrq/personas.html', {
-        'persona_formset': zip(personas, formset)
+        'persona_formset': zip(personas, formset),
+        'max_locks': amo.MAX_LOCKS
     }).content
 
     return {'html': html,
             'count': PersonaLock.objects.filter(reviewer=reviewer).count()}
 
 
-def single(request, persona_id):
+@reviewer_required('persona')
+def single(request, slug):
     """
     Like a detail page, manually review a single persona if it is pending
     and isn't locked.
@@ -149,7 +155,7 @@ def single(request, persona_id):
     msg = None
 
     # Don't review an already reviewed theme.
-    persona = get_object_or_404(Persona, persona_id=persona_id)
+    persona = get_object_or_404(Persona, addon__slug=slug)
     if (persona.addon.status not in
         [amo.STATUS_UNREVIEWED, amo.STATUS_PENDING, amo.STATUS_REJECTED]):
         error = True
