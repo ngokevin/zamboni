@@ -106,7 +106,8 @@
                     }
                 }, delay);
 
-                delete keymap['13']; $('.rq-dropdown').hide();
+                delete keymap['13'];
+                $('.rq-dropdown').hide();
             }
 
             function switchpersona(i) {
@@ -202,6 +203,9 @@
                 $('#reviewed-count').text($('div.persona.reviewed').length);
                 if ($(queue).hasClass('advance')) {
                     gotopersona(i+1, 500);
+                } else {
+                    delete keymap['13'];
+                    $('.rq-dropdown').hide();
                 }
                 if ($('#reviewed-count').text() === $('#total').text()) {
                     morePersonas();

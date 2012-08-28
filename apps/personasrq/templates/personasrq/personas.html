@@ -28,6 +28,10 @@
       <div class="desc"><strong>{{ _('Description ') }}: </strong>{{ persona.addon.description }}</div>
     {% endif %}
 
+    {% if max_locks > 0 %}
+      <a class="history" href="{{ url('personasrq.single', persona.persona_id) }}">{{ _('Review History') }}</a>
+    {% endif %}
+
     <div class="choices">
       <div class="group">
         <button class="moreinfo" data-id="{{ persona.persona_id }}">{{ _('Request More Info') }} &#9662;</button>

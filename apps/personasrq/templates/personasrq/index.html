@@ -84,11 +84,9 @@
     </ul>
   </div>
   <button id="commit" type="submit">Commit</button>
-  {% block queue_details %}
-    <div id="queue-details">
-      <span id="reviewed-count">0</span><span> {{ _('out of') }} </span><span id="total">{{ persona_count }}</span> {{ _('reviewed') }}</span>
-    </div>
-  {% endblock %}
+  <div id="queue-details">
+    <span id="reviewed-count">0</span><span> {{ _('out of') }} </span><span id="total">{{ persona_count }}</span> {{ _('reviewed') }}</span>
+  </div>
 </div></div>
 
 <div class="persona-queue details single">
@@ -100,7 +98,9 @@
     {{ formset.management_form }}
     {% include 'personasrq/personas.html' %}
   </form>
+  {% block review_history %}{% endblock %}
 </div>
+
 {% endblock %}
 
 {% block js %}

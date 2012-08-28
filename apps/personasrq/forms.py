@@ -41,7 +41,7 @@ class PersonaReviewForm(happyforms.Form):
 
     def clean_reject_reason(self):
         if ('action' in self.cleaned_data and
-            self.cleaned_data['action'] == amo.ACTION_REJECT
+            int(self.cleaned_data['action']) == amo.ACTION_REJECT
             and not self.cleaned_data['reject_reason']):
             raise_required()
         return self.cleaned_data['reject_reason']
@@ -49,7 +49,8 @@ class PersonaReviewForm(happyforms.Form):
     def clean_comment(self):
         d = self.cleaned_data
         # Comment field needed for duplicate, flag, moreinfo, and reject.
-        if ('action' in self.cleaned_data and d['action'] != amo.ACTION_APPROVE
+        if ('action' in self.cleaned_data
+            and int(d['action']) != amo.ACTION_APPROVE
             and not d['comment']):
             raise_required()
         return self.cleaned_data['comment']
@@ -81,6 +82,7 @@ class PersonaReviewForm(happyforms.Form):
             'comment': comment
         }
 
+        subject = None
         if action == amo.ACTION_APPROVE:
             subject = 'Theme Submission Approved: %s' % persona.addon.name
             template = 'personasrq/emails/approve.html'
@@ -114,4 +116,5 @@ class PersonaReviewForm(happyforms.Form):
         persona.save()
         persona_lock.delete()
 
-        send_mail(subject, template, context, author_emails)
+        if subject:
+            send_mail(subject, template, context, author_emails)

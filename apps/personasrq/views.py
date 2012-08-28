@@ -14,7 +14,7 @@ import amo
 from amo.decorators import json_view, post_required
 from addons.models import Persona
 from personasrq.forms import PersonaReviewForm
-from personasrq.models import PersonaLock
+from personasrq.models import PersonaLock, PersonaReview
 
 
 def personasrq(request):
@@ -150,7 +150,8 @@ def single(request, persona_id):
 
     # Don't review an already reviewed theme.
     persona = get_object_or_404(Persona, persona_id=persona_id)
-    if persona.addon.status not in [amo.STATUS_UNREVIEWED, amo.STATUS_PENDING]:
+    if (persona.addon.status not in
+        [amo.STATUS_UNREVIEWED, amo.STATUS_PENDING, amo.STATUS_REJECTED]):
         error = True
         msg = _('This theme has already been reviewed.')
 
@@ -167,8 +168,12 @@ def single(request, persona_id):
             'error': msg
         })
 
-    # Create lock if not created.
-    if persona_lock == []:  # Passes on 'if not persona_lock' for some reason.
+    # Create lock if not created or steal expired one.
+    persona_lock = PersonaLock.objects.filter(persona=persona)
+    if persona_lock:
+        persona_lock.update(reviewer=reviewer,
+            expiry=datetime.datetime.now() + datetime.timedelta(minutes=30))
+    else:
         PersonaLock.objects.create(persona=persona, reviewer=reviewer,
                                    expiry=datetime.datetime.now() +
                                    datetime.timedelta(minutes=30),
@@ -183,7 +188,10 @@ def single(request, persona_id):
         'formset': formset,
         'persona': persona,
         'persona_formset': zip([persona, ], formset),
+        'persona_reviews': PersonaReview.objects.filter(persona=persona),
         'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),
         'max_locks': 0,
-        'actions': amo.REVIEW_ACTIONS
+        'actions': amo.REVIEW_ACTIONS,
+        'reasons': amo.PERSONA_REJECT_REASONS,
+        'persona_count': 1
     })

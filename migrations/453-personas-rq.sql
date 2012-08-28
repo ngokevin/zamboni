@@ -13,7 +13,7 @@ CREATE TABLE `persona_reviews` (
     `created` datetime NOT NULL,
     `modified` datetime NOT NULL,
     `reviewer_id` int(11) unsigned NOT NULL,
-    `persona_id` int(11) unsigned NOT NULL UNIQUE,
+    `persona_id` int(11) unsigned NOT NULL,
     `action` int(11) unsigned  NOT NULL,
     `reject_reason` int(11) unsigned ,
     `comment` varchar(500)

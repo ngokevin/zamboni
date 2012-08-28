@@ -17,7 +17,7 @@ class PersonaLock(models.Model):
 class PersonaReview(amo.models.ModelBase):
     # Review history.
     reviewer = UserForeignKey()
-    persona = models.OneToOneField('addons.Persona')
+    persona = models.ForeignKey('addons.Persona')
     action = models.PositiveIntegerField(choices=amo.REVIEW_ACTIONS.items())
     reject_reason = models.PositiveIntegerField(
         choices=amo.PERSONA_REJECT_REASONS.items() + [('duplicate', '')],
