@@ -39,6 +39,8 @@ def queue(request):
     formset = PersonaReviewFormset(
         initial=[{'persona': persona.persona_id} for persona in personas])
 
+    request.session['persona_redirect_url'] = reverse('personasrq.queue')
+
     return jingo.render(request, 'personasrq/queue.html', {
         'formset': formset,
         'persona_formset': zip(personas, formset),
@@ -46,7 +48,8 @@ def queue(request):
         'persona_count': len(personas),
         'max_locks': amo.MAX_LOCKS,
         'more_url': reverse('personasrq.more'),
-        'actions': amo.REVIEW_ACTIONS
+        'actions': amo.REVIEW_ACTIONS,
+        'reviewable': True,
     })
 
 
@@ -90,14 +93,14 @@ def commit(request):
     for form in formset:
         try:
             persona_lock = PersonaLock.objects.filter(
-                persona=form.data[form.prefix + '-persona'],
+                persona__persona_id=form.data[form.prefix + '-persona'],
                 reviewer=reviewer)
             if persona_lock and form.is_valid() and form.cleaned_data:
                 form.save()
         except MultiValueDictKeyError:
             # Address off-by-one error caused by management form.
             continue
-    return redirect(reverse('personasrq.queue'))
+    return redirect(request.session['persona_redirect_url'])
 
 
 @json_view
@@ -146,44 +149,40 @@ def single(request, slug):
     and isn't locked.
     """
     reviewer = request.amo_user
-    error = False
-    msg = None
+    reviewable = True
 
     # Don't review an already reviewed theme.
     persona = get_object_or_404(Persona, addon__slug=slug)
     if (persona.addon.status not in
         [amo.STATUS_UNREVIEWED, amo.STATUS_PENDING, amo.STATUS_REJECTED]):
-        error = True
-        msg = _('This theme has already been reviewed.')
+        reviewable = False
 
     # Don't review a locked theme (that's not locked to self).
     persona_lock = (PersonaLock.objects.filter(persona=persona)
                     .exclude(reviewer=reviewer))
     if persona_lock and persona_lock[0].expiry > datetime.datetime.now():
-        error = True
-        msg = _('This theme is currently being reviewed.')
+        reviewable = False
 
-    if error:
-        return jingo.render(request, 'personasrq/error.html', {
-            'persona': persona,
-            'error': msg
-        })
-
-    # Create lock if not created or steal expired one.
-    persona_lock = PersonaLock.objects.filter(persona=persona)
-    if persona_lock:
-        persona_lock.update(reviewer=reviewer,
-            expiry=datetime.datetime.now() + datetime.timedelta(minutes=30))
-    else:
-        PersonaLock.objects.create(persona=persona, reviewer=reviewer,
-                                   expiry=datetime.datetime.now() +
-                                   datetime.timedelta(minutes=30),
-                                   persona_lock_id=persona.persona_id)
-        persona.addon.set_status(amo.STATUS_PENDING)
+    if reviewable:
+        # Create lock if not created or steal expired one.
+        persona_lock = PersonaLock.objects.filter(persona=persona)
+        if persona_lock:
+            persona_lock.update(reviewer=reviewer,
+                expiry=datetime.datetime.now() + datetime.timedelta(minutes=30)
+            )
+        else:
+            PersonaLock.objects.create(persona=persona, reviewer=reviewer,
+                                       expiry=datetime.datetime.now() +
+                                       datetime.timedelta(minutes=30),
+                                       persona_lock_id=persona.persona_id)
+            persona.addon.set_status(amo.STATUS_PENDING)
 
     PersonaReviewFormset = formset_factory(PersonaReviewForm)
     formset = PersonaReviewFormset(
         initial=[{'persona': persona.persona_id}])
+
+    request.session['persona_redirect_url'] = reverse('personasrq.single',
+        args=[persona.addon.slug])
 
     return jingo.render(request, 'personasrq/single.html', {
         'formset': formset,
@@ -195,5 +194,6 @@ def single(request, slug):
         'max_locks': 0,
         'actions': amo.REVIEW_ACTIONS,
         'reasons': amo.PERSONA_REJECT_REASONS,
-        'persona_count': 1
+        'persona_count': 1,
+        'reviewable': reviewable,
     })

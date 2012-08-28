@@ -68,25 +68,27 @@
     </form>
   {% endblock %}
 
-  <div class="box shortcuts">
-    <h2>{{ _('Keyboard Shortcuts') }}</h2>
-    <ul>
-      {% block multi_theme_nav_shortcuts %}
-        <li><strong>J</strong> <span>{{ _('Next Theme') }}</span></li>
-        <li><strong>K</strong> <span>{{ _('Previous Theme') }}</span></li>
-        <li class="divider"></li>
-      {% endblock %}
-      <li><strong>A</strong> <span>{{ _('Approve') }}</span></li>
-      <li><strong>R</strong> <span>{{ _('Reject') }}</span></li>
-      <li><strong>D</strong> <span>{{ _('Duplicate') }}</span></li>
-      <li><strong>F</strong> <span>{{ _('Flag') }}</span></li>
-      <li><strong>M</strong> <span>{{ _('Request More Info') }}</span></li>
-    </ul>
-  </div>
-  <button id="commit" type="submit">Commit</button>
-  <div id="queue-details">
-    <span id="reviewed-count">0</span><span> {{ _('out of') }} </span><span id="total">{{ persona_count }}</span> {{ _('reviewed') }}</span>
-  </div>
+  {% if reviewable %}
+    <div class="box shortcuts">
+      <h2>{{ _('Keyboard Shortcuts') }}</h2>
+      <ul>
+        {% block multi_theme_nav_shortcuts %}
+          <li><strong>J</strong> <span>{{ _('Next Theme') }}</span></li>
+          <li><strong>K</strong> <span>{{ _('Previous Theme') }}</span></li>
+          <li class="divider"></li>
+        {% endblock %}
+        <li><strong>A</strong> <span>{{ _('Approve') }}</span></li>
+        <li><strong>R</strong> <span>{{ _('Reject') }}</span></li>
+        <li><strong>D</strong> <span>{{ _('Duplicate') }}</span></li>
+        <li><strong>F</strong> <span>{{ _('Flag') }}</span></li>
+        <li><strong>M</strong> <span>{{ _('Request More Info') }}</span></li>
+      </ul>
+    </div>
+    <button id="commit" type="submit">Commit</button>
+    <div id="queue-details">
+      <span id="reviewed-count">0</span><span> {{ _('out of') }} </span><span id="total">{{ persona_count }}</span> {{ _('reviewed') }}</span>
+    </div>
+  {% endif %}
 </div></div>
 
 <div class="persona-queue details single">

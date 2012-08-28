@@ -34,54 +34,57 @@ persona.addon.categories.all() }}">{{ persona.addon.categories.all()[0] if perso
       <a class="history" href="{{ url('personasrq.single', persona.addon.slug) }}">{{ _('Review History') }}</a>
     {% endif %}
 
-    <div class="choices">
-      <div class="group">
-        <button class="moreinfo" data-id="{{ persona.persona_id }}">{{ _('Request More Info') }} &#9662;</button>
+    {% if reviewable %}
+      <div class="choices">
+        <div class="group">
+          <button class="moreinfo" data-id="{{ persona.persona_id }}">{{ _('Request More Info') }} &#9662;</button>
+        </div>
+        <div class="group">
+          <button class="flag" data-id="{{ persona.persona_id }}">{{ _('Flag') }} &#9662;</button>
+          <button class="duplicate" data-id="{{ persona.persona_id }}">{{ _('Duplicate') }} &#9662;</button>
+          <button class="reject" data-id="{{ persona.persona_id }}">{{ _('Reject') }} &#9662;</button>
+        </div>
+        <div class="group">
+          <button class="approve" data-id="{{ persona.persona_id }}">{{ _('Approve') }}</button>
+        </div>
       </div>
-      <div class="group">
-        <button class="flag" data-id="{{ persona.persona_id }}">{{ _('Flag') }} &#9662;</button>
-        <button class="duplicate" data-id="{{ persona.persona_id }}">{{ _('Duplicate') }} &#9662;</button>
-        <button class="reject" data-id="{{ persona.persona_id }}">{{ _('Reject') }} &#9662;</button>
+      <div class="c"></div>
+      <div class="duplicate-dropdown rq-dropdown">
+        <span>{{ _('Enter the ID or URL of the duplicate') }}:</span>
+        <textarea></textarea>
+        <strong class="error-required">{{ required() }} Field required</strong>
+        <button>Continue</button>
       </div>
-      <div class="group">
-        <button class="approve" data-id="{{ persona.persona_id }}">{{ _('Approve') }}</button>
+      <div class="reject-reason-dropdown rq-dropdown">
+        <span>{{ _('Select a reason for rejection') }}:</span>
+        <ul>
+          {% for reject_reason in reject_reasons %}
+            <li class="reject_reason" data-id="{{ reject_reason[0] }}">
+              <strong>{{ reject_reason[0]}}: </strong>
+              <span>{{ reject_reason[1] }}</span>
+            </li>
+          {% endfor %}
+        </ul>
       </div>
-    </div>
-    <div class="c"></div>
-    <div class="duplicate-dropdown rq-dropdown">
-      <span>{{ _('Enter the ID or URL of the duplicate') }}:</span>
-      <textarea></textarea>
-      <strong class="error-required">{{ required() }} Field required</strong>
-      <button>Continue</button>
-    </div>
-    <div class="reject-reason-dropdown rq-dropdown">
-      <span>{{ _('Select a reason for rejection') }}:</span>
-      <ul>
-        {% for reject_reason in reject_reasons %}
-          <li class="reject_reason" data-id="{{ reject_reason[0] }}">
-            <strong>{{ reject_reason[0]}}: </strong>
-            <span>{{ reject_reason[1] }}</span>
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-    <div class="reject-reason-detail-dropdown rq-dropdown">
-      <span>{{ _('Describe your reason for rejection') }}:</span>
-      <textarea></textarea>
-      <strong class="error-required">{{ required() }} Field required</strong>
-      <button>{{ _('Continue') }}</button>
-    </div>
-    <div class="moreinfo-dropdown rq-dropdown">
-      <span>{{ _('Enter your request for') }} <span>{{ persona.author }}</span>:</span>
-      <textarea></textarea>
-      <strong class="error-required">{{ required() }} Field required</strong>
-      <button>{{ _('Continue') }}</button>
-    </div>
-    <div class="flag-dropdown rq-dropdown">
-      <span>{{ _('Describe your reason for flagging') }}:</span>
-      <textarea></textarea>
-      <strong class="error-required">{{ required() }} Field required</strong>
-      <button>{{ _('Continue') }}</button>
-    </div>
+      <div class="reject-reason-detail-dropdown rq-dropdown">
+        <span>{{ _('Describe your reason for rejection') }}:</span>
+        <textarea></textarea>
+        <strong class="error-required">{{ required() }} Field required</strong>
+        <button>{{ _('Continue') }}</button>
+      </div>
+      <div class="moreinfo-dropdown rq-dropdown">
+        <span>{{ _('Enter your request for') }} <span>{{ persona.author }}</span>:</span>
+        <textarea></textarea>
+        <strong class="error-required">{{ required() }} Field required</strong>
+        <button>{{ _('Continue') }}</button>
+      </div>
+      <div class="flag-dropdown rq-dropdown">
+        <span>{{ _('Describe your reason for flagging') }}:</span>
+        <textarea></textarea>
+        <strong class="error-required">{{ required() }} Field required</strong>
+        <button>{{ _('Continue') }}</button>
+      </div>
+    {% endif %}
+
   </div></div>
 {% endfor %}
