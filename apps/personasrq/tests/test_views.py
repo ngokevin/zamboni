@@ -157,8 +157,8 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
             PersonaLock.objects.create(
                 persona=persona, reviewer=reviewer,
                 persona_lock_id=persona.persona_id,
-                expiry = datetime.datetime.now() +
-                         datetime.timedelta(minutes=amo.LOCK_EXPIRY))
+                expiry=datetime.datetime.now() +
+                       datetime.timedelta(minutes=amo.LOCK_EXPIRY))
             form_data['form-%s-persona' % index] = str(persona.persona_id)
 
         # moreinfo
@@ -195,3 +195,30 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         eq_(personas[2].addon.status, amo.STATUS_REJECTED)
         eq_(personas[3].addon.status, amo.STATUS_REJECTED)
         eq_(personas[4].addon.status, amo.STATUS_PUBLIC)
+
+    def test_user_review_history(self):
+        PersonaReview.objects.all().delete()
+        reviewer = self.create_and_become_reviewer()
+
+        res = self.client.get(reverse('personasrq.history'))
+        eq_(res.status_code, 200)
+        doc = pq(res.content)
+        eq_(doc('tbody tr').length, 0)
+
+        persona = Persona.objects.all()[0]
+        for x in range(3):
+            PersonaReview.objects.create(persona=persona, action='4',
+                comment=None, reject_reason=None, reviewer=reviewer)
+
+        res = self.client.get(reverse('personasrq.history'))
+        eq_(res.status_code, 200)
+        doc = pq(res.content)
+        eq_(doc('tbody tr').length, 3)
+
+    def test_single_basic(self):
+        self.create_and_become_reviewer()
+        res = self.client.get(reverse('personasrq.single',
+                              args=[Persona.objects.all()[0].addon.slug]))
+        eq_(res.status_code, 200)
+        doc = pq(res.content)
+        eq_(doc('.persona').length, 1)
