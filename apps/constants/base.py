@@ -436,6 +436,7 @@ MKT_CUT = .70
 # Persona review queue constants.
 INITIAL_LOCKS = 5
 MAX_LOCKS = 20
+LOCK_EXPIRY = 30  # Minutes.
 
 ACTION_MOREINFO = 0
 ACTION_FLAG = 1

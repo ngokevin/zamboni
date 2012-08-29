@@ -34,7 +34,8 @@ def queue(request):
     else:
         # Update the expiry on currently checked-out personas.
         persona_locks.update(
-            expiry=datetime.datetime.now() + datetime.timedelta(minutes=30))
+            expiry=datetime.datetime.now() +
+            datetime.timedelta(minutes=amo.LOCK_EXPIRY))
         personas = [persona_lock.persona for persona_lock in persona_locks]
 
     PersonaReviewFormset = formset_factory(PersonaReviewForm)
@@ -65,7 +66,7 @@ def get_personas(reviewer, persona_locks, persona_locks_count):
     for persona in personas:
         PersonaLock.objects.create(persona=persona, reviewer=reviewer,
                                    expiry=datetime.datetime.now() +
-                                   datetime.timedelta(minutes=30),
+                                   datetime.timedelta(minutes=amo.LOCK_EXPIRY),
                                    persona_lock_id=persona.persona_id)
         persona.addon.set_status(amo.STATUS_PENDING)
 
@@ -78,7 +79,7 @@ def get_personas(reviewer, persona_locks, persona_locks_count):
         for persona_lock in expired_locks:
             persona_lock.reviewer = reviewer
             persona_lock.expiry = (datetime.datetime.now() +
-                                   datetime.timedelta(minutes=30))
+                                   datetime.timedelta(minutes=amo.LOCK_EXPIRY))
             persona_lock.save()
             personas = [persona_lock.persona for persona_lock
                         in expired_locks]
@@ -170,13 +171,14 @@ def single(request, slug):
         persona_lock = PersonaLock.objects.filter(persona=persona)
         if persona_lock:
             persona_lock.update(reviewer=reviewer,
-                expiry=datetime.datetime.now() + datetime.timedelta(minutes=30)
+                expiry=datetime.datetime.now() +
+                datetime.timedelta(minutes=amo.LOCK_EXPIRY)
             )
         else:
             PersonaLock.objects.create(persona=persona, reviewer=reviewer,
-                                       expiry=datetime.datetime.now() +
-                                       datetime.timedelta(minutes=30),
-                                       persona_lock_id=persona.persona_id)
+                expiry=datetime.datetime.now() +
+                datetime.timedelta(minutes=amo.LOCK_EXPIRY),
+                persona_lock_id=persona.persona_id)
             persona.addon.set_status(amo.STATUS_PENDING)
 
     PersonaReviewFormset = formset_factory(PersonaReviewForm)
@@ -209,7 +211,7 @@ def single(request, slug):
 def history(request):
     pager = amo.utils.paginate(request,
         PersonaReview.objects.filter(
-        reviewer=request.amo_user).order_by('-created'), 10)
+        reviewer=request.amo_user).order_by('-created'), 20)
 
     return jingo.render(request, 'personasrq/history.html', {
         'persona_reviews': pager.object_list,
