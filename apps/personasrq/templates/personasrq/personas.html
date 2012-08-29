@@ -52,8 +52,8 @@ persona.addon.categories.all() }}">{{ persona.addon.categories.all()[0] if perso
       <div class="duplicate-dropdown rq-dropdown">
         <span>{{ _('Enter the ID or URL of the duplicate') }}:</span>
         <textarea></textarea>
-        <strong class="error-required">{{ required() }} Field required</strong>
-        <button>Continue</button>
+        <strong class="error-required">{{ required() }} {{ _('Field required') }}</strong>
+        <button>{{ _('Continue') }}</button>
       </div>
       <div class="reject-reason-dropdown rq-dropdown">
         <span>{{ _('Select a reason for rejection') }}:</span>
@@ -69,19 +69,19 @@ persona.addon.categories.all() }}">{{ persona.addon.categories.all()[0] if perso
       <div class="reject-reason-detail-dropdown rq-dropdown">
         <span>{{ _('Describe your reason for rejection') }}:</span>
         <textarea></textarea>
-        <strong class="error-required">{{ required() }} Field required</strong>
+        <strong class="error-required">{{ required() }} {{ _('Field required') }}</strong>
         <button>{{ _('Continue') }}</button>
       </div>
       <div class="moreinfo-dropdown rq-dropdown">
         <span>{{ _('Enter your request for') }} <span>{{ persona.author }}</span>:</span>
         <textarea></textarea>
-        <strong class="error-required">{{ required() }} Field required</strong>
+        <strong class="error-required">{{ required() }} {{ _('Field required') }}</strong>
         <button>{{ _('Continue') }}</button>
       </div>
       <div class="flag-dropdown rq-dropdown">
         <span>{{ _('Describe your reason for flagging') }}:</span>
         <textarea></textarea>
-        <strong class="error-required">{{ required() }} Field required</strong>
+        <strong class="error-required">{{ required() }} {{ _('Field required') }}</strong>
         <button>{{ _('Continue') }}</button>
       </div>
     {% endif %}

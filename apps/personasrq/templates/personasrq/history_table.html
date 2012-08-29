@@ -2,12 +2,12 @@
   <table id="review-history">
   <thead>
     <tr>
-      <th>Review Date</th>
-      {% if not user_history %}<th>Reviewer</th>{% endif %}
-      {% if user_history %}<th>Persona</th>{% endif %}
-      <th>Action</th>
-      <th>Reason</th>
-      <th>Comment</th>
+      <th>{{ _('Review Date') }}</th>
+      {% if not user_history %}<th>{{ _('Reviewer') }}</th>{% endif %}
+      {% if user_history %}<th>{{ _('Persona') }}</th>{% endif %}
+      <th>{{ _('Action') }}</th>
+      <th>{{ _('Reason') }}</th>
+      <th>{{ _('Comment') }}</th>
     </tr>
   </thead>
   <tbody>
@@ -35,5 +35,5 @@
     </div>
   {% endif %}
 {% else %}
-  <p>There are currently no reviews.</p>
+  <p>{{ _('There are currently no reviews.') }}</p>
 {% endif %}
