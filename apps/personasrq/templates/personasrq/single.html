@@ -1,11 +1,11 @@
 {% extends "personasrq/queue.html" %}
 
 {% block title %}
-  Theme Review for {{ persona.addon.name }}
+  {{ _('Theme Review for') }} {{ persona.addon.name }}
 {% endblock %}
 
 {% block header %}
-  Theme Review for {{ persona.addon.name }}
+  {{ _('Theme Review for') }} {{ persona.addon.name }}
 {% endblock %}
 
 {% block queue_options %}{% endblock %}
@@ -15,27 +15,6 @@
 {% block history %}{% endblock %}
 
 {% block review_history %}
-  <h2>Review History</h2>
-  <table id="review-history">
-    <thead>
-      <tr>
-        <th>Review Date</th>
-        <th>Reviewer</th>
-        <th>Action</th>
-        <th>Comment</th>
-        <th>Reason</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for persona_review in persona_reviews %}
-        <tr>
-          <td>{{ persona_review.created.strftime('%Y-%m-%d') }}</td>
-          <td>{{ persona_review.reviewer.username }}</td>
-          <td>{{ actions[persona_review.action] }}</td>
-          <td>{{ persona_review.comment }}</td>
-          <td>{{ reasons[persona_review.reject_reason] }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <h2>{{ _('Review History') }}</h2>
+  {% include "personasrq/history_table.html" %}
 {% endblock %}

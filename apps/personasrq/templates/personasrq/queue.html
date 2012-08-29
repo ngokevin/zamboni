@@ -84,6 +84,12 @@
         <li><strong>M</strong> <span>{{ _('Request More Info') }}</span></li>
       </ul>
     </div>
+  {% endif %}
+
+  <a class="button review-history" href="{{ url('personasrq.history') }}">Your Review History</a>
+  <div class="c"></div>
+
+  {% if reviewable %}
     <button id="commit" type="submit">Commit</button>
     <div id="queue-details">
       <span id="reviewed-count">0</span><span> {{ _('out of') }} </span><span id="total">{{ persona_count }}</span> {{ _('reviewed') }}</span>

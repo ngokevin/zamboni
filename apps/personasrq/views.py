@@ -2,6 +2,7 @@
 # with old code, but they're actually themes now.
 import datetime
 
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404, redirect
 from django.forms.formsets import formset_factory
@@ -12,6 +13,7 @@ from tower import ugettext_lazy as _
 
 import amo
 from amo.decorators import json_view, post_required
+import amo.utils
 from addons.models import Persona
 from editors.views import reviewer_required
 from personasrq.forms import PersonaReviewForm
@@ -184,16 +186,36 @@ def single(request, slug):
     request.session['persona_redirect_url'] = reverse('personasrq.single',
         args=[persona.addon.slug])
 
+    pager = amo.utils.paginate(request,
+        PersonaReview.objects.filter(persona=persona)
+        .order_by('-created'), 20)
+
     return jingo.render(request, 'personasrq/single.html', {
         'formset': formset,
         'persona': persona,
         'persona_formset': zip([persona, ], formset),
-        'persona_reviews': PersonaReview.objects.filter(
-            persona=persona).order_by('-created'),
+        'pager': pager,
+        'persona_reviews': pager.object_list,
         'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),
         'max_locks': 0,
         'actions': amo.REVIEW_ACTIONS,
         'reasons': amo.PERSONA_REJECT_REASONS,
         'persona_count': 1,
         'reviewable': reviewable,
+    })
+
+
+@reviewer_required('persona')
+def history(request):
+    pager = amo.utils.paginate(request,
+        PersonaReview.objects.filter(
+        reviewer=request.amo_user).order_by('-created'), 10)
+
+    return jingo.render(request, 'personasrq/history.html', {
+        'persona_reviews': pager.object_list,
+        'pager': pager,
+        'user_history': True,
+        'actions': amo.REVIEW_ACTIONS,
+        'reasons': amo.PERSONA_REJECT_REASONS,
+        'base_url': settings.SITE_URL
     })

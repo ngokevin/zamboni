@@ -1,0 +1,39 @@
+{% if persona_reviews %}
+  <table id="review-history">
+  <thead>
+    <tr>
+      <th>Review Date</th>
+      {% if not user_history %}<th>Reviewer</th>{% endif %}
+      {% if user_history %}<th>Persona</th>{% endif %}
+      <th>Action</th>
+      <th>Reason</th>
+      <th>Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for persona_review in persona_reviews %}
+      <tr>
+        <td>{{ persona_review.created.strftime('%Y-%m-%d') }}</td>
+        {% if not user_history %}<td>{{ persona_review.reviewer.username }}</td>{% endif %}
+        {% if user_history %}
+          <td>
+            <a href="{{ url('personasrq.single', persona_review.persona.addon.slug)|absolutify(base_url) }}">
+              {{ persona_review.persona.addon.name }}
+            </a>
+          </td>
+        {% endif %}
+        <td>{{ actions[persona_review.action] }}</td>
+        <td>{{ reasons[persona_review.reject_reason] }}</td>
+        <td>{{ persona_review.comment }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  </table>
+  {% if pager.paginator.num_pages > 1 %}
+    <div class="listing-footer">
+      {{ pager|paginator }}
+    </div>
+  {% endif %}
+{% else %}
+  <p>There are currently no reviews.</p>
+{% endif %}

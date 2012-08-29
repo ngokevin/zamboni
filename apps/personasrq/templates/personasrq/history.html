@@ -1,0 +1,10 @@
+{% extends "personasrq/queue.html" %}
+
+{% block title %}
+  {{ _('Your Review History') }}
+{% endblock %}
+
+{% block content %}
+  <h1>{{ _('Your Review History') }}</h1>
+  {% include "personasrq/history_table.html" %}
+{% endblock %}
