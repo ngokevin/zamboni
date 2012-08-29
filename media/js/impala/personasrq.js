@@ -179,8 +179,8 @@
 
                     // Update metadata on Django management form for
                     // formset.
-                    $('#id_form-TOTAL_FORMS').val(personaCount + 1 + '');
-                    $('#id_form-INITIAL_FORMS').val(personaCount + '');
+                    $('#id_form-TOTAL_FORMS').val(parseInt(personaCount, 10) + 1 + '');
+                    $('#id_form-INITIAL_FORMS').val(parseInt(personaCount, 10) + '');
 
                     gotopersona(i, 500);
                     ajaxLockFlag = 0;

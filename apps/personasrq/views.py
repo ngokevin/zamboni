@@ -103,7 +103,11 @@ def commit(request):
         except MultiValueDictKeyError:
             # Address off-by-one error caused by management form.
             continue
-    return redirect(request.session['persona_redirect_url'])
+
+    if 'persona_redirect_url' in request.session:
+        return redirect(request.session['persona_redirect_url'])
+    else:
+        return redirect(reverse('personasrq.queue'))
 
 
 @json_view

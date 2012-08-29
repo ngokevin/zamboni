@@ -12,7 +12,7 @@ from addons.models import Persona
 import amo
 import amo.tests
 from amo.tests import addon_factory
-from personasrq.models import PersonaLock
+from personasrq.models import PersonaLock, PersonaReview
 from users.models import UserProfile
 
 
@@ -138,3 +138,60 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         eq_(self.client.get(reverse('personasrq.more')).status_code, 200)
 
         PersonaLock.objects.all().delete()
+
+    def test_commit(self):
+        PersonaLock.objects.all().delete()
+        PersonaReview.objects.all().delete()
+        form_data = {
+            'form-MAX_NUM_FORMS': '',
+            'form-INITIAL_FORMS': str(Persona.objects.count()),
+            'form-TOTAL_FORMS': str(Persona.objects.count() + 1),
+        }
+        personas = Persona.objects.all()
+        personas.update(submit=datetime.datetime.now())
+
+        reviewer = self.create_and_become_reviewer()
+        for index_persona in enumerate(personas):
+            index = index_persona[0]
+            persona = index_persona[1]
+            PersonaLock.objects.create(
+                persona=persona, reviewer=reviewer,
+                persona_lock_id=persona.persona_id,
+                expiry = datetime.datetime.now() +
+                         datetime.timedelta(minutes=amo.LOCK_EXPIRY))
+            form_data['form-%s-persona' % index] = str(persona.persona_id)
+
+        # moreinfo
+        form_data['form-%s-action' % 0] = str(amo.ACTION_MOREINFO)
+        form_data['form-%s-comment' % 0] = 'moreinfo'
+        form_data['form-%s-reject_reason' % 0] = ''
+
+        # flag
+        form_data['form-%s-action' % 1] = str(amo.ACTION_FLAG)
+        form_data['form-%s-comment' % 1] = 'flag'
+        form_data['form-%s-reject_reason' % 1] = ''
+
+        # duplicate
+        form_data['form-%s-action' % 2] = str(amo.ACTION_DUPLICATE)
+        form_data['form-%s-comment' % 2] = 'duplicate'
+        form_data['form-%s-reject_reason' % 2] = ''
+
+        # reject
+        form_data['form-%s-action' % 3] = str(amo.ACTION_REJECT)
+        form_data['form-%s-comment' % 3] = 'reject'
+        form_data['form-%s-reject_reason' % 3] = '1'
+
+        # approve
+        form_data['form-%s-action' % 4] = str(amo.ACTION_APPROVE)
+        form_data['form-%s-comment' % 4] = ''
+        form_data['form-%s-reject_reason' % 4] = ''
+
+        res = self.client.post(reverse('personasrq.commit'), form_data)
+
+        eq_(res.status_code, 302)
+        eq_(PersonaReview.objects.count(), 5)
+        eq_(personas[0].addon.status, amo.STATUS_PENDING)
+        eq_(personas[1].addon.status, amo.STATUS_PENDING)
+        eq_(personas[2].addon.status, amo.STATUS_REJECTED)
+        eq_(personas[3].addon.status, amo.STATUS_REJECTED)
+        eq_(personas[4].addon.status, amo.STATUS_PUBLIC)
