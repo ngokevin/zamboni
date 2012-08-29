@@ -42,6 +42,8 @@
           <li><a href="{{ url('editors.queue_apps') }}">
                 {{ _('Apps') }} ({{ queue_counts['apps'] }})</a></li>
           {% endif %}
+          <li><a href="{{ url('personasrq.queue') }}">
+                {{ _('Personas') }} ({{ queue_counts['personas'] }})</a></li>
           {% endif %}
         </ul>
       </li>
