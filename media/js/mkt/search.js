@@ -9,18 +9,35 @@
         $this.attr('placeholder', $this.data('placeholder'));
     });
 
-    z.page.on('click', '#search-facets li.facet', function(e) {
-        var $this = $(this);
-        if ($this.hasClass('active')) {
-            if ($(e.target).is('a')) {
-                return;
-            }
-            $this.removeClass('active');
-        } else {
-            $this.closest('ul').removeClass('active');
-            $this.addClass('active');
-        }
+    // Add 'sel' class to active filter and set hidden input value.
+    z.page.on('click', '#filters .toggles a', function() {
+        selectMe($(this));
+        return false;
     });
+
+
+    function selectMe($elm) {
+        var $myUL = $elm.closest('.toggles'),
+            val = '',
+            vars = z.getVars($elm[0].search);
+
+        $myUL.find('a').removeClass('sel');
+
+        if ($myUL[0].id == 'filter-prices') {
+            val = vars.price || '';
+        } else if ($myUL[0].id == 'filter-categories') {
+            val = vars.cat || '';
+        } else if ($myUL[0].id == 'filter-sort') {
+            val = vars.sort || '';
+        }
+        $myUL.find('input[type=hidden]').val(val);
+        $elm.addClass('sel');
+    }
+
+    // Apply filters button.
+    z.page.on('click', '#filters .header-button.apply', _pd(function() {
+        $('#filters form').submit();
+    }));
 
     var expandListings = false;
     var $expandToggle = $('#site-header .expand');

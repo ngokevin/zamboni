@@ -15,8 +15,8 @@ from django.utils.http import urlquote
 
 import commonware.log
 from elasticutils.contrib.django import F, S
-import waffle
 from tower import ugettext as _
+import waffle
 
 from access.acl import action_allowed, check_reviewer
 import amo
@@ -413,11 +413,15 @@ class Webapp(Addon):
         FeaturedApp = models.get_model('zadmin', 'FeaturedApp')
         qs = (FeaturedApp.objects
               .filter(app__status=amo.STATUS_PUBLIC,
-                      app__disabled_by_user=False,
-                      start_date__lte=cls.now(),
-                      end_date__gte=cls.now()
-                      )
+                      app__disabled_by_user=False)
               .order_by('-app__weekly_downloads'))
+        qs = (qs.filter(start_date__lte=cls.now())
+            | qs.filter(start_date__isnull=True))
+        qs = (qs.filter(end_date__gte=cls.now())
+            | qs.filter(end_date__isnull=True))
+
+        if waffle.switch_is_active('disabled-payments'):
+            qs = qs.filter(app__premium_type__in=amo.ADDON_FREES)
 
         if isinstance(cat, list):
             qs = qs.filter(category__in=cat)
@@ -469,12 +473,16 @@ class Webapp(Addon):
         if cat:
             filters.update(category=cat.id)
 
+        srch = S(cls).query(**filters)
         if region:
             excluded = cls.get_excluded_in(region)
             if excluded:
-                return S(cls).query(**filters).filter(~F(id__in=excluded))
+                srch = srch.filter(~F(id__in=excluded))
 
-        return S(cls).query(**filters)
+        if waffle.switch_is_active('disabled-payments'):
+            srch = srch.filter(premium_type__in=amo.ADDON_FREES, price=0)
+
+        return srch
 
     @classmethod
     def popular(cls, cat=None, region=None):
