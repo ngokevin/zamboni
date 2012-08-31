@@ -21,7 +21,6 @@ STATUS_PURGATORY = 10  # A temporary home; bug 614686
 STATUS_DELETED = 11
 STATUS_REJECTED = 12  # This applies only to apps (for now)
 STATUS_PUBLIC_WAITING = 13  # bug 740967
-STATUS_BEING_REVIEWED = 14
 
 STATUS_CHOICES = {
     STATUS_NULL: _(u'Incomplete'),
@@ -41,7 +40,6 @@ STATUS_CHOICES = {
     # Approved, but the developer would like to put it public when they want.
     # The need to go to the marketplace and actualy make it public.
     STATUS_PUBLIC_WAITING: _('Approved but waiting'),
-    STATUS_BEING_REVIEWED: _('Currently being reviewed'),
 }
 
 # We need to expose nice values that aren't localisable.
@@ -438,9 +436,9 @@ LOGIN_SOURCE_UNKNOWN = 0
 LOGIN_SOURCE_BROWSERID = 1
 
 # Persona review queue constants.
-INITIAL_LOCKS = 5
-MAX_LOCKS = 20
-LOCK_EXPIRY = 30  # Minutes.
+PERSONA_INITIAL_LOCKS = 5  # Initial amount of persona to check out.
+PERSONA_MAX_LOCKS = 20  # Max amount of personas to check out per reviewer.
+PERSONA_LOCK_EXPIRY = 30  # Minutes.
 
 ACTION_MOREINFO = 0
 ACTION_FLAG = 1
@@ -456,6 +454,7 @@ REVIEW_ACTIONS = {
 }
 
 PERSONA_REJECT_REASONS = {
+    0: _('Other rejection reason'),
     1: _('Sexual or pornographic content'),
     2: _('Inappropriate or offensive content'),
     3: _('Violence, war, or weaponry images'),
@@ -465,6 +464,4 @@ PERSONA_REJECT_REASONS = {
     7: _('Spam content'),
     8: _('Low-quality, stretched, or blank image'),
     9: _('Header image alignment problem'),
-    0: _('Other rejection reason'),
 }
-REASON_OTHER = 0

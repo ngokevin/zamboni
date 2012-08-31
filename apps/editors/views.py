@@ -19,7 +19,7 @@ import amo
 from abuse.models import AbuseReport
 from access import acl
 from addons.decorators import addon_view
-from addons.models import Addon, Persona, Version
+from addons.models import Addon, Version
 from amo.decorators import json_view, login_required, post_required
 from amo.utils import paginate
 from amo.urlresolvers import reverse
@@ -341,8 +341,8 @@ def queue_counts(type=None, **kw):
                                 .filter(reviewflag__isnull=False,
                                         editorreview=1).count),
               'apps': Webapp.objects.pending().count,
-              'personas': Persona.objects.filter(
-                  addon__status=amo.STATUS_UNREVIEWED).count}
+              'personas': Addon.objects.filter(
+                  type=amo.ADDON_PERSONA, status=amo.STATUS_UNREVIEWED).count}
     rv = {}
     if isinstance(type, basestring):
         return counts[type]()

@@ -1,10 +1,16 @@
 {% block content %}
-A reviewer has looked over your Firefox theme submission and found things that need to be addressed before it can be approved. Please address the remarks below and resubmit your theme.
+Thanks for submitting your Theme {{ persona.addon.name }}.
 
-Issue: {{ reason }}
-Comment: {{ comment }}
+Unfortunately, we cannot add your Theme to the gallery because of the following reason:
+{{ reason }}
+{{ comment }}
 
-Theme: {{ persona.addon.name }}
-URL: {{ persona.addon.get_detail_url()|absolutify(base_url) }}
-Submission Date: {{ submission_date }}
+We appreciate your involvement in the Theme community and encourage you to create another design that fits our Terms of Service at https://www.getpersonas.com/en-US/upload
+
+If you have any questions or want more information, please stop by the forum at
+https://forums.mozilla.org/addons/viewforum.php?f=30 and tell us what's on your mind.
+
+Best Wishes,
+The Marketplace Team
+
 {% endblock %}

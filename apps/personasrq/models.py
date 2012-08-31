@@ -15,7 +15,9 @@ class PersonaLock(models.Model):
 
 
 class PersonaReview(amo.models.ModelBase):
-    # Review history.
+    """
+    Review history.
+    """
     reviewer = UserForeignKey()
     persona = models.ForeignKey('addons.Persona')
     action = models.PositiveIntegerField(choices=amo.REVIEW_ACTIONS.items())

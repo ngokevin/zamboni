@@ -19,8 +19,8 @@
             var queue = this;
             var currentpersona = 0;
             var cacheQueueHeight;
-            var maxLocks = parseInt($('#max-locks').data('max-locks'), 10);
-            var moreUrl = $('#more-url').data('more-url');
+            var maxLocks = parseInt($('.persona-queue').data('max-locks'), 10);
+            var moreUrl = $('.persona-queue').data('more-url');
 
             var personasList = $('div.persona', queue);
             var personas = personasList.map(function() {
@@ -264,7 +264,7 @@
                     // Given the rejection reason, does the actual rejection of
                     // the Persona.
                     $('input.action', nthPersona(i)).val(3);
-                    $('input.reject_reason', nthPersona(i)).val(rejectId);
+                    $('input.reject-reason', nthPersona(i)).val(rejectId);
                     setReviewed(i, 'Rejected');
 
                     // Remove key and click-bindings now that rejection is

@@ -13,7 +13,7 @@
   <tbody>
     {% for persona_review in persona_reviews %}
       <tr>
-        <td>{{ persona_review.created.strftime('%Y-%m-%d') }}</td>
+        <td>{{ persona_review.created|datetime('%Y-%m-%d') }}</td>
         {% if not user_history %}<td>{{ persona_review.reviewer.username }}</td>{% endif %}
         {% if user_history %}
           <td>
@@ -31,7 +31,7 @@
   </table>
   {% if pager.paginator.num_pages > 1 %}
     <div class="listing-footer">
-      {{ pager|paginator }}
+      {{ pager|impala_paginator }}
     </div>
   {% endif %}
 {% else %}

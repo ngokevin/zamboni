@@ -1,7 +1,7 @@
 {% extends "personasrq/queue.html" %}
 
 {% block title %}
-  {{ _('Theme Review for') }} {{ persona.addon.name }}
+  {{ _('Theme Review for {0}')|f(persona.addon.name) }}
 {% endblock %}
 
 {% block header %}

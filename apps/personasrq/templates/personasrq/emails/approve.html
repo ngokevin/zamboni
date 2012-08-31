@@ -1,7 +1,17 @@
 {% block content %}
-A reviewer has just approved your Firefox theme submission! Your theme is now public for everyone to enjoy on Firefox.
+Thanks for submitting your Theme {{ persona.addon.name }}!
 
-Theme: {{ persona.addon.name }}
-URL: {{ persona.addon.get_detail_url()|absolutify(base_url) }}
-Submission Date: {{ submission_date }}
+We're big fans of creativity, and it's fun to see how people are dressing up their browsers.
+
+Once it gets automatically copied up to the live server, you'll be able to view
+it at {{ persona.addon.get_detail_url()|absolutify(base_url) }}
+
+You can also check it out shortly in the Gallery at http://www.getpersonas.com/en-US/gallery/All/Recent
+
+If you have any questions or want more information, please stop by the forum at
+https://forums.mozilla.org/addons/viewforum.php?f=30 and tell us what's on your mind.
+
+Best Wishes,
+The Marketplace Team
+
 {% endblock %}

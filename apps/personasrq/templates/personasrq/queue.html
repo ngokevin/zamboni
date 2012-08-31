@@ -88,21 +88,18 @@
     </div>
   {% endif %}
 
-  <a class="button review-history" href="{{ url('personasrq.history') }}">Your Review History</a>
+  <a class="button review-history" href="{{ url('personasrq.history') }}">{{ _('Your Review History') }}</a>
   <div class="c"></div>
 
   {% if reviewable %}
     <button id="commit" type="submit">{{ _('Commit') }}</button>
     <div id="queue-details">
-      <span id="reviewed-count">0</span><span> {{ _('out of') }} </span><span id="total">{{ persona_count }}</span> {{ _('reviewed') }}</span>
+      <span id="reviewed-count">0</span><span> {{ _('out of') }} </span><span id="total">{{ persona_count }}</span><span> {{ _('reviewed') }}</span>
     </div>
   {% endif %}
 </div></div>
 
-<div class="persona-queue details single">
-  <span id="max-locks" data-max-locks="{{ max_locks }}"></span>
-  <span id="more-url" data-more-url="{{ more_url }}"></span>
-
+<div class="persona-queue details single" data-max-locks="{{ max_locks }}" data-more-url="{{ more_url }}">
   <form id="persona-queue-form" action="{{ url('personasrq.commit') }}" method="post">
     {{ csrf() }}
     {{ formset.management_form }}

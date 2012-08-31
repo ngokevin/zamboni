@@ -4,8 +4,8 @@ import datetime
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.shortcuts import get_object_or_404, redirect
 from django.forms.formsets import formset_factory
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.datastructures import MultiValueDictKeyError
 
 import jingo
@@ -26,17 +26,16 @@ def queue(request):
     persona_locks = PersonaLock.objects.filter(reviewer=reviewer)
     persona_locks_count = persona_locks.count()
 
-    if persona_locks_count < amo.INITIAL_LOCKS:
+    if persona_locks_count < amo.PERSONA_INITIAL_LOCKS:
         personas = get_personas(reviewer, persona_locks, persona_locks_count)
         # Combine currently checked-out personas with newly checked-out ones by
         # re-evaluating persona_locks.
-        personas = [persona_lock.persona for persona_lock in persona_locks]
     else:
         # Update the expiry on currently checked-out personas.
         persona_locks.update(
             expiry=datetime.datetime.now() +
-            datetime.timedelta(minutes=amo.LOCK_EXPIRY))
-        personas = [persona_lock.persona for persona_lock in persona_locks]
+            datetime.timedelta(minutes=amo.PERSONA_LOCK_EXPIRY))
+    personas = [persona_lock.persona for persona_lock in persona_locks]
 
     PersonaReviewFormset = formset_factory(PersonaReviewForm)
     formset = PersonaReviewFormset(
@@ -46,10 +45,10 @@ def queue(request):
 
     return jingo.render(request, 'personasrq/queue.html', {
         'formset': formset,
-        'persona_formset': zip(personas, formset),
+        'persona_formsets': zip(personas, formset),
         'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),
         'persona_count': len(personas),
-        'max_locks': amo.MAX_LOCKS,
+        'max_locks': amo.PERSONA_MAX_LOCKS,
         'more_url': reverse('personasrq.more'),
         'actions': amo.REVIEW_ACTIONS,
         'reviewable': True,
@@ -60,26 +59,26 @@ def get_personas(reviewer, persona_locks, persona_locks_count):
     # Check out personas from the pool if none or not enough checked out.
     personas = list(Persona.objects
         .filter(addon__status=amo.STATUS_UNREVIEWED)
-        [:amo.INITIAL_LOCKS - persona_locks_count])
+        [:amo.PERSONA_INITIAL_LOCKS - persona_locks_count])
 
     # Set a lock on the checked-out personas
+    expiry = (datetime.datetime.now() +
+              datetime.timedelta(minutes=amo.PERSONA_LOCK_EXPIRY))
     for persona in personas:
         PersonaLock.objects.create(persona=persona, reviewer=reviewer,
-                                   expiry=datetime.datetime.now() +
-                                   datetime.timedelta(minutes=amo.LOCK_EXPIRY),
+                                   expiry=expiry,
                                    persona_lock_id=persona.persona_id)
-        persona.addon.set_status(amo.STATUS_PENDING)
+        persona.addon.update(status=amo.STATUS_PENDING)
 
     # Empty pool? Go look for some expired locks.
     if not personas:
         expired_locks = (PersonaLock.objects
             .filter(expiry__lte=datetime.datetime.now())
-            [:amo.INITIAL_LOCKS])
+            [:amo.PERSONA_INITIAL_LOCKS])
         # Steal expired locks.
         for persona_lock in expired_locks:
             persona_lock.reviewer = reviewer
-            persona_lock.expiry = (datetime.datetime.now() +
-                                   datetime.timedelta(minutes=amo.LOCK_EXPIRY))
+            persona_lock.expiry = expiry
             persona_lock.save()
             personas = [persona_lock.persona for persona_lock
                         in expired_locks]
@@ -100,6 +99,8 @@ def commit(request):
                 reviewer=reviewer)
             if persona_lock and form.is_valid() and form.cleaned_data:
                 form.save()
+            else:
+                print form.errors
         except MultiValueDictKeyError:
             # Address off-by-one error caused by management form.
             continue
@@ -118,21 +119,21 @@ def more(request):
     persona_locks_count = persona_locks.count()
 
     # Maximum number of locks.
-    if (persona_locks_count >= amo.MAX_LOCKS):
+    if persona_locks_count >= amo.PERSONA_MAX_LOCKS:
         return {
             'personas': [],
-            'message': _('You have reached the maximum number of personas to '
+            'message': _('You have reached the maximum number of themes to '
                          'review at once. Please commit your outstanding '
                          'reviews.')}
 
     # Adapt the third argument of get_personas to not take over than the max
     # number of locks.
-    if persona_locks_count > amo.MAX_LOCKS - amo.INITIAL_LOCKS:
-        wanted_locks = amo.MAX_LOCKS - persona_locks_count
+    if persona_locks_count > amo.PERSONA_MAX_LOCKS - amo.PERSONA_INITIAL_LOCKS:
+        wanted_locks = amo.PERSONA_MAX_LOCKS - persona_locks_count
     else:
-        wanted_locks = amo.INITIAL_LOCKS
+        wanted_locks = amo.PERSONA_INITIAL_LOCKS
     personas = get_personas(reviewer, persona_locks,
-                            amo.INITIAL_LOCKS - wanted_locks)
+                            amo.PERSONA_INITIAL_LOCKS - wanted_locks)
 
     # Create forms, which will need to be manipulated to fit with the currently
     # existing forms.
@@ -141,8 +142,9 @@ def more(request):
         initial=[{'persona': persona.persona_id} for persona in personas])
 
     html = jingo.render(request, 'personasrq/personas.html', {
-        'persona_formset': zip(personas, formset),
-        'max_locks': amo.MAX_LOCKS
+        'persona_formsets': zip(personas, formset),
+        'max_locks': amo.PERSONA_MAX_LOCKS,
+        'reviewable': True
     }).content
 
     return {'html': html,
@@ -160,30 +162,27 @@ def single(request, slug):
 
     # Don't review an already reviewed theme.
     persona = get_object_or_404(Persona, addon__slug=slug)
-    if (persona.addon.status not in
-        [amo.STATUS_UNREVIEWED, amo.STATUS_PENDING, amo.STATUS_REJECTED]):
+    if persona.addon.status not in amo.UNREVIEWED_STATUSES:
         reviewable = False
 
     # Don't review a locked theme (that's not locked to self).
     persona_lock = (PersonaLock.objects.filter(persona=persona)
                     .exclude(reviewer=reviewer))
-    if persona_lock and persona_lock[0].expiry > datetime.datetime.now():
+    if (persona_lock.exists() and
+        persona_lock[0].expiry > datetime.datetime.now()):
         reviewable = False
 
+    expiry = (datetime.datetime.now() +
+              datetime.timedelta(minutes=amo.PERSONA_LOCK_EXPIRY))
     if reviewable:
         # Create lock if not created or steal expired one.
         persona_lock = PersonaLock.objects.filter(persona=persona)
-        if persona_lock:
-            persona_lock.update(reviewer=reviewer,
-                expiry=datetime.datetime.now() +
-                datetime.timedelta(minutes=amo.LOCK_EXPIRY)
-            )
+        if persona_lock.exists():
+            persona_lock.update(reviewer=reviewer, expiry=expiry)
         else:
             PersonaLock.objects.create(persona=persona, reviewer=reviewer,
-                expiry=datetime.datetime.now() +
-                datetime.timedelta(minutes=amo.LOCK_EXPIRY),
-                persona_lock_id=persona.persona_id)
-            persona.addon.set_status(amo.STATUS_PENDING)
+                expiry=expiry, persona_lock_id=persona.persona_id)
+            persona.addon.update(status=amo.STATUS_PENDING)
 
     PersonaReviewFormset = formset_factory(PersonaReviewForm)
     formset = PersonaReviewFormset(
@@ -199,7 +198,7 @@ def single(request, slug):
     return jingo.render(request, 'personasrq/single.html', {
         'formset': formset,
         'persona': persona,
-        'persona_formset': zip([persona, ], formset),
+        'persona_formset': zip([persona], formset),
         'pager': pager,
         'persona_reviews': pager.object_list,
         'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),

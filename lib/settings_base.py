@@ -584,7 +584,8 @@ MINIFY_BUNDLES = {
             'css/zamboni/admin_features.css'
         ),
         'zamboni/personasrq': {
-            'css/impala/personasrq.less'
+            'css/impala/personasrq.less',
+            'css/impala/paginator.less'
         }
     },
     'js': {

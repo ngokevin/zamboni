@@ -25,36 +25,27 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
             addon_factory(type=amo.ADDON_PERSONA, status=amo.STATUS_UNREVIEWED)
 
     def create_and_become_reviewer(self):
-        pw = ('sha512$7b5436061f8c0902088c292c057be69fdb17312e2f71607c9c51641f'
-              '5d876522$08d1d370d89e2ae92755fd03464a7276ca607c431d04a52d659f7a'
-              '184f3f9918073637d82fc88981c7099c7c46a1137b9fdeb675304eb98801038'
-              '905a9ee0600')
-
         username = 'reviewer%s' % User.objects.count()
         email = username + '@mozilla.com'
         reviewer = User.objects.create(username=email, email=email,
                                        is_active=True, is_superuser=True,
-                                       is_staff=True, password=pw)
+                                       is_staff=True)
         user = UserProfile.objects.create(user=reviewer, email=email,
-                                          username=username, password=pw)
+                                          username=username)
+        reviewer.set_password('password')
+        reviewer.save()
         user.set_password('password')
+        user.save()
         GroupUser.objects.create(group_id=50002, user=user)
 
         self.client.login(username=email, password='password')
         return user
 
     def get_personas(self):
-        # It doesn't mean what you think it means.
         return self.client.get(reverse('personasrq.queue')).content
 
-    def get_and_check_personas(self, reviewer):
+    def get_and_check_personas(self, reviewer, expected_queue_length):
         doc = pq(self.get_personas())
-        if self.free_personas > amo.INITIAL_LOCKS:
-            expected_queue_length = amo.INITIAL_LOCKS
-        else:
-            expected_queue_length = self.free_personas
-        self.free_personas -= expected_queue_length
-
         eq_(doc('div.persona').length, expected_queue_length)
         eq_(PersonaLock.objects.filter(reviewer=reviewer).count(),
             expected_queue_length)
@@ -64,7 +55,14 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         self.free_personas = self.persona_count
         for i in range(self.persona_count):
             reviewer = self.create_and_become_reviewer()
-            self.get_and_check_personas(reviewer)
+
+            if self.free_personas > amo.INITIAL_LOCKS:
+                expected_queue_length = amo.INITIAL_LOCKS
+            else:
+                expected_queue_length = self.free_personas
+            self.free_personas -= expected_queue_length
+
+            self.get_and_check_personas(reviewer, expected_queue_length)
 
     def test_top_off(self):
         # If reviewer has less than max locks, try to get more from pool.
@@ -91,8 +89,6 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
     def test_expiry(self):
         # Test that reviewers who want personas from an empty pool can steal
         # checked-out personas from other reviewers whose locks have expired.
-        PersonaLock.objects.all().delete()
-
         for i in range(3):
             reviewer = self.create_and_become_reviewer()
             self.get_personas()
@@ -137,11 +133,7 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         eq_(self.client.get(reverse('personasrq.commit')).status_code, 405)
         eq_(self.client.get(reverse('personasrq.more')).status_code, 200)
 
-        PersonaLock.objects.all().delete()
-
     def test_commit(self):
-        PersonaLock.objects.all().delete()
-        PersonaReview.objects.all().delete()
         form_data = {
             'form-MAX_NUM_FORMS': '',
             'form-INITIAL_FORMS': str(Persona.objects.count()),
@@ -150,6 +142,7 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         personas = Persona.objects.all()
         personas.update(submit=datetime.datetime.now())
 
+        # Create locks.
         reviewer = self.create_and_become_reviewer()
         for index_persona in enumerate(personas):
             index = index_persona[0]
@@ -197,7 +190,6 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         eq_(personas[4].addon.status, amo.STATUS_PUBLIC)
 
     def test_user_review_history(self):
-        PersonaReview.objects.all().delete()
         reviewer = self.create_and_become_reviewer()
 
         res = self.client.get(reverse('personasrq.history'))
@@ -207,7 +199,8 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
 
         persona = Persona.objects.all()[0]
         for x in range(3):
-            PersonaReview.objects.create(persona=persona, action='4',
+            PersonaReview.objects.create(persona=persona,
+                action=str(amo.ACTION_APPROVE),
                 comment=None, reject_reason=None, reviewer=reviewer)
 
         res = self.client.get(reverse('personasrq.history'))
