@@ -20,7 +20,7 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
     fixtures = ['base/users', 'base/admin']
 
     def setUp(self):
-        self.persona_count = int(amo.INITIAL_LOCKS * 2.5)
+        self.persona_count = int(amo.PERSONA_INITIAL_LOCKS * 2.5)
         for x in range(self.persona_count):
             addon_factory(type=amo.ADDON_PERSONA, status=amo.STATUS_UNREVIEWED)
 
@@ -56,8 +56,8 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         for i in range(self.persona_count):
             reviewer = self.create_and_become_reviewer()
 
-            if self.free_personas > amo.INITIAL_LOCKS:
-                expected_queue_length = amo.INITIAL_LOCKS
+            if self.free_personas > amo.PERSONA_INITIAL_LOCKS:
+                expected_queue_length = amo.PERSONA_INITIAL_LOCKS
             else:
                 expected_queue_length = self.free_personas
             self.free_personas -= expected_queue_length
@@ -69,9 +69,9 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         reviewer = self.create_and_become_reviewer()
 
         doc = pq(self.get_personas())
-        eq_(doc('div.persona').length, amo.INITIAL_LOCKS)
+        eq_(doc('div.persona').length, amo.PERSONA_INITIAL_LOCKS)
         eq_(PersonaLock.objects.filter(reviewer=reviewer).count(),
-            amo.INITIAL_LOCKS)
+            amo.PERSONA_INITIAL_LOCKS)
 
         for persona_lock in PersonaLock.objects.filter(reviewer=reviewer)[:2]:
             persona_lock.delete()
@@ -82,9 +82,9 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
                           status=amo.STATUS_UNREVIEWED)
 
         doc = pq(self.get_personas())
-        eq_(doc('div.persona').length, amo.INITIAL_LOCKS)
+        eq_(doc('div.persona').length, amo.PERSONA_INITIAL_LOCKS)
         eq_(PersonaLock.objects.filter(reviewer=reviewer).count(),
-            amo.INITIAL_LOCKS)
+            amo.PERSONA_INITIAL_LOCKS)
 
     def test_expiry(self):
         # Test that reviewers who want personas from an empty pool can steal
@@ -140,7 +140,6 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
             'form-TOTAL_FORMS': str(Persona.objects.count() + 1),
         }
         personas = Persona.objects.all()
-        personas.update(submit=datetime.datetime.now())
 
         # Create locks.
         reviewer = self.create_and_become_reviewer()
@@ -151,7 +150,7 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
                 persona=persona, reviewer=reviewer,
                 persona_lock_id=persona.persona_id,
                 expiry=datetime.datetime.now() +
-                       datetime.timedelta(minutes=amo.LOCK_EXPIRY))
+                       datetime.timedelta(minutes=amo.PERSONA_LOCK_EXPIRY))
             form_data['form-%s-persona' % index] = str(persona.persona_id)
 
         # moreinfo

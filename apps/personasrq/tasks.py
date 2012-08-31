@@ -23,11 +23,9 @@ def send_mail(cleaned_data, persona, persona_lock):
     comment = cleaned_data['comment']
 
     emails = set(persona.addon.authors.values_list('email', flat=True))
-    dt = persona.submit
     context = {
         'persona': persona,
         'base_url': settings.SITE_URL,
-        'submission_date': '%04d-%02d-%02d' % (dt.year, dt.month, dt.day),
         'reason': reason,
         'comment': comment
     }

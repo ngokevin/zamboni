@@ -872,8 +872,9 @@ MINIFY_BUNDLES = {
             'js/zamboni/admin_validation.js',
         ),
         'zamboni/personasrq': (
-            'js/impala/personasrq.js',
+            'js/impala/formset.js',
             'js/lib/jquery.zoomBox.js',
+            'js/impala/personasrq.js',
         ),
         # This is included when DEBUG is True.  Bundle in <head>.
         'debug': (

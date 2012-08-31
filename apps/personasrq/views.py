@@ -198,7 +198,7 @@ def single(request, slug):
     return jingo.render(request, 'personasrq/single.html', {
         'formset': formset,
         'persona': persona,
-        'persona_formset': zip([persona], formset),
+        'persona_formsets': zip([persona], formset),
         'pager': pager,
         'persona_reviews': pager.object_list,
         'reject_reasons': amo.PERSONA_REJECT_REASONS.items(),

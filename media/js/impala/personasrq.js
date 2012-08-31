@@ -1,4 +1,5 @@
 (function($) {
+    /* jQuery.ScrollTo by Ariel Flesler */
     $.fn.scrollTo = function(opts) {
         if (!this.length) return this;
         opts = $.extend({
@@ -34,21 +35,23 @@
                 return personasList[i];
             }
 
-            $(window).scroll(function() {
+            $(window).scroll(_.throttle(function() {
                 updateMetrics();
-                var i = findCurrentpersona();
-                if (i != currentpersona) {
-                    switchpersona( findCurrentpersona() );
+                var i = findCurrentPersona();
+                if (i >= 0 && i != currentpersona) {
+                    switchPersona(findCurrentPersona());
                 }
-            });
+            }, 250));
 
             $(document).keyup(function(e) {
                 if (!$(queue).hasClass('shortcuts')) return;
-                if ($('textarea').is(':focus') && e.which != '13') return;
+
+                // Ignore key-bindings when textarea focused.
+                if (fieldFocused(e) && e.which != z.keys.ENTER) return;
 
                 // For using Enter to submit textareas.
-                if (e.which == '13' && '13' in keymap) {
-                    keymap['13']();
+                if (e.which == z.keys.ENTER && z.keys.ENTER in keymap) {
+                    keymap[z.keys.ENTER]();
                 }
 
                 var key = String.fromCharCode(e.which).toLowerCase();
@@ -63,14 +66,14 @@
 
             // Pressing Enter in text field doesn't add carriage return.
             $('textarea').keypress(function(e) {
-                if (e.keyCode == 13) {
+                if (e.keyCode == z.keys.ENTER) {
                     e.preventDefault();
                 }
             });
 
             $('.persona', queue).removeClass('active');
             updateMetrics();
-            switchpersona( findCurrentpersona() );
+            switchPersona(findCurrentPersona());
 
             function updateMetrics() {
                 var queueHeight = $(queue).height();
@@ -83,8 +86,10 @@
                 });
             }
 
-            function getpersonaParent(elem) {
+            function getPersonaParent(elem) {
                 var parent = $(elem).closest('.persona').get(0);
+
+                // Easier than $.each since loop involves returning values.
                 for (var i = 0; i < personas.length; i++) {
                     if (personas[i].element == parent) {
                         return i;
@@ -93,30 +98,26 @@
                 return -1;
             }
 
-            function gotopersona(i, delay, duration) {
+            function goToPersona(i, delay, duration) {
                 delay = delay || 0;
                 duration = duration || 250;
                 setTimeout(function() {
-                    if (i < 0) {
-                        // alert('Previous Page');
-                    } else if (i >= personas.length) {
-                        // alert('Next Page');
-                    } else {
+                    if (i >= 0 && i < personas.length) {
                         $(personas[i].element).scrollTo({ duration: duration, marginTop: 20 });
                     }
                 }, delay);
 
-                delete keymap['13'];
+                delete keymap[z.keys.ENTER];
                 $('.rq-dropdown').hide();
             }
 
-            function switchpersona(i) {
+            function switchPersona(i) {
                 $(personas[currentpersona].element).removeClass('active');
                 $(personas[i].element).addClass('active');
                 currentpersona = i;
             }
 
-            function findCurrentpersona() {
+            function findCurrentPersona() {
                 var pageTop = $(window).scrollTop();
 
                 if (pageTop <= personas[currentpersona].top) {
@@ -129,29 +130,28 @@
                 }
 
                 else {
-                    for (var i = currentpersona; i < personas.length-1; i++) {
+                    for (var i = currentpersona; i < personas.length; i++) {
                         if (pageTop <= personas[i].top) {
-                            break;
+                            return i;
                         }
                     }
-                    return i;
                 }
             }
 
             var ajaxLockFlag = 0;
             function morePersonas() {
                 // Don't do anything if max locks or currently making request
-                // or not all personas reviewed. Using a exposed DOM element to
+                // or not all personas reviewed. Using an exposed DOM element to
                 // hold data, but we don't really care if they try to tamper
                 // with that.
+                var personaCount = $('#total').text();
                 if (personasList.length >= maxLocks || ajaxLockFlag ||
-                    parseInt($('#reviewed-count').text(), 10) !== parseInt($('#total').text(), 10)) {
+                    $('#reviewed-count').text() != personaCount) {
                     return;
                 }
                 ajaxLockFlag = 1;
-                var personaCount = $('#total').text();
-                var i = personaCount;
-                $.get(moreUrl, {}, function(data) {
+                var i = parseInt(personaCount, 10);
+                $.get(moreUrl, function(data) {
                     // Update total.
                     $('#total').text(data.count);
 
@@ -167,6 +167,7 @@
 
                     // Correct the new Django forms' prefixes
                     // (id_form-x-field) to play well with the formset.
+                    var $input;
                     var newPersonas = personasList.slice(personaCount, personasList.length);
                     $(newPersonas).each(function(index, persona) {
                         $('input', persona).each(function(index, input) {
@@ -179,69 +180,72 @@
 
                     // Update metadata on Django management form for
                     // formset.
-                    $('#id_form-TOTAL_FORMS').val(parseInt(personaCount, 10) + 1 + '');
+                    updateTotalForms('form', 1);
                     $('#id_form-INITIAL_FORMS').val(parseInt(personaCount, 10) + '');
 
-                    gotopersona(i, 500);
+                    goToPersona(i, 500);
                     ajaxLockFlag = 0;
                 });
             }
 
             var keymap = {
-                'j': ['next', null],
-                'k': ['prev', null],
-                'a': ['approve', null],
-                'r': ['reject_reason', null],
-                'd': ['duplicate', null],
-                'f': ['flag', null],
-                'm': ['moreinfo', null]
+                j: ['next', null],
+                k: ['prev', null],
+                a: ['approve', null],
+                r: ['reject_reason', null],
+                d: ['duplicate', null],
+                f: ['flag', null],
+                m: ['moreinfo', null]
             };
+            for (var j = 0; j <= 9; j++) {
+                keymap[j] = ['reject_reason_detail', j];
+            }
 
             function setReviewed(i, text) {
                 $(nthPersona(i)).addClass('reviewed');
                 $('.status', personas[i].element).addClass('reviewed').text(text);
                 $('#reviewed-count').text($('div.persona.reviewed').length);
                 if ($(queue).hasClass('advance')) {
-                    gotopersona(i+1, 500);
+                    goToPersona(i+1, 500);
                 } else {
-                    delete keymap['13'];
+                    delete keymap[z.keys.ENTER];
                     $('.rq-dropdown').hide();
                 }
-                if ($('#reviewed-count').text() === $('#total').text()) {
+                if ($('#reviewed-count').text() == $('#total').text()) {
                     morePersonas();
                 }
             }
 
-            var personaActions = {
-                'next': function (i) { gotopersona(i+1); },
-                'prev': function (i) { gotopersona(i-1); },
+            var isRejecting = false;
+            $('li.reject_reason').click(function(e) {
+                if (!isRejecting) {
+                    var rejectId = $(this).data('id');
+                    reject_reason_detail(i, rejectId);
+                }
+            });
 
-                'approve': function (i) {
+            var personaActions = {
+                next: function (i) { goToPersona(i+1); },
+                prev: function (i) { goToPersona(i-1); },
+
+                approve: function (i) {
                     $('input.action', nthPersona(i)).val(4);
                     setReviewed(i, 'Approved');
                 },
 
-                'reject_reason': function (i) {
+                reject_reason: function (i) {
                     // Open up dropdown of rejection reasons and set up
                     // key and click-bindings for choosing a reason. This
                     // function does not actually do the rejecting as the
                     // rejecting is only done once a reason is supplied.
                     $('.rq-dropdown:not(.reject-reason-dropdown)').hide();
                     $('.reject-reason-dropdown', nthPersona(i)).toggle();
-
-                    // Dynamically add key-mapping.
-                    for (var j = 0; j <= 9; j++) {
-                        keymap[j + ''] = ['reject_reason_detail', j];
-                    }
-
-                    var reject_reason_detail = this.reject_reason_detail;
-                    $('li.reject_reason').click(function(e) {
-                        var rejectId = $(this).data('id');
-                        reject_reason_detail(i, rejectId);
-                    });
+                    isRejecting = true;
                 },
 
-                'reject_reason_detail': function(i, rejectId) {
+                reject_reason_detail: function(i, rejectId) {
+                    if (!isRejecting) { return; }
+
                     $('.rq-dropdown:not(.reject-reason-detail-dropdown)').hide();
                     $('.reject-reason-detail-dropdown', nthPersona(i)).toggle();
                     var textArea = $('.reject-reason-detail-dropdown textarea', nthPersona(i)).focus();
@@ -256,26 +260,20 @@
                             $('.reject-reason-detail-dropdown .error-required').show();
                         }
                     };
-                    keymap['13'] = submit;
+                    keymap[z.keys.ENTER] = submit;
                     $('.reject-reason-detail-dropdown button').click(_pd(submit));
                 },
 
-                'reject': function(i, rejectId) {
+                reject: function(i, rejectId) {
                     // Given the rejection reason, does the actual rejection of
                     // the Persona.
                     $('input.action', nthPersona(i)).val(3);
                     $('input.reject-reason', nthPersona(i)).val(rejectId);
                     setReviewed(i, 'Rejected');
-
-                    // Remove key and click-bindings now that rejection is
-                    // complete.
-                    for (var i = 0; i <= 9; i++) {
-                        delete keymap[i + ''];
-                    }
-                    $('li.reject_reason').unbind('click');
+                    isRejecting = false;
                 },
 
-                'duplicate': function(i) {
+                duplicate: function(i) {
                     // Open up dropdown to enter ID/URL of duplicate.
                     $('.rq-dropdown:not(.duplicate-dropdown)').hide();
                     $('.duplicate-dropdown', nthPersona(i)).toggle();
@@ -292,11 +290,11 @@
                             $('.duplicate-dropdown .error-required').show();
                         }
                     };
-                    keymap['13'] = submit;
+                    keymap[z.keys.ENTER] = submit;
                     $('.duplicate-dropdown button').click(_pd(submit));
                 },
 
-                'flag': function(i) {
+                flag: function(i) {
                     // Open up dropdown to enter reason for flagging.
                     $('.rq-dropdown:not(.flag-dropdown)').hide();
                     $('.flag-dropdown', nthPersona(i)).toggle();
@@ -313,11 +311,11 @@
                             $('.flag-dropdown .error-required').show();
                         }
                     };
-                    keymap['13'] = submit;
+                    keymap[z.keys.ENTER] = submit;
                     $('.flag-dropdown button').click(_pd(submit));
                 },
 
-                'moreinfo': function(i) {
+                moreinfo: function(i) {
                     // Open up dropdown to enter ID/URL of moreinfo.
                     $('.rq-dropdown:not(.moreinfo-dropdown)').hide();
                     $('.moreinfo-dropdown', nthPersona(i)).toggle();
@@ -334,26 +332,26 @@
                             $('.moreinfo-dropdown .error-required').show();
                         }
                     };
-                    keymap['13'] = submit;
+                    keymap[z.keys.ENTER] = submit;
                     $('.moreinfo-dropdown button').click(_pd(submit));
                 }
             };
 
             $('button.approve', this).click(_pd(function(e) {
-                personaActions.approve(getpersonaParent(e.currentTarget));
+                personaActions.approve(getPersonaParent(e.currentTarget));
             }));
             $('button.reject', this).click(_pd(function(e) {
-                personaActions.reject_reason(getpersonaParent(e.currentTarget));
+                personaActions.reject_reason(getPersonaParent(e.currentTarget));
             }));
             $('button.duplicate', this).click(_pd(function(e) {
                 e.preventDefault(); // _pd wasn't working...
-                personaActions.duplicate(getpersonaParent(e.currentTarget));
+                personaActions.duplicate(getPersonaParent(e.currentTarget));
             }));
             $('button.flag', this).click(_pd(function(e) {
-                personaActions.flag(getpersonaParent(e.currentTarget));
+                personaActions.flag(getPersonaParent(e.currentTarget));
             }));
             $('button.moreinfo', this).click(_pd(function(e) {
-                personaActions.moreinfo(getpersonaParent(e.currentTarget));
+                personaActions.moreinfo(getPersonaParent(e.currentTarget));
             }));
         });
     };
@@ -368,16 +366,16 @@
 
             function onChange(e) {
                 var category = $('#rq-category', self).val();
-                var details = true /* $('#rq-details:checked', self).val() */;
+                var details = true;  // $('#rq-details:checked', self).val() */
                 var advance = $('#rq-advance:checked', self).val();
-                var single = true /* $('#rq-single:checked', self).val() */;
-                var shortcuts = true /* $('#rq-shortcuts:checked', self).val() */;
+                var single = true;  // $('#rq-single:checked', self).val()
+                var shortcuts = true;  // $('#rq-shortcuts:checked', self).val()
 
                 $(queueSelector)
-                    .toggleClass('details', details !== undefined)
-                    .toggleClass('advance', advance !== undefined)
-                    .toggleClass('single', single !== undefined)
-                    .toggleClass('shortcuts', shortcuts !== undefined);
+                    .toggleClass('details', !!details)
+                    .toggleClass('advance', !!advance)
+                    .toggleClass('single', !!single)
+                    .toggleClass('shortcuts', !!shortcuts);
 
                 $('.shortcuts', self).toggle(shortcuts);
             }

@@ -1,3 +1,4 @@
+/* jQuery Zoombox: https://github.com/technicolorenvy/jquery-zoombox */
 (function($) {
 	$.fn.zoomBox = function(opts) {
 		var box, boxX, boxY, boxW, boxH;
@@ -9,7 +10,7 @@
 			zoomSpeed: 200,
 			zoomMargin: 10
 		}, opts || { });
-	
+
 		this.each(function() {
 			initMetrics(this);
 			$(img).css( imageCenter() );
@@ -28,18 +29,18 @@
 			jimg.data('origHeight', jimg.attr('height'));
 			updateMetrics(elem);
 		}
-	
+
 		function updateMetrics(elem)
 		{
 			var jbox = $(elem);
 			var jimg = $('img', elem);
-		
+
 			box = elem;
 			boxX = jbox.offset().left;
 			boxY = jbox.offset().top;
 			boxW = jbox.width();
 			boxH = jbox.height();
-		
+
 			img = jimg.get(0);
 			imgW = jimg.data('origWidth');
 			imgH = jimg.data('origHeight');
@@ -50,12 +51,12 @@
 			updateMetrics(e.currentTarget);
 
 			$(img).stop(false, true);
-		
+
 			$(img).animate(imageZoom(e.pageX, e.pageY), opts.zoomSpeed, 'linear', function() {
 				$(box).bind('mousemove', onMouseMove);
 			});
 		}
-	
+
 		function onMouseMove(e)
 		{
 			$(img).css( imageZoom(e.pageX, e.pageY) );
@@ -74,7 +75,7 @@
 			var sx = (boxW - 2*opts.zoomMargin) / imgW;
 			var sy = (boxH - 2*opts.zoomMargin) / imgH;
 			var scale = Math.min(sx, sy);
-		
+
 			return {
 				'left': (boxW - scale*imgW) / 2,
 				'top': (boxH - scale*imgH) / 2,
@@ -87,16 +88,16 @@
 		{
 			x = x - boxX;
 			y = y - boxY;
-		
+
 			var sx = boxW / imgW;
 			var sy = boxH / imgH;
-		
+
 			var x2 = boxW/2 - x * imgW / boxW;
 			var y2 = boxH/2 - y * imgH / boxH;
 
 			x2 = Math.max( Math.min(x2, 0), boxW-imgW );
 			y2 = Math.max( Math.min(y2, 0), boxH-imgH );
-		
+
 			return {
 				'left': x2,
 				'top': y2,
