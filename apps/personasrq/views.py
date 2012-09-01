@@ -15,9 +15,10 @@ import amo
 from amo.decorators import json_view, post_required
 import amo.utils
 from addons.models import Persona
+from devhub.models import ActivityLog
 from editors.views import reviewer_required
 from personasrq.forms import PersonaReviewForm
-from personasrq.models import PersonaLock, PersonaReview
+from personasrq.models import PersonaLock
 
 
 @reviewer_required('persona')
@@ -192,8 +193,8 @@ def single(request, slug):
         args=[persona.addon.slug])
 
     pager = amo.utils.paginate(request,
-        PersonaReview.objects.filter(persona=persona)
-        .order_by('-created'), 20)
+        ActivityLog.objects.filter(action=amo.LOG.PERSONA_REVIEW.id,
+        user=request.amo_user).order_by('-created'), 20)
 
     return jingo.render(request, 'personasrq/single.html', {
         'formset': formset,
@@ -213,8 +214,8 @@ def single(request, slug):
 @reviewer_required('persona')
 def history(request):
     pager = amo.utils.paginate(request,
-        PersonaReview.objects.filter(
-        reviewer=request.amo_user).order_by('-created'), 20)
+        ActivityLog.objects.filter(action=amo.LOG.PERSONA_REVIEW.id,
+        user=request.amo_user).order_by('-created'), 20)
 
     return jingo.render(request, 'personasrq/history.html', {
         'persona_reviews': pager.object_list,

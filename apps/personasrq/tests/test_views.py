@@ -12,7 +12,8 @@ from addons.models import Persona
 import amo
 import amo.tests
 from amo.tests import addon_factory
-from personasrq.models import PersonaLock, PersonaReview
+from devhub.models import ActivityLog
+from personasrq.models import PersonaLock
 from users.models import UserProfile
 
 
@@ -181,7 +182,7 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
         res = self.client.post(reverse('personasrq.commit'), form_data)
 
         eq_(res.status_code, 302)
-        eq_(PersonaReview.objects.count(), 5)
+        eq_(ActivityLog.objects.count(), 5)
         eq_(personas[0].addon.status, amo.STATUS_PENDING)
         eq_(personas[1].addon.status, amo.STATUS_PENDING)
         eq_(personas[2].addon.status, amo.STATUS_REJECTED)
@@ -198,9 +199,9 @@ class PersonaReviewQueueTest(amo.tests.TestCase):
 
         persona = Persona.objects.all()[0]
         for x in range(3):
-            PersonaReview.objects.create(persona=persona,
-                action=str(amo.ACTION_APPROVE),
-                comment=None, reject_reason=None, reviewer=reviewer)
+            amo.log(amo.LOG.PERSONA_REVIEW, persona, user=reviewer,
+                    details={'action': amo.ACTION_APPROVE,
+                             'comment': '', 'reject_reason': ''})
 
         res = self.client.get(reverse('personasrq.history'))
         eq_(res.status_code, 200)

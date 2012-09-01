@@ -7,7 +7,6 @@ from tower import ugettext_lazy as _
 
 import amo
 from amo.utils import send_mail_jinja
-from personasrq.models import PersonaReview
 
 
 @task
@@ -61,10 +60,10 @@ def send_mail(cleaned_data, persona, persona_lock):
         context['reviewer_email'] = persona_lock.reviewer.email
         persona.addon.update(status=amo.STATUS_PENDING)
 
-    PersonaReview.objects.create(reviewer=persona_lock.reviewer,
-                                 persona=persona, action=action,
-                                 reject_reason=reject_reason,
-                                 comment=comment)
+    amo.log(amo.LOG.PERSONA_REVIEW, persona, details={
+        'action': action,
+        'reject_reason': reject_reason,
+        'comment': comment}, user=persona_lock.reviewer)
 
     persona.approve = datetime.datetime.now()
     persona.save()
