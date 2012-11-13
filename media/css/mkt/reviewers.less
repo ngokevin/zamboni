@@ -698,20 +698,38 @@ div.editor-stats-table > div.editor-stats-dark {
     }
 }
 
-.queue-outer #queue-search table {
-    margin: 0;
-    padding: 0;
-}
-.queue-outer #queue-search,
-.date_range {
+#queue-search {
     padding: 1em;
+    margin-bottom: 1em;
+    table {
+        margin: 0;
+        padding: 0;
+    }
+    .date_range {
+        padding: 1em;
+    }
+    label[for="id_text_query"] {
+        margin-right: .5em;
+    }
+    button {
+        margin: 0 .5em;
+    }
 }
 #advanced-search {
     display: none;
     margin-top: 1em;
+    label {
+        margin-bottom: .5em;
+    }
     .column1 {
         float: left;
+        position: relative;
+        top: 1em;
         width: 375px;
+        select {
+            position: relative;
+            bottom: .5em;
+        }
     }
     .column1 label {
         display: block;

@@ -244,7 +244,7 @@ def app_review(request, addon):
 QueuedApp = collections.namedtuple('QueuedApp', 'app created')
 
 
-def _queue(request, apps, tab, pager_processor=None):
+def _queue(request, apps, tab, search_form, pager_processor=None):
     per_page = request.GET.get('per_page', QUEUE_PER_PAGE)
     pager = paginate(request, apps, per_page)
 
@@ -252,6 +252,7 @@ def _queue(request, apps, tab, pager_processor=None):
         'addons': pager.object_list,
         'pager': pager,
         'tab': tab,
+        'search_form': search_form
     }))
 
 
@@ -263,9 +264,18 @@ def queue_apps(request):
                                  status=amo.WEBAPPS_UNREVIEWED_STATUS)
                          .exclude(id__in=excluded_ids)
                          .order_by('created'))
+
+    # Handle search filters.
+    if request.GET:
+        search_form = forms.AppQueueSearchForm(request.GET)
+        if search_form.is_valid():
+            qs = search_form.filter_qs(qs)
+    else:
+        search_form = forms.AppQueueSearchForm()
+
     apps = [QueuedApp(app, app.created) for app in qs]
 
-    return _queue(request, apps, 'pending')
+    return _queue(request, apps, 'pending', search_form)
 
 
 @permission_required('Apps', 'Review')
