@@ -432,7 +432,7 @@ def _filter(qs, data):
                        data['device_type_ids'])
     if data.get('premium_type_ids', []):
         qs = qs.filter(premium_type__in=data['premium_type_ids'])
-    return qs
+    return qs.distinct()
 
 
 @permission_required('Apps', 'Review')
