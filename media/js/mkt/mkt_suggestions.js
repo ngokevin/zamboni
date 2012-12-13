@@ -10,10 +10,15 @@
         suggestions.on('dismissed', abortRequest);
     }
 
+    var current_search = null;
     var previous_request = null;
 
     function processResults(settings) {
-        if (!settings) {
+        // Remember the previous search term so that only one of consecutive
+        // duplicate queries makes the request to ajaxCache. This prevents the
+        // duplicate requests from aborting themselves in the middle of
+        // ajaxCache request.
+        if (!settings || current_search == settings['$form'].serialize().slice(2)) {
             return;
         }
 
@@ -51,6 +56,7 @@
             }
         });
 
+        current_search = settings['$form'].serialize().slice(2);
         abortRequest();
         previous_request = new_request;
     }
