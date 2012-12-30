@@ -12,15 +12,14 @@ from test_utils import RequestFactory
 
 import amo
 import amo.tests
+from amo.tests import app_factory
 from amo.tests.test_helpers import get_image_path
 from addons.models import Addon, AddonCategory, Category
 from files.helpers import copyfileobj
 
 import mkt
 from mkt.developers import forms
-from mkt.site.fixtures import fixture
-from mkt.webapps.models import (AddonExcludedRegion as AER, ContentRating,
-                                Webapp)
+from mkt.webapps.models import (AddonExcludedRegion as AER, ContentRating)
 
 
 class TestPreviewForm(amo.tests.TestCase):
@@ -283,3 +282,35 @@ class TestPackagedAppForm(amo.tests.AMOPaths, amo.tests.WebappTestCase):
         eq_(validation['messages'][0]['message'],
             [u'Packaged app too large for submission.',
              u'Packages must be less than 5 bytes.'])
+
+
+class TestTransactionFilterForm(amo.tests.TestCase):
+
+    def setUp(self):
+        self.apps = [app_factory(), app_factory()]
+        self.data = {
+            'app': self.apps[0].id,
+            'transaction_type': 1,
+            'transaction_id': 1,
+            'date_from_day': '1',
+            'date_from_month': '1',
+            'date_from_year': '2012',
+            'date_to_day': '1',
+            'date_to_month': '1',
+            'date_to_year': '2013',
+        }
+
+    def test_basic(self):
+        """Test the form doesn't crap out."""
+        self.check_valid(True)
+
+    def test_app_choices(self):
+        """Test app choices."""
+        form = forms.TransactionFilterForm(self.data, apps=self.apps)
+        for app in self.apps:
+            assertion = (app.id, app.name) in form.fields['app'].choices
+            assert assertion, '(%s, %s) not in choices' % (app.id, app.name)
+
+    def check_valid(self, valid):
+        form = forms.TransactionFilterForm(self.data, apps=self.apps)
+        eq_(form.is_valid(), valid)

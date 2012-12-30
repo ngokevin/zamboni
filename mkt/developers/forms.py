@@ -2,10 +2,10 @@
 from datetime import datetime
 import json
 import os
-import socket
 
 from django import forms
 from django.conf import settings
+from django.forms.extras.widgets import SelectDateWidget
 from django.forms.models import formset_factory, modelformset_factory
 from django.template.defaultfilters import filesizeformat
 
@@ -23,7 +23,7 @@ from addons.models import (Addon, AddonCategory, AddonUser, BlacklistedSlug,
                            Category, Preview)
 from addons.widgets import CategoriesSelectMultiple
 from amo import get_user
-from amo.utils import raise_required, remove_icons
+from amo.utils import remove_icons
 from files.models import FileUpload
 from lib.video import tasks as vtasks
 from translations.fields import TransField
@@ -35,6 +35,7 @@ import mkt
 from mkt.constants import APP_IMAGE_SIZES, MAX_PACKAGED_APP_SIZE
 from mkt.constants.ratingsbodies import (RATINGS_BY_NAME, ALL_RATINGS,
                                          RATINGS_BODIES)
+from mkt.site.forms import AddonChoiceField
 from mkt.webapps.models import (AddonExcludedRegion, ContentRating, ImageAsset,
                                 Webapp)
 
@@ -851,3 +852,26 @@ class AppFormTechnical(addons.forms.AddonFormBase):
             af.update(uses_flash=bool(uses_flash))
 
         return super(AppFormTechnical, self).save(commit=True)
+
+
+class TransactionFilterForm(happyforms.Form):
+    app = AddonChoiceField(queryset=None, required=False, label=_lazy(u'App'))
+    transaction_type = forms.ChoiceField(
+        required=False, label=_lazy(u'Transaction Type'),
+        choices=[(None, '')] + amo.MKT_TRANSACTION_CONTRIB_TYPES.items())
+    transaction_id = forms.CharField(
+        required=False, label=_lazy(u'Transaction ID'))
+
+    current_year = datetime.today().year
+    years = [current_year - x for x in range(current_year - 2012)]
+    date_from = forms.DateTimeField(
+        required=False, widget=SelectDateWidget(years=years),
+        label=_lazy(u'From'))
+    date_to = forms.DateTimeField(
+        required=False, widget=SelectDateWidget(years=years),
+        label=_lazy(u'To'))
+
+    def __init__(self, *args, **kwargs):
+        self.apps = kwargs.pop('apps', [])
+        super(TransactionFilterForm, self).__init__(*args, **kwargs)
+        self.fields['app'].queryset = self.apps
