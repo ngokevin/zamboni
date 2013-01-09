@@ -33,7 +33,7 @@ from lib.crypto.tests import mock_sign
 import mkt.constants.reviewers as rvw
 from mkt.reviewers.models import ThemeLock
 from mkt.reviewers.views import (_do_sort, _filter, _check_if_searching,
-                                 _get_search_form, _get_themes)
+                                 _get_search_form, _get_themes, _queue_to_apps)
 from mkt.submit.tests.test_views import BasePackagedAppTest
 from mkt.webapps.models import Webapp
 import reviews
@@ -347,7 +347,7 @@ class TestRereviewQueue(AppReviewerTest, AccessMixin, FlagsMixin):
         eq_(r.status_code, 200)
         links = pq(r.content)('#addon-queue tbody')('tr td:nth-of-type(2) a')
         apps = [rq.addon for rq in
-                RereviewQueue.objects.all().order_by('addon__created')]
+                RereviewQueue.objects.all().order_by('created')]
         expected = [
             (unicode(apps[0].name), self.review_url(apps[0])),
             (unicode(apps[1].name), self.review_url(apps[1])),
@@ -2220,3 +2220,17 @@ class TestQueueSearchSort(AppReviewerTest):
                                    'order': 'asc'})
         sorted_qs = _do_sort(r, qs)
         eq_(list(sorted_qs), [self.apps[0], self.apps[1]])
+
+    def test_queue_to_app_sort(self):
+        """Tests queue object's created sort order."""
+        rrq_list = [RereviewQueue.objects.create(addon=self.apps[1]).addon,
+                    RereviewQueue.objects.create(addon=self.apps[0]).addon]
+        rqs = RereviewQueue.objects.all()
+
+        request = self.rf.get(reverse('reviewers.apps.queue_rereview'),
+                              {'sort': 'created'})
+        apps, form = _queue_to_apps(request, rqs)
+
+        # Assert the order that RereviewQueue objects were created is
+        # maintained.
+        eq_(rrq_list, [queued_app.app for queued_app in apps])
