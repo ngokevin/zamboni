@@ -2223,14 +2223,22 @@ class TestQueueSearchSort(AppReviewerTest):
 
     def test_queue_to_app_sort(self):
         """Tests queue object's created sort order."""
-        rrq_list = [RereviewQueue.objects.create(addon=self.apps[1]).addon,
-                    RereviewQueue.objects.create(addon=self.apps[0]).addon]
-        rqs = RereviewQueue.objects.all()
+        url = reverse('reviewers.apps.queue_rereview')
 
-        request = self.rf.get(reverse('reviewers.apps.queue_rereview'),
-                              {'sort': 'created'})
-        apps, form = _queue_to_apps(request, rqs)
+        earlier_rrq = RereviewQueue.objects.create(addon=self.apps[0])
+        later_rrq = RereviewQueue.objects.create(addon=self.apps[1])
+        later_rrq.created += datetime.timedelta(days=1)
+        later_rrq.save()
+
+        request = self.rf.get(url, {'sort': 'created'})
+        apps, form = _queue_to_apps(request, RereviewQueue.objects.all())
 
         # Assert the order that RereviewQueue objects were created is
         # maintained.
-        eq_(rrq_list, [queued_app.app for queued_app in apps])
+        eq_([earlier_rrq.addon, later_rrq.addon],
+            [queued_app.app for queued_app in apps])
+
+        request = self.rf.get(url, {'sort': 'created', 'order': 'desc'})
+        apps, form = _queue_to_apps(request, RereviewQueue.objects.all())
+        eq_([later_rrq.addon, earlier_rrq.addon],
+            [queued_app.app for queued_app in apps])
