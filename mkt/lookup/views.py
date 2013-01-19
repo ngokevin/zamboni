@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.db import connection
 from django.db.models import Sum, Count, Q
 from django.shortcuts import get_object_or_404, redirect
@@ -10,9 +11,10 @@ from tower import ugettext as _
 
 import amo
 from addons.models import Addon
-from amo.decorators import login_required, permission_required, json_view
+from amo.decorators import (login_required, permission_required, post_required,
+                            json_view)
 from amo.urlresolvers import reverse
-from amo.utils import paginate
+from amo.utils import paginate, send_mail_jinja
 from apps.access import acl
 from apps.bandwagon.models import Collection
 from devhub.models import ActivityLog
@@ -87,6 +89,28 @@ def _transaction_summary(tx_id):
         'buyer': None,
         'seller': None,
         'amount': 0}
+
+
+@post_required
+@login_required
+@permission_required('Transaction', 'Refund')
+def transaction_refund(request, tx_id):
+    contrib = get_object_or_404(Contribution, transaction_id=tx_id)
+    refund_reason = '%s: %s' % (request.amo_user.email,
+                                request.POST['refund_reason'])
+    contrib.enqueue_refund(status=amo.REFUND_PENDING,
+                           refund_reason=refund_reason)
+
+    # TODO: Solitude API call to request refund (bug 821906: doRefund()).
+
+    # Email buyer.
+    send_mail_jinja(_('Your app refund request has been accepted'),
+                    'support/emails/refund-approved.txt',
+                    {'name': contrib.addon.name},
+                    recipient_list=[contrib.user.email],
+                    from_email=settings.MARKETPLACE_EMAIL)
+
+    return redirect(reverse('lookup.transaction_summary', args=[tx_id]))
 
 
 @login_required

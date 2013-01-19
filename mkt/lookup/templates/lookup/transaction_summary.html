@@ -30,10 +30,21 @@
           {% endif %}
           <dt>{{ _('Amount') }}</dt>
           <dd>{{ tx.amount|numberfmt }}</dd>
+          <dt>{{ _('Notes') }}</dt><dd>{{ tx.notes }}</dd>
         </dl>
       </section>
     {% else %}
       {{ no_results() }}
+    {% endif %}
+
+    {% if action_allowed('Transaction', 'Refund') %}
+      <form class="refund-transaction" method="post"
+            action="{{ url('lookup.transaction_refund', tx_id) }}">
+        {{ csrf() }}
+        <label for="refund-reason">{{ _('Enter refund details to refund transaction') }}</label>
+        <textarea id="refund-reason" name="refund_reason" rows=4></textarea>
+        <button>{{ _('Refund this Transaction') }}</button>
+      </form>
     {% endif %}
 
 {% endblock %}
