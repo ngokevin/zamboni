@@ -2,6 +2,13 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 import json
 
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core import mail
+from django.test.client import RequestFactory
+from django.utils.encoding import smart_str
+
+import mock
 from babel import numbers
 from pyquery import PyQuery as pq
 from nose.exc import SkipTest
@@ -15,7 +22,9 @@ from amo.helpers import urlparams
 from amo.tests import addon_factory, app_factory, ESTestCase, TestCase
 from amo.urlresolvers import reverse
 from devhub.models import ActivityLog
+from lib.pay_server import client, SolitudeError
 from market.models import AddonPaymentData, AddonPremium, Price, Refund
+from mkt.lookup.views import _transaction_summary, transaction_refund
 from mkt.site.fixtures import fixture
 from mkt.webapps.cron import update_weekly_downloads
 from mkt.webapps.models import Installed, Webapp
@@ -279,6 +288,57 @@ class TestTransactionSummary(TestCase):
                           password='password')
         r = self.client.get(self.url)
         eq_(r.status_code, 403)
+
+
+class TestTransactionRefund(TestCase):
+    fixtures = fixture('user_support_staff', 'user_999')
+
+    def setUp(self):
+        self.tx_id = 45
+        self.url = reverse('lookup.transaction_refund', args=[self.tx_id])
+        self.app = app_factory()
+        self.user = UserProfile.objects.get(username='regularuser')
+        AddonUser.objects.create(addon=self.app, user=self.user)
+
+        self.contrib = Contribution.objects.create(
+            addon=self.app, user=self.user, transaction_id=self.tx_id,
+            type=amo.CONTRIB_PURCHASE)
+
+        self.req = RequestFactory().post(self.url, {'refund_reason': 'text'})
+        self.req.user = User.objects.get(username='support_staff')
+        self.req.amo_user = UserProfile.objects.get(username='support_staff')
+        self.req.groups = self.req.amo_user.groups.all()
+        self.login(self.req.user)
+
+    def test_mark_transaction_refund(self):
+        transaction_refund(self.req, self.tx_id)
+
+        refund = Refund.objects.filter(contribution__addon=self.app)
+        eq_(refund.count(), 1)
+        eq_(refund[0].status, amo.REFUND_PENDING)
+        assert self.req.POST['refund_reason'] in refund[0].refund_reason
+
+    @mock.patch.object(settings, 'SEND_REAL_EMAIL', True)
+    def test_refund_email(self):
+        transaction_refund(self.req, self.tx_id)
+        eq_(len(mail.outbox), 1)
+        assert self.app.name.localized_string in smart_str(mail.outbox[0].body)
+
+    def test_redirect(self):
+        resp = self.client.post(self.url, {'refund_reason': 'text'})
+        self.assert3xx(resp, reverse('lookup.transaction_summary',
+                                     args=[self.tx_id]))
+
+    def test_already_refunded(self):
+        self.contrib.enqueue_refund(status=amo.REFUND_PENDING,
+                                    refund_reason='front fell off')
+        resp = self.client.post(self.url, {'refund_reason': 'text'})
+        eq_(resp.status_code, 403)
+
+    def test_403(self):
+        self.login(self.user)
+        resp = self.client.post(self.url, {'refund_reason': 'text'})
+        eq_(resp.status_code, 403)
 
 
 class TestAppSearch(ESTestCase, SearchTestMixin):

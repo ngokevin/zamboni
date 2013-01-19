@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta
 
+from django.conf import settings
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db import connection
 from django.db.models import Sum, Count, Q
 from django.shortcuts import get_object_or_404, redirect
@@ -10,7 +13,8 @@ from tower import ugettext as _
 
 import amo
 from addons.models import Addon
-from amo.decorators import login_required, permission_required, json_view
+from amo.decorators import (login_required, permission_required, post_required,
+                            json_view)
 from amo.urlresolvers import reverse
 from amo.utils import paginate
 from apps.access import acl
@@ -19,7 +23,8 @@ from devhub.models import ActivityLog
 from elasticutils.contrib.django import S
 from market.models import AddonPaymentData, Refund
 from mkt.account.utils import purchase_list
-from mkt.lookup.forms import TransactionSearchForm
+from mkt.lookup.forms import TransactionRefundForm, TransactionSearchForm
+from mkt.lookup.tasks import email_buyer_refund
 from mkt.webapps.models import Installed
 from stats.models import DownloadCount, Contribution
 from users.models import UserProfile
@@ -72,9 +77,11 @@ def user_summary(request, user_id):
 @permission_required('Transaction', 'View')
 def transaction_summary(request, tx_id):
     tx_form = TransactionSearchForm()
+    tx_refund_form = TransactionRefundForm()
 
     return jingo.render(request, 'lookup/transaction_summary.html',
                         {'tx_id': tx_id, 'tx_form': tx_form,
+                         'tx_refund_form': tx_refund_form,
                          'tx': _transaction_summary(tx_id)})
 
 
@@ -87,6 +94,32 @@ def _transaction_summary(tx_id):
         'buyer': None,
         'seller': None,
         'amount': 0}
+
+
+@post_required
+@login_required
+@permission_required('Transaction', 'Refund')
+def transaction_refund(request, tx_id):
+    contrib = get_object_or_404(Contribution, transaction_id=tx_id)
+    try:
+        if contrib.refund or contrib.is_refunded():
+            raise PermissionDenied
+    except Refund.DoesNotExist:
+        pass
+
+    form = TransactionRefundForm(request.POST)
+    if form.is_valid():
+        contrib.enqueue_refund(
+            status=amo.REFUND_PENDING,
+            refund_reason=form.cleaned_data['refund_reason'])
+    else:
+        return redirect(reverse('lookup.transaction_summary', args=[tx_id]))
+
+    # TODO: Solitude API call to request refund (bug 821906: doRefund()).
+
+    email_buyer_refund(contrib)
+
+    return redirect(reverse('lookup.transaction_summary', args=[tx_id]))
 
 
 @login_required

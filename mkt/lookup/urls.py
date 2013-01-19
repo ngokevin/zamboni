@@ -20,6 +20,8 @@ app_patterns = patterns('',
 
 # These views all start with transaction ID.
 transaction_patterns = patterns('',
+    url(r'^refund$', views.transaction_refund,
+        name='lookup.transaction_refund'),
     url(r'^summary$', views.transaction_summary,
         name='lookup.transaction_summary'),
 )

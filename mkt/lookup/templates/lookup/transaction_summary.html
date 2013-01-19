@@ -36,4 +36,13 @@
       {{ no_results() }}
     {% endif %}
 
+    {% if action_allowed('Transaction', 'Refund') %}
+      <form class="refund-transaction c" method="post"
+            action="{{ url('lookup.transaction_refund', tx_id) }}">
+        {{ csrf() }}
+        {{ tx_refund_form }}
+        <button>{{ _('Refund this transaction') }}</button>
+      </form>
+    {% endif %}
+
 {% endblock %}
