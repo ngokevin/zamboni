@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import connection
 from django.db.models import Sum, Count, Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 
 import jingo
@@ -21,7 +21,9 @@ from apps.access import acl
 from apps.bandwagon.models import Collection
 from devhub.models import ActivityLog
 from elasticutils.contrib.django import S
+from lib.pay_server import client, SolitudeError
 from market.models import AddonPaymentData, Refund
+from mkt.constants.payments import PROVIDERS
 from mkt.account.utils import purchase_list
 from mkt.lookup.forms import TransactionRefundForm, TransactionSearchForm
 from mkt.lookup.tasks import email_buyer_refund
@@ -76,24 +78,64 @@ def user_summary(request, user_id):
 @login_required
 @permission_required('Transaction', 'View')
 def transaction_summary(request, tx_id):
+    tx_data = _transaction_summary(tx_id)
+    if not tx_data:
+        raise Http404
+
     tx_form = TransactionSearchForm()
     tx_refund_form = TransactionRefundForm()
 
     return jingo.render(request, 'lookup/transaction_summary.html',
-                        {'tx_id': tx_id, 'tx_form': tx_form,
-                         'tx_refund_form': tx_refund_form,
-                         'tx': _transaction_summary(tx_id)})
+                        dict({'tx_id': tx_id, 'tx_form': tx_form,
+                              'tx_refund_form': tx_refund_form}.items() +
+                             tx_data.items()))
 
 
 def _transaction_summary(tx_id):
     """Get transaction details from Solitude API."""
-    # TODO: Get transaction details from Solitude API.
+    buyer = None
+    seller = None
+    related_tx = None
+
+    contrib = get_object_or_404(Contribution, transaction_id=tx_id)
+
+    # Get tx.
+    try:
+        transaction = client.lookup_transaction(tx_id)
+    except (SolitudeError, ValueError):
+        return
+
+    # Get buyer.
+    buyer_uri = transaction.get('buyer')
+    if buyer_uri:
+        buyer = client.get(buyer_uri)
+
+    # Get product.
+    seller_product_uri = transaction.get('seller_product')
+    if seller_product_uri:
+        seller_product = client.get(seller_product_uri)
+
+        # Get seller.
+        seller_uri = seller_product.get('seller', None)
+        if seller_uri:
+            seller = client.get(seller_uri)
+
+    # Get related transaction.
+    related_tx_uri = transaction.get('related', None)
+    if related_tx_uri:
+        related_tx = client.get(related_tx_uri)
+
     return {
-        'id': '',
-        'date': '',
-        'buyer': None,
-        'seller': None,
-        'amount': 0}
+        'tx': transaction,
+        'buyer': buyer,
+        'seller': seller,
+        'provider': PROVIDERS[transaction['provider']],
+        'related_tx': related_tx,
+
+        'contrib': contrib,
+        'type': amo.CONTRIB_TYPES[contrib.type],
+        'is_refund': contrib.type == amo.CONTRIB_REFUND,
+    }
 
 
 @post_required
