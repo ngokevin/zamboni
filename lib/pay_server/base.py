@@ -38,6 +38,7 @@ mapping = {
     'seller_paypal': ['paypal', 'seller', ['get', 'post', 'patch']],
     'seller_bluevia': ['bluevia', 'seller', ['get', 'post', 'patch']],
     'product': ['generic', 'product', ['get', 'post']],
+    'transaction': ['generic', 'transaction', ['get', 'post']],
     # PayPal APIs
     'account_check': ['paypal', 'account-check', ['post']],
     'ipn': ['paypal', 'ipn', ['post']],
@@ -61,6 +62,7 @@ mapping = {
 
 date_format = '%Y-%m-%d'
 time_format = '%H:%M:%S'
+
 
 class Encoder(json.JSONEncoder):
 
