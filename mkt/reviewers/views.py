@@ -373,6 +373,7 @@ def queue_rereview(request):
                                 addon__disabled_by_user=False)
                         .exclude(addon__in=excluded_ids))
     apps, search_form = _queue_to_apps(request, rqs)
+    apps = [QueuedApp(app, app.rereviewqueue_set.all()[0].created) for app in apps]
     return _queue(request, apps, 'rereview', search_form)
 
 
@@ -381,6 +382,7 @@ def queue_escalated(request):
     eqs = EscalationQueue.uncached.filter(addon__type=amo.ADDON_WEBAPP,
                                           addon__disabled_by_user=False)
     apps, search_form = _queue_to_apps(request, eqs)
+    apps = [QueuedApp(app, app.escalationqueue_set.all()[0].created) for app in apps]
     return _queue(request, apps, 'escalated', search_form)
 
 
@@ -446,9 +448,8 @@ def _queue_to_apps(request, queue_qs):
 
     # Put the filtered qs back into the correct sort order.
     qs = manual_order(qs, sorted_app_ids)
-    apps = [QueuedApp(app, app.created) for app in qs]
 
-    return apps, search_form
+    return qs, search_form
 
 
 def _get_search_form(request, qs):
