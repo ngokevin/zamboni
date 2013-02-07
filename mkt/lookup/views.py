@@ -23,8 +23,7 @@ from devhub.models import ActivityLog
 from elasticutils.contrib.django import S
 from lib.pay_server import client
 from market.models import AddonPaymentData, Refund
-from mkt.constants.payments import (STATUS_COMPLETED, STATUS_FAILED,
-                                    STATUS_PENDING, PROVIDERS)
+from mkt.constants.payments import PROVIDERS
 from mkt.account.utils import purchase_list
 from mkt.lookup.forms import TransactionRefundForm, TransactionSearchForm
 from mkt.lookup.tasks import (email_buyer_refund_approved,
@@ -99,25 +98,46 @@ def transaction_summary(request, uuid):
 def _transaction_summary(uuid):
     """Get transaction details from Solitude API."""
     contrib = get_object_or_404(Contribution, uuid=uuid)
-
     # If the transaction is pending, we haven't assigned a transaction
     # uuid to the form yet.
-    solitude = {}
+    transaction = {}
     if contrib.transaction_id:
         # We'll probably be pulling more from this later.
-        solitude = (client.api.generic.transaction
-                    .get_object_or_404(uuid=contrib.transaction_id))
+        transaction = (client.api.generic.transaction
+                       .get_object_or_404(uuid=contrib.transaction_id))
+
+    # Get buyer.
+    buyer = None
+    buyer_uri = transaction.get('buyer')
+    if buyer_uri:
+        buyer = client.get(buyer_uri)
+
+    # Get refund status.
+    refund_status = None
+    has_refund = contrib.has_refund()
+    if has_refund:
+        try:
+            refund_status = client.api.bango.refund.status.get(
+                data={'uuid': contrib.refund.transaction_id})['status']
+        except HttpServerError:
+            refund_status = _('Currently unable to retrieve refund status.')
 
     return {
+        # Solitude data.
+        'tx': transaction,
+        'buyer': buyer,
         # There won't be a provider on pending refunds.
-        'provider': PROVIDERS.get(solitude.get('provider', ''), 'None'),
+        'provider': PROVIDERS.get(transaction.get('provider', ''), 'None'),
+        'refund_status': refund_status,
+        'related': contrib.related,
+
+        # Zamboni data.
         'app': contrib.addon,
         'contrib': contrib,
         'type': amo.CONTRIB_TYPES.get(contrib.type, _('Incomplete')),
         # Whitelist what is refundable.
-        'is_refundable': (contrib.type == amo.CONTRIB_PURCHASE
-                          and not contrib.is_refunded()),
-        'related': contrib.related,
+        'is_refundable': ((contrib.type == amo.CONTRIB_PURCHASE)
+                          and not has_refund),
     }
 
 
@@ -146,27 +166,27 @@ def transaction_refund(request, uuid):
             _('You cannot make a refund request for this transaction.'))
         return redirect(reverse('lookup.transaction_summary', args=[uuid]))
 
-    if res['status'] == STATUS_PENDING:
+    if res['status'] == 'PENDING':
         # Create pending Refund.
-        contrib.enqueue_refund(
-            status=amo.REFUND_PENDING,
+        refund_uuid = client.get(res['transaction'])['uuid']
+        contrib.enqueue_refund(amo.REFUND_PENDING, request.amo_user,
             refund_reason=form.cleaned_data['refund_reason'],
-            user=request.amo_user)
+            transaction_id=refund_uuid)
         log.info('Refund pending: %s' % uuid)
         email_buyer_refund_pending(contrib)
         messages.success(
             request, _('Refund for this transaction now pending.'))
-    elif res['status'] == STATUS_COMPLETED:
+    elif res['status'] == 'OK':
         # Create approved Refund.
-        contrib.enqueue_refund(
-            status=amo.REFUND_APPROVED,
+        refund_uuid = client.get(res['transaction'])['uuid']
+        contrib.enqueue_refund(amo.REFUND_APPROVED, request.amo_user,
             refund_reason=form.cleaned_data['refund_reason'],
-            user=request.amo_user)
+            transaction_id=refund_uuid)
         log.info('Refund approved: %s' % uuid)
         email_buyer_refund_approved(contrib)
         messages.success(
             request, _('Refund for this transaction successfully approved.'))
-    elif res['status'] == STATUS_FAILED:
+    elif res['status'] == 'FAILED':
         # Bango no like.
         log.error('Refund failed: %s' % uuid)
         messages.error(

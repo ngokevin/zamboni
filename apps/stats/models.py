@@ -320,7 +320,7 @@ class Contribution(amo.models.ModelBase):
             self.save()
 
     def enqueue_refund(self, status, user, refund_reason=None,
-                       rejection_reason=None):
+                       rejection_reason=None, transaction_id=None):
         """Keep track of a contribution's refund status."""
         from market.models import Refund
         refund, c = Refund.objects.safer_get_or_create(contribution=self,
@@ -343,6 +343,8 @@ class Contribution(amo.models.ModelBase):
             refund.refund_reason = refund_reason
         if rejection_reason:
             refund.rejection_reason = rejection_reason
+        if transaction_id:
+            refund.transaction_id = transaction_id
         refund.save()
         return refund
 
