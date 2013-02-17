@@ -6,7 +6,7 @@ PIL==1.1.7
 
 # For JWT to sign App receipts:
 # Temporary.
-M2Crypto==0.20.2
+-e git://github.com/ametaireau/M2Crypto.git@0a30b69ab47c64ef6a713338912194603a12c84e#egg=M2Crypto
 
 # For the addon validator, including C speedups.
 simplejson==2.3.2
