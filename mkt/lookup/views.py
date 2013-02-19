@@ -23,7 +23,7 @@ from devhub.models import ActivityLog
 from elasticutils.contrib.django import S
 from lib.pay_server import client
 from market.models import AddonPaymentData, Refund
-from mkt.constants.payments import PROVIDERS
+from mkt.constants.payments import COMPLETED, FAILED, PENDING, PROVIDERS
 from mkt.account.utils import purchase_list
 from mkt.lookup.forms import TransactionRefundForm, TransactionSearchForm
 from mkt.lookup.tasks import (email_buyer_refund_approved,
@@ -98,6 +98,9 @@ def transaction_summary(request, uuid):
 def _transaction_summary(uuid):
     """Get transaction details from Solitude API."""
     contrib = get_object_or_404(Contribution, uuid=uuid)
+    refund_contribs = contrib.get_refund_contribs()
+    refund_contrib = refund_contribs[0] if refund_contribs.exists() else None
+
     # If the transaction is pending, we haven't assigned a transaction
     # uuid to the form yet.
     transaction = {}
@@ -114,11 +117,10 @@ def _transaction_summary(uuid):
 
     # Get refund status.
     refund_status = None
-    has_refund = contrib.has_refund()
-    if has_refund:
+    if refund_contrib:
         try:
             refund_status = client.api.bango.refund.status.get(
-                data={'uuid': contrib.refund.transaction_id})['status']
+                data={'uuid': refund_contrib.transaction_id})['status']
         except HttpServerError:
             refund_status = _('Currently unable to retrieve refund status.')
 
@@ -137,7 +139,7 @@ def _transaction_summary(uuid):
         'type': amo.CONTRIB_TYPES.get(contrib.type, _('Incomplete')),
         # Whitelist what is refundable.
         'is_refundable': ((contrib.type == amo.CONTRIB_PURCHASE)
-                          and not has_refund),
+                          and not refund_contrib),
     }
 
 
@@ -147,7 +149,10 @@ def _transaction_summary(uuid):
 def transaction_refund(request, uuid):
     contrib = get_object_or_404(Contribution, uuid=uuid,
                                 type=amo.CONTRIB_PURCHASE)
-    if contrib.has_refund():
+    refund_contribs = contrib.get_refund_contribs()
+    refund_contrib = refund_contribs[0] if refund_contribs.exists() else None
+
+    if refund_contrib:
         messages.error(request, _('A refund has already been processed.'))
         return redirect(reverse('lookup.transaction_summary', args=[uuid]))
 
@@ -166,27 +171,35 @@ def transaction_refund(request, uuid):
             _('You cannot make a refund request for this transaction.'))
         return redirect(reverse('lookup.transaction_summary', args=[uuid]))
 
-    if res['status'] == 'PENDING':
+    if res['status'] in [PENDING, COMPLETED]:
+        # Create refund Contribution.
+        refund_contrib = contrib
+        refund_contrib.pk = None
+        refund_contrib.save()
+        refund_contrib.update(
+            type=amo.CONTRIB_REFUND, amount=-refund_contrib.amount,
+            transaction_id=client.get(res['transaction']['uuid']),
+            related=contrib)
+
+    if res['status'] == PENDING:
         # Create pending Refund.
-        refund_uuid = client.get(res['transaction'])['uuid']
-        contrib.enqueue_refund(amo.REFUND_PENDING, request.amo_user,
-            refund_reason=form.cleaned_data['refund_reason'],
-            transaction_id=refund_uuid)
+        refund_contrib.enqueue_refund(
+            amo.REFUND_PENDING, request.amo_user,
+            refund_reason=form.cleaned_data['refund_reason'])
         log.info('Refund pending: %s' % uuid)
         email_buyer_refund_pending(contrib)
         messages.success(
             request, _('Refund for this transaction now pending.'))
-    elif res['status'] == 'OK':
+    elif res['status'] == COMPLETED:
         # Create approved Refund.
-        refund_uuid = client.get(res['transaction'])['uuid']
-        contrib.enqueue_refund(amo.REFUND_APPROVED, request.amo_user,
-            refund_reason=form.cleaned_data['refund_reason'],
-            transaction_id=refund_uuid)
+        refund_contrib.enqueue_refund(
+            amo.REFUND_APPROVED, request.amo_user,
+            refund_reason=form.cleaned_data['refund_reason'])
         log.info('Refund approved: %s' % uuid)
         email_buyer_refund_approved(contrib)
         messages.success(
             request, _('Refund for this transaction successfully approved.'))
-    elif res['status'] == 'FAILED':
+    elif res['status'] == FAILED:
         # Bango no like.
         log.error('Refund failed: %s' % uuid)
         messages.error(

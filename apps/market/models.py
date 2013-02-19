@@ -290,8 +290,6 @@ class RefundManager(amo.models.ManagerBase):
 class Refund(amo.models.ModelBase):
     # This refers to the original object with `type=amo.CONTRIB_PURCHASE`.
     contribution = models.OneToOneField('stats.Contribution')
-    # Internal transaction id between us and Solitude to get refund status.
-    transaction_id = models.CharField(max_length=255, null=True, db_index=True)
 
     # Pending => 0
     # Approved => 1
