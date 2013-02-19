@@ -48,7 +48,7 @@ theme_detail_patterns = patterns('',
     url('^$', lambda r,
         addon_id: redirect('devhub.themes.edit', addon_id,
                            permanent=True)),
-    url('^edit$', views.edit, name='devhub.themes.edit'),
+    url('^edit$', views.edit_theme, name='devhub.themes.edit'),
     url('^edit_(?P<section>[^/]+)(?:/(?P<editable>[^/]+))?$',
         views.addons_section, name='devhub.themes.section'),
 )

@@ -321,6 +321,21 @@ def edit(request, addon_id, addon, webapp=False, theme=False):
     return jingo.render(request, 'devhub/addons/edit.html', data)
 
 
+@dev_required(theme=True)
+def edit_theme(request, addon_id, addon, theme=False):
+    data = {
+       'page': 'edit',
+       'addon': addon,
+       'theme': theme,
+       'valid_slug': addon.slug,
+       'tags': addon.tags.not_blacklisted().values_list('tag_text', flat=True),
+       'previews': addon.previews.all(),
+       'form': addon_forms.NewPersonaForm(instance=addon, request=request)
+    }
+
+    return jingo.render(request, 'devhub/personas/edit.html', data)
+
+
 @dev_required(owner_for_post=True, webapp=True)
 def delete(request, addon_id, addon, webapp=False):
     # Database deletes only allowed for free or incomplete addons.
@@ -1795,8 +1810,6 @@ def submit_bump(request, addon_id, addon, webapp=False):
 
 @login_required
 def submit_persona(request):
-    if not waffle.flag_is_active(request, 'submit-personas'):
-        raise PermissionDenied
     form = addon_forms.NewPersonaForm(data=request.POST or None,
                                       files=request.FILES or None,
                                       request=request)
