@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+import hashlib
+import uuid
 
 from django.db import connection
 from django.db.models import Sum, Count, Q
@@ -23,7 +25,8 @@ from devhub.models import ActivityLog
 from elasticutils.contrib.django import S
 from lib.pay_server import client
 from market.models import AddonPaymentData, Refund
-from mkt.constants.payments import COMPLETED, FAILED, PENDING, PROVIDERS
+from mkt.constants.payments import (COMPLETED, FAILED, PENDING, PROVIDERS,
+                                    REFUND_STATUSES)
 from mkt.account.utils import purchase_list
 from mkt.lookup.forms import TransactionRefundForm, TransactionSearchForm
 from mkt.lookup.tasks import (email_buyer_refund_approved,
@@ -81,8 +84,8 @@ def user_summary(request, user_id):
 
 @login_required
 @permission_required('Transaction', 'View')
-def transaction_summary(request, uuid):
-    tx_data = _transaction_summary(uuid)
+def transaction_summary(request, tx_uuid):
+    tx_data = _transaction_summary(tx_uuid)
     if not tx_data:
         raise Http404
 
@@ -90,14 +93,14 @@ def transaction_summary(request, uuid):
     tx_refund_form = TransactionRefundForm()
 
     return jingo.render(request, 'lookup/transaction_summary.html',
-                        dict({'uuid': uuid, 'tx_form': tx_form,
+                        dict({'uuid': tx_uuid, 'tx_form': tx_form,
                               'tx_refund_form': tx_refund_form}.items() +
                              tx_data.items()))
 
 
-def _transaction_summary(uuid):
+def _transaction_summary(tx_uuid):
     """Get transaction details from Solitude API."""
-    contrib = get_object_or_404(Contribution, uuid=uuid)
+    contrib = get_object_or_404(Contribution, uuid=tx_uuid)
     refund_contribs = contrib.get_refund_contribs()
     refund_contrib = refund_contribs[0] if refund_contribs.exists() else None
 
@@ -119,8 +122,8 @@ def _transaction_summary(uuid):
     refund_status = None
     if refund_contrib:
         try:
-            refund_status = client.api.bango.refund.status.get(
-                data={'uuid': refund_contrib.transaction_id})['status']
+            refund_status = REFUND_STATUSES[client.api.bango.refund.status.get(
+                data={'uuid': refund_contrib.transaction_id})['status']]
         except HttpServerError:
             refund_status = _('Currently unable to retrieve refund status.')
 
@@ -146,47 +149,49 @@ def _transaction_summary(uuid):
 @post_required
 @login_required
 @permission_required('Transaction', 'Refund')
-def transaction_refund(request, uuid):
-    contrib = get_object_or_404(Contribution, uuid=uuid,
+def transaction_refund(request, tx_uuid):
+    contrib = get_object_or_404(Contribution, uuid=tx_uuid,
                                 type=amo.CONTRIB_PURCHASE)
     refund_contribs = contrib.get_refund_contribs()
     refund_contrib = refund_contribs[0] if refund_contribs.exists() else None
 
     if refund_contrib:
         messages.error(request, _('A refund has already been processed.'))
-        return redirect(reverse('lookup.transaction_summary', args=[uuid]))
+        return redirect(reverse('lookup.transaction_summary', args=[tx_uuid]))
 
     form = TransactionRefundForm(request.POST)
     if not form.is_valid():
         messages.error(request, str(form.errors))
-        return redirect(reverse('lookup.transaction_summary', args=[uuid]))
+        return redirect(reverse('lookup.transaction_summary', args=[tx_uuid]))
 
     try:
         res = client.api.bango.refund.post({'uuid': contrib.transaction_id})
     except (HttpClientError, HttpServerError):
         # Either doing something not supposed to or Solitude had an issue.
-        log.exception('Refund error: %s' % uuid)
+        log.exception('Refund error: %s' % tx_uuid)
         messages.error(
             request,
             _('You cannot make a refund request for this transaction.'))
-        return redirect(reverse('lookup.transaction_summary', args=[uuid]))
+        return redirect(reverse('lookup.transaction_summary', args=[tx_uuid]))
 
     if res['status'] in [PENDING, COMPLETED]:
         # Create refund Contribution.
-        refund_contrib = contrib
+        refund_contrib = Contribution.objects.get(id=contrib.id)
+        refund_contrib.id = None
         refund_contrib.pk = None
         refund_contrib.save()
         refund_contrib.update(
-            type=amo.CONTRIB_REFUND, amount=-refund_contrib.amount,
-            transaction_id=client.get(res['transaction']['uuid']),
-            related=contrib)
+            type=amo.CONTRIB_REFUND, related=contrib,
+            uuid=hashlib.md5(str(uuid.uuid4())).hexdigest(),
+            amount=-refund_contrib.amount if refund_contrib.amount else None,
+            transaction_id=client.get(res['transaction'])['uuid'])
 
     if res['status'] == PENDING:
         # Create pending Refund.
         refund_contrib.enqueue_refund(
             amo.REFUND_PENDING, request.amo_user,
             refund_reason=form.cleaned_data['refund_reason'])
-        log.info('Refund pending: %s' % uuid)
+        log.info('Refund pending: %s' % tx_uuid)
         email_buyer_refund_pending(contrib)
         messages.success(
             request, _('Refund for this transaction now pending.'))
@@ -195,17 +200,17 @@ def transaction_refund(request, uuid):
         refund_contrib.enqueue_refund(
             amo.REFUND_APPROVED, request.amo_user,
             refund_reason=form.cleaned_data['refund_reason'])
-        log.info('Refund approved: %s' % uuid)
+        log.info('Refund approved: %s' % tx_uuid)
         email_buyer_refund_approved(contrib)
         messages.success(
             request, _('Refund for this transaction successfully approved.'))
     elif res['status'] == FAILED:
         # Bango no like.
-        log.error('Refund failed: %s' % uuid)
+        log.error('Refund failed: %s' % tx_uuid)
         messages.error(
             request, _('Refund request for this transaction failed.'))
 
-    return redirect(reverse('lookup.transaction_summary', args=[uuid]))
+    return redirect(reverse('lookup.transaction_summary', args=[tx_uuid]))
 
 
 @login_required

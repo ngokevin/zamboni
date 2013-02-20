@@ -351,9 +351,11 @@ class TestTransactionSummary(TestCase):
 
     @mock.patch('mkt.lookup.views.client')
     def test_no_transaction_404(self, solitude):
-        solitude.api.generic.transaction.get_object_or_404.side_effect = ObjectDoesNotExist
+        solitude.api.generic.transaction.get_object_or_404.side_effect = (
+            ObjectDoesNotExist)
         r = self.client.get(reverse('lookup.transaction_summary', args=[999]))
         eq_(r.status_code, 404)
+
 
 @mock.patch.object(settings, 'TASK_USER_ID', 999)
 class TestTransactionRefund(TestCase):
