@@ -596,6 +596,9 @@ MINIFY_BUNDLES = {
             # Datepicker styles and jQuery UI core.
             'css/zamboni/jquery-ui/custom-1.7.2.css',
         ),
+        'zamboni/forms': (
+            'css/impala/forms.less',
+        )
     },
     'js': {
         # JS files common to the entire site (pre-impala).

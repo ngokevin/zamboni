@@ -27,11 +27,11 @@
 
 <section id="edit-persona" class="primary devhub-form">
   <div class="island hero prettyform item">
-    <form action="" method="post" class="item-wrapper">
+    <form action="" method="post" class="item_wrapper">
+      <h3>{{ _('Theme Details') }}</h3>
       {{ csrf() }}
       {{ form.unsaved_data }}
       <fieldset>
-        <legend>{{ _('Theme Details') }}</legend>
         <ul>
           {{ pretty_field(form.name, label=_('Give your Theme a name.')) }}
           {{ pretty_field(form.category, label=_('Select the category that best describes your Theme.'),
@@ -61,7 +61,7 @@
         </ul>
       </fieldset>
       <fieldset>
-        <legend>{{ _('Theme License') }}</legend>
+        <h3>{{ _('Theme License') }}</h3>
         <div id="cc-chooser"{% if form.license.value() %} class="hidden"{% endif %}>
           {{ form.license }}
           {{ form.license.errors }}
@@ -156,7 +156,7 @@
         </div>
       </fieldset>
       <fieldset id="persona-design">
-        <legend>{{ _('Theme Design') }}</legend>
+        <h3>{{ _('Theme Design') }}</h3>
         <ul>
           <li id="persona-header" class="row">
             {{ pretty_field(form.header, label=_('Select a header image for your Theme.'),
@@ -200,7 +200,7 @@
         </ul>
       </fieldset>
       <fieldset id="persona-preview">
-        <legend>{{ _('Preview') }}</legend>
+        <h3>{{ _('Preview') }}</h3>
         <div class="persona persona-large persona-preview">
           <div class="persona-viewer" data-browsertheme>
             <div class="details">
@@ -217,7 +217,7 @@
           </div>
         </div>
       </fieldset>
-      <p><button>{{ _('Submit Theme') }}</button></p>
+      <p><button>{{ _('Submit Changes') }}</button></p>
     </form>
   </div>
 </section>
