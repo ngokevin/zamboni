@@ -1561,8 +1561,41 @@ iframe#manifest-contents {
             font-size: 13px;
             padding: 13px 0;
         }
+        td {
+            padding: 13px 0;
+            &.app-name {
+                max-width: 140px;
+            }
+            &.flags {
+                min-width: 42px;
+            }
+        }
         .payments {
             display: none;
+        }
+    }
+    .device-list {
+        bottom: 10px;
+        position: relative;
+        width: 80px;
+        ul {
+            position: relative;
+        }
+        li {
+            position: absolute;
+        }
+        .desktop {
+            left: -37px;
+        }
+        .android-tablet {
+            left: -27px;
+            top: 10px;
+        }
+        .firefoxos {
+            left: 18px;
+        }
+        .android-mobile {
+            left: -2px;
         }
     }
 }
