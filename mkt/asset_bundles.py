@@ -79,7 +79,6 @@ CSS = {
         'css/devreg/themes_review.less',
         'css/devreg/legacy-paginator.less',
         'css/devreg/files.less',
-        'css/devreg/menupicker.less',
     ),
     'mkt/splash': (
         'css/mkt/splash.less',
@@ -306,7 +305,6 @@ JS = {
         'js/zamboni/editors.js',
         'js/mkt/reviewers.js',
         'js/zamboni/editors.js',
-        'js/devreg/menupicker.js',
         'js/devreg/expandable.js',
         'js/devreg/reviewers_init.js',
     ),
