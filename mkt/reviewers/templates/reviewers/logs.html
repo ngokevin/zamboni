@@ -7,7 +7,7 @@
 {% block content %}
 
   {% include 'reviewers/logs_filter.html' %}
-  <h1>{{ _('App Review Log') }}</h1>
+  <h1 class="trigger-logs">{{ _('App Review Log') }}</h1>
 
   <section class="island">
     {% if pager.object_list %}
