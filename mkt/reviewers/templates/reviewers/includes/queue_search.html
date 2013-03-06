@@ -1,7 +1,7 @@
 {% from 'site/helpers/form_row.html' import form_row %}
 
 {% if search_form %}
-  <div id="queue-search"{% if not DESKTOP %} class="mobile-queue-search"{% endif %} data-api-url="{{ search_url }}">
+  <div class="queue-search" data-api-url="{{ search_url }}">
     <form class="c">
       <label for="{{ search_form.q.auto_id }}">{{ search_form.q.label }}</label>
       {{ search_form.q }}
@@ -11,10 +11,16 @@
         (<a id="clear-queue-search" href="{{ url('reviewers.apps.queue_%s' % tab) }}">{{ _('Clear Search') }}</a>)
       {% endif %}
 
-      <div class="advanced-search c{% if not adv_searching %} hidden{% endif %}">
+      <div class="advanced-search desktop c{% if not adv_searching %} hidden{% endif %}">
         <div class="basic-filters">
-          {# TODO: Add back 'admin_review', 'has_editor_comment', 'has_info_request', 'waiting_time_days' when they are in elasticsearch. #}
           {{ form_row(search_form, ('status', 'app_type')) }}
+          {# TODO: Add back 'admin_review', 'has_editor_comment',
+             'has_info_request', 'waiting_time_days' when they are in
+             elasticsearch.
+          {{ form_row(search_form, ('admin_review', 'has_editor_comment',
+                                    'has_info_request', 'waiting_time_days',
+                                    'app_type')) }}
+          #}
         </div>
         <div class="device-type-select">
           {{ form_row(search_form, ('device',)) }}
@@ -24,7 +30,6 @@
         </div>
       </div>
       {{ search_form.limit }}
-
     </form>
   </div>
 {% endif %}
