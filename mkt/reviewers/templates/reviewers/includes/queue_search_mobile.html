@@ -34,18 +34,18 @@
           <!--Differentiate radio and checkbox form elements.-->
           {% set multi = field in ('device', 'premium_types') %}
 
-          <!--Pretty and visible representation of form.-->
+          <!-- Pretty and visible representation of form. -->
           <div class="form-elem c value-select-field" data-field="{{ field }}">
             {{ search_form[field].label_tag() }}
             <div class="{{ field }} selected-val c {% if multi %} multi-val{% endif %}">
               <div class="tabnav-sprite"></div>
-              <!--Defaults to None, until JS updates the pretty value based on
-                  actual form values.-->
+              <!-- Defaults to None, until JS updates the pretty value based on
+                  actual form values. -->
               <span>{{ _('None') }}</span>
             </div>
           </div>
 
-          <!--Respective overlay, contains actual form inputs.-->
+          <!-- Respective overlay, contains actual form inputs. -->
           <div role="dialog" class="{{ field }}-overlay scrollable hidden">
             <section>
               <h1>{{ search_form[field].field.label }}</h1>
@@ -57,8 +57,8 @@
                              type="{{ 'checkbox' if multi else 'radio' }}"
                              name="{{ field }}" value="{{ val }}">
                       <span>
-                        <!--Evaluate lazy translation, empty-string-valued
-                            radios can't be selected.-->
+                        {# Evaluate lazy translation, empty-string-valued
+                           radios can't be selected. #}
                         {{ pretty_val ~ '' or _('None') }}
                       </span>
                     </label>

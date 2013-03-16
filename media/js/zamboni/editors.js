@@ -344,7 +344,7 @@ function initQueueSearch(doc) {
                our Gaia form after submitting with GET params. We sync data
                between the populated hidden desktop advanced search form to our
                mobile Gaia form. */
-            var val = $(input).attr('value');
+            var val = $(this).val();
             if (val) {
                 /* If input checked/selected in the desktop form, check/select
                    it in our Gaia form. */
@@ -354,7 +354,7 @@ function initQueueSearch(doc) {
                 $inputs = $inputs.add($('input[value="' + val + '"]:checked' + nameSelect,
                                         $advSearch));
                 if ($inputs.length) {
-                    $(input).attr('checked', true);
+                    $(input).prop('checked');
                 }
             }
         });
@@ -499,15 +499,13 @@ function syncPrettyMobileForm() {
         var name = $(valSelectField).data('field');
         var $checkedInputs = $('li[role="option"] input[name="' + name + '"]:checked');
 
-        var valStr = '';
+        var valStrs = [];
         $checkedInputs.each(function(index, input) {
             // Build pretty string.
-            if (index > 0) {
-                valStr += ', ';
-            }
-            valStr += $(input).next('span').text();
+            valStrs.push($(input).next('span').text());
         });
         // Sync new selected value to our span in the pretty form.
-        $('.' + name + '.selected-val span').text(valStr || gettext('None'));
+        $('.' + name + '.selected-val span').text(valStrs.join() ||
+                                                  gettext('None'));
     });
 }
