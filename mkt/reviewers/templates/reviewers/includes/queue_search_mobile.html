@@ -32,7 +32,7 @@
         <!--Value selector fields.-->
         {% for field in ('app_type', 'device', 'premium_types') %}
           <!--Differentiate radio and checkbox form elements.-->
-          {% set multi = field in ('device', 'premium_types') %}
+          {% set multi = field in ('premium_types',) %}
 
           <!-- Pretty and visible representation of form. -->
           <div class="form-elem c value-select-field" data-field="{{ field }}">
