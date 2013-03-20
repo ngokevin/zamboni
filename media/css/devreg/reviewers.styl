@@ -565,8 +565,9 @@ div.editor-stats-table > div.editor-stats-dark {
 }
 
 .queue-search {
-    padding: 1em;
     margin-bottom: 1em;
+    padding: 1em;
+    text-align: center;
     .clear-queue-search {
         text-transform: lowercase;
     }
@@ -576,15 +577,25 @@ div.editor-stats-table > div.editor-stats-dark {
     label[for="id_q"] {
         margin-right: .5em;
     }
-    button {
-        margin: 0 .5em;
+    #id_q {
+        border-radius: 3px 0 0 3px;
     }
+    .toggle-queue-search {
+        position: relative;
+        left: 5px;
+    }
+}
+button.search {
+    border-radius: 0 3px 3px 0;
+    line-height: 14px;
+    height: 30px;
+    padding: 0;
+    right: 3px;
+    top: 1px;
 }
 .advanced-search {
     margin-top: 26px;
-    &.hidden {
-        display: none;
-    }
+    text-align: left;
     label {
         margin-bottom: .5em;
     }
@@ -597,44 +608,24 @@ div.editor-stats-table > div.editor-stats-dark {
     .form-row {
         clear: both;
     }
-    .basic-filters {
-        float: left;
-        position: relative;
-        top: 3px;
-        width: 350px;
+    .basic-filters, .device-type-select, .premium-type-select {
         select, input {
+            bottom: 5px;
             position: relative;
-            bottom: 3px;
         }
     }
-    .device-type-select, .premium-type-select {
-        float: left;
+    .basic-filters {
         label {
             display: block;
+            float: left;
+            margin-right: 10px;
+            min-width: 100px;
+            text-align: right;
         }
-    }
-    .device-type-select {
-        width: 200px;
-    }
-    .premium-type-select {
-        width: 250px;
-    }
-    .premium-type-select:after {
-        content: ".";
-        display: block;
-        clear: both;
-        height: 0;
-        visibility: hidden;
-    }
-    .basic-filters label {
-        display: block;
-        float: left;
-        width: 13em;
     }
 }
 #id_q {
-    height: 2em;
-    width: 50%;
+    min-width: 50%;
 }
 
 /* Add-on Review Log */
@@ -1187,16 +1178,13 @@ iframe#manifest-contents {
 
 @media $landscape-max {
     #id_q {
-        display: block;
         font-size: 18px;
-        margin-top: .5em;
-        width: 100%;
-    }
-    .queue-search button {
-        margin: .5em .5em 0 0;
     }
     html, body {
         background: $bg-gray $grain-src;
+    }
+    #page ul.tabnav li {
+        margin: 0;
     }
     #breadcrumbs,
     #actions + strong,
@@ -1368,6 +1356,19 @@ iframe#manifest-contents {
     .app-name a {
         font-weight: 600;
     }
+    button.button.search {
+        height: 38px;
+        line-height: 48px;
+        margin-top: 0px;
+        min-width: 0%;
+        margin-right: 0;
+        padding: 0 2px;
+        top: 5px;
+        span {
+            bottom: 7px;
+            position: relative;
+        }
+    }
 }
 
 $mobileborder = #d7d2c3;
@@ -1382,14 +1383,10 @@ $mobileborder = #d7d2c3;
     ul.tabnav a, .clear-queue-search {
         font-size: 16px;
     }
-    .button {
-        margin-top: 0px;
-        min-width: 0%;
-        margin-right: 0;
-        top: 8px;
+    button.button.search {
+        top: 7px;
         span {
             bottom: 9px;
-            position: relative;
         }
     }
     #site-nav {
@@ -1439,18 +1436,22 @@ $mobileborder = #d7d2c3;
             width: 75%;
         }
         .button {
-            height: 36px;
-            max-width: 22%;
             margin-right: 0;
+            right: 8px;
+            top: 7px;
         }
         .toggle-queue-search, .clear-queue-search {
             bottom: 64px;
             float: right;
+            left: 0;
             line-height: 6px;
-            margin-right: 3px;
             position: relative;
         }
+        .toggle-queue-search {
+            margin-right: 10px;
+        }
         .clear-queue-search {
+            margin-right: 3px;
             text-transform: none;
         }
     }
@@ -1869,13 +1870,6 @@ $mobileborder = #d7d2c3;
     }
 }
 
-@media $landscape-max {
-    #page ul.tabnav li {
-        margin: 0;
-    }
-}
-
-
 @media (min-width: 768px) {
     .site-title a {
         padding-left: 250px;
@@ -1883,6 +1877,7 @@ $mobileborder = #d7d2c3;
         left: -250px;
     }
     .data-grid {
+        margin-top: 13px;
         .addon-row a {
             max-width: 600px;
         }

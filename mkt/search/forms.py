@@ -135,9 +135,10 @@ class AppListForm(AppSearchForm):
 
 
 class ApiSearchForm(forms.Form):
-    q = forms.CharField(required=False,
-                        label=_lazy(u'Search'),
-                        widget=forms.TextInput(attrs={'autocomplete': 'off'}))
+    q = forms.CharField(
+        required=False, label=_lazy(u'Search'),
+        widget=forms.TextInput(attrs={'autocomplete': 'off',
+                                      'placeholder': _lazy(u'Search')}))
     type = forms.ChoiceField(required=False, choices=ADDON_CHOICES,
                              label=_lazy(u'Add-on type'))
     status = forms.ChoiceField(required=False, choices=STATUS_CHOICES,
