@@ -18,6 +18,7 @@ from applications.models import AppVersion
 from addons.forms import EditThemeForm, EditThemeOwnerForm, ThemeForm
 from addons.models import Addon, Category, Charity, Persona
 from devhub import forms
+from editors.models import RereviewQueueTheme
 from files.helpers import copyfileobj
 from files.models import FileUpload
 from market.models import AddonPremium
@@ -482,13 +483,41 @@ class TestEditThemeForm(amo.tests.TestCase):
 
     def test_name_unique(self):
         data = self.get_dict(name='Bands Make You Dance')
-        Addon.objects.create(type=amo.ADDON_PERSONA,
-            status=amo.STATUS_PUBLIC, name=data['name'])
+        Addon.objects.create(
+            type=amo.ADDON_PERSONA, status=amo.STATUS_PUBLIC,
+            name=data['name'])
         self.form = EditThemeForm(data, request=self.request,
                                   instance=self.instance)
         eq_(self.form.is_valid(), False)
         eq_(self.form.errors,
             {'name': ['This name is already in use. Please choose another.']})
+
+    @mock.patch('addons.tasks.create_persona_preview_images.delay')
+    @mock.patch('addons.tasks.save_persona_image.delay')
+    def test_reupload(self, save_persona_image_mock,
+                      create_persona_preview_images_mock):
+        data = self.get_dict(header_hash='y0l0', footer_hash='abab')
+        self.form = EditThemeForm(data, request=self.request,
+                                  instance=self.instance)
+        eq_(self.form.is_valid(), True)
+        self.form.save()
+
+        dst = os.path.join(settings.ADDONS_PATH, str(self.instance.id))
+        header_src = os.path.join(settings.TMP_PATH, 'persona_header',
+                                  u'y0l0')
+        footer_src = os.path.join(settings.TMP_PATH, 'persona_footer',
+                                  u'abab')
+
+        eq_(save_persona_image_mock.mock_calls,
+            [mock.call(src=header_src,
+                       full_dst=os.path.join(dst, 'pending_header.png')),
+             mock.call(src=footer_src,
+                       full_dst=os.path.join(dst, 'pending_footer.png'))])
+
+        rqt = RereviewQueueTheme.objects.filter(theme=self.instance.persona)
+        eq_(rqt.count(), 1)
+        eq_(rqt[0].header, os.path.join(dst, 'pending_header.png'))
+        eq_(rqt[0].footer, os.path.join(dst, 'pending_footer.png'))
 
 
 class TestEditThemeOwnerForm(amo.tests.TestCase):
