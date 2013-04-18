@@ -44,15 +44,25 @@ def send_mail(cleaned_data, theme_lock):
         template = 'reviewers/themes/emails/approve.html'
         theme.addon.update(status=amo.STATUS_PUBLIC)
 
+        if theme.rereviewqueuetheme_set.count():
+            # If reuploaded theme, replace old theme design.
+            reupload = theme.rereviewqueuetheme_set.all()[0]
+            theme.header = reupload.header
+            theme.footer = reupload.header
+            theme.save()
+            theme.rereviewqueuetheme_set.all().delete()
+
     elif action == rvw.ACTION_REJECT:
         subject = _('A problem with your Theme submission')
         template = 'reviewers/themes/emails/reject.html'
         theme.addon.update(status=amo.STATUS_REJECTED)
+        theme.rereviewqueuetheme_set.all().delete()
 
     elif action == rvw.ACTION_DUPLICATE:
         subject = _('A problem with your Theme submission')
         template = 'reviewers/themes/emails/reject.html'
         theme.addon.update(status=amo.STATUS_REJECTED)
+        theme.rereviewqueuetheme_set.all().delete()
 
     elif action == rvw.ACTION_FLAG:
         subject = _('Theme submission flagged for review')

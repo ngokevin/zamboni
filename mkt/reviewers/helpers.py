@@ -125,6 +125,9 @@ def queue_tabnav_themes(context):
         tabs.append((
             'themes', 'flagged', 'queue_flagged', _('Flagged'),
         ))
+        tabs.append((
+            'themes', 'rereview', 'queue_rereview', _('Rereview'),
+        ))
     return tabs
 
 
