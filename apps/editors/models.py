@@ -15,7 +15,7 @@ import amo.models
 from amo.helpers import absolutify
 from amo.urlresolvers import reverse
 from amo.utils import cache_ns_key, send_mail
-from addons.models import Addon
+from addons.models import Addon, Persona
 from editors.sql_model import RawSQLModel
 from translations.fields import save_signal, TranslatedField
 from users.models import UserProfile
@@ -693,3 +693,23 @@ class RereviewQueue(amo.models.ModelBase):
                     details={'comments': message})
         else:
             amo.log(event, addon, addon.current_version)
+
+
+class RereviewQueueTheme(amo.models.ModelBase):
+    theme = models.ForeignKey(Persona)
+    header = models.CharField(max_length=72, null=True)
+    footer = models.CharField(max_length=72, null=True)
+
+    class Meta:
+        db_table = 'rereview_queue_theme'
+
+    def __str__(self):
+        return str(self.id)
+
+    @amo.cached_property
+    def footer_url(self):
+        return self.theme._image_url(self.footer)
+
+    @amo.cached_property
+    def header_url(self):
+        return self.theme._image_url(self.header)

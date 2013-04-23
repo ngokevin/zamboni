@@ -47,8 +47,12 @@ def marketplace_patterns(prefix):
 theme_detail_patterns = patterns('',
     url('^$', lambda r,
         addon_id: redirect('devhub.themes.edit', addon_id, permanent=True)),
-    url('^edit$', views.edit_theme, name='devhub.themes.edit'),
     url('^delete$', views.delete, name='devhub.themes.delete'),
+    # Upload url here to satisfy CSRF.
+    url('^edit/upload/'
+        '(?P<upload_type>persona_header|persona_footer)$',
+        views.ajax_upload_image, name='devhub.personas.reupload_persona'),
+    url('^edit$', views.edit_theme, name='devhub.themes.edit'),
 )
 
 # These will all start with /app/<app_slug>/
@@ -245,8 +249,7 @@ urlpatterns = decorate(write, patterns('',
     url('^ajax/addon/%s/' % ADDON_ID, include(ajax_patterns)),
 
     # Themes submission.
-    url('^theme/submit/?$', views.submit_theme,
-        name='devhub.themes.submit'),
+    url('^theme/submit/?$', views.submit_theme, name='devhub.themes.submit'),
     url('^theme/%s/submit/done$' % ADDON_ID, views.submit_theme_done,
         name='devhub.themes.submit.done'),
     url('^theme/submit/upload/'

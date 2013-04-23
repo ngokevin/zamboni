@@ -1622,7 +1622,7 @@ class Persona(caching.CachingMixin, models.Model):
     movers = models.FloatField(null=True, db_index=True)
     popularity = models.IntegerField(null=False, default=0, db_index=True)
     license = models.PositiveIntegerField(choices=amo.PERSONA_LICENSES_CHOICES,
-        null=True, blank=True)
+                                          null=True, blank=True)
 
     objects = caching.CachingManager()
 
