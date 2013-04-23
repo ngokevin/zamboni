@@ -337,6 +337,7 @@ def edit_theme(request, addon_id, addon, theme=False):
 
     return jingo.render(request, 'devhub/personas/edit.html', {
         'addon': addon,
+        'persona': addon.persona,
         'form': form,
         'owner_form': owner_form
     })
@@ -1235,7 +1236,8 @@ def image_status(request, addon_id, addon, theme=False):
 
 
 @json_view
-def ajax_upload_image(request, upload_type):
+@csrf_view_exempt
+def ajax_upload_image(request, upload_type, addon_id=None):
     errors = []
     upload_hash = ''
 
