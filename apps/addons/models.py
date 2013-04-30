@@ -1616,8 +1616,12 @@ class Persona(caching.CachingMixin, models.Model):
     approve = models.DateTimeField(null=True)
     movers = models.FloatField(null=True, db_index=True)
     popularity = models.IntegerField(null=False, default=0, db_index=True)
-    license = models.PositiveIntegerField(choices=amo.PERSONA_LICENSES_CHOICES,
-        null=True, blank=True)
+    license = models.PositiveIntegerField(
+        choices=amo.PERSONA_LICENSES_CHOICES, null=True, blank=True)
+
+    # To spot duplicate submissions.
+    checksum = models.CharField(max_length=64, blank=True, default='')
+    dupe_persona = models.ForeignKey('self', null=True)
 
     objects = caching.CachingManager()
 

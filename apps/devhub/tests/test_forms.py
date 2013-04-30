@@ -277,10 +277,11 @@ class TestThemeForm(amo.tests.TestCase):
             {'data-allowed-types': 'image/jpeg|image/png',
              'data-upload-url': footer_url})
 
+    @mock.patch('addons.forms.make_checksum')
     @mock.patch('addons.tasks.create_persona_preview_images.delay')
     @mock.patch('addons.tasks.save_persona_image.delay')
     def test_success(self, save_persona_image_mock,
-                     create_persona_preview_images_mock):
+                     create_persona_preview_images_mock, mock1):
         if not hasattr(Image.core, 'jpeg_encoder'):
             raise SkipTest
 
@@ -320,6 +321,7 @@ class TestThemeForm(amo.tests.TestCase):
         eq_(persona.textcolor, data['textcolor'].lstrip('#'))
         eq_(persona.author, self.request.amo_user.username)
         eq_(persona.display_username, self.request.amo_user.name)
+        assert not persona.dupe_persona
 
         v = addon.versions.all()
         eq_(len(v), 1)
@@ -343,6 +345,31 @@ class TestThemeForm(amo.tests.TestCase):
             full_dst=[os.path.join(dst, 'preview.png'),
                       os.path.join(dst, 'icon.png')],
             set_modified_on=[addon])
+
+    @mock.patch('addons.tasks.create_persona_preview_images.delay')
+    @mock.patch('addons.tasks.save_persona_image.delay')
+    @mock.patch('addons.forms.make_checksum')
+    def test_dupe_persona(self, make_checksum_mock, mock1, mock2):
+        """
+        Submitting persona with checksum already in db should be marked
+        duplicate.
+        """
+        make_checksum_mock.return_value = 'cornhash'
+
+        self.request.amo_user = UserProfile.objects.get(pk=2519)
+
+        self.post()
+        eq_(self.form.is_valid(), True, self.form.errors)
+        self.form.save()
+
+        self.post(name='whatsinaname', slug='metalslug')
+        eq_(self.form.is_valid(), True, self.form.errors)
+        self.form.save()
+
+        personas = Persona.objects.order_by('addon__created')
+        eq_(personas[0].checksum, personas[1].checksum)
+        eq_(personas[1].dupe_persona, personas[0])
+        eq_(personas[0].dupe_persona, None)
 
 
 class TestEditThemeForm(amo.tests.TestCase):
@@ -447,7 +474,8 @@ class TestEditThemeOwnerForm(amo.tests.TestCase):
             status=amo.STATUS_PUBLIC, slug='swag-overload',
             name='Bands Make Me Dance', summary='tha summary')
         Persona.objects.create(persona_id=0, addon_id=self.instance.id,
-            license=amo.LICENSE_CC_BY.id, accentcolor='C0FFEE', textcolor='EFFFFF')
+            license=amo.LICENSE_CC_BY.id, accentcolor='C0FFEE',
+            textcolor='EFFFFF')
 
     def test_initial(self):
         self.form = EditThemeOwnerForm(None, instance=self.instance)

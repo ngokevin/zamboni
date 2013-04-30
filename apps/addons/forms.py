@@ -1,4 +1,5 @@
 from datetime import datetime
+import hashlib
 import os
 import re
 
@@ -557,10 +558,11 @@ class ThemeForm(ThemeFormBase):
             footer = os.path.join(settings.TMP_PATH, 'persona_footer', footer)
             dst_root = os.path.join(settings.ADDONS_PATH, str(addon.id))
 
-            save_persona_image.delay(src=header,
-                full_dst=os.path.join(dst_root, 'header.png'))
-            save_persona_image.delay(src=footer,
-                full_dst=os.path.join(dst_root, 'footer.png'))
+            header_dst = os.path.join(dst_root, 'header.png')
+            footer_dst = os.path.join(dst_root, 'footer.png')
+
+            save_persona_image.delay(src=header, full_dst=header_dst)
+            save_persona_image.delay(src=footer, full_dst=footer_dst)
             create_persona_preview_images.delay(src=header,
                 full_dst=[os.path.join(dst_root, 'preview.png'),
                           os.path.join(dst_root, 'icon.png')],
@@ -587,6 +589,10 @@ class ThemeForm(ThemeFormBase):
         p.submit = datetime.now()
         p.author = user.username
         p.display_username = user.name
+
+        # To spot duplicate submissions.
+        p.checksum = make_checksum(header_dst, footer_dst)
+        check_duplicate_submission(p)
         p.save()
 
         # Save tags.
@@ -599,6 +605,18 @@ class ThemeForm(ThemeFormBase):
         return addon
 
 
+def make_checksum(header_dst, footer_dst):
+    raw_checksum = open(header_dst).read() + open(footer_dst).read()
+    return hashlib.sha224(raw_checksum).hexdigest()
+
+
+def check_duplicate_submission(theme):
+    """Marks theme as probable duplicate if checksum exists in DB."""
+    dupe_personas = Persona.objects.filter(checksum=theme.checksum)
+    if dupe_personas.exists():
+        theme.dupe_persona = dupe_personas.order_by('addon__created')[0]
+
+
 class EditThemeForm(AddonFormBase):
     name = forms.CharField(max_length=50)
     slug = forms.CharField(max_length=30)
@@ -609,8 +627,9 @@ class EditThemeForm(AddonFormBase):
     tags = forms.CharField(required=False)
     accentcolor = ColorField(required=False)
     textcolor = ColorField(required=False)
-    license = forms.TypedChoiceField(choices=amo.PERSONA_LICENSES_CHOICES,
-        coerce=int, empty_value=None, widget=forms.HiddenInput,
+    license = forms.TypedChoiceField(
+        choices=amo.PERSONA_LICENSES_CHOICES, coerce=int, empty_value=None,
+        widget=forms.HiddenInput,
         error_messages={'required': _lazy(u'A license must be selected.')})
 
     class Meta:
