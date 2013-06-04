@@ -1713,12 +1713,26 @@ def submit_bump(request, addon_id, addon, webapp=False):
 @login_required
 @waffle_flag('submit-personas')
 def submit_theme(request):
-    form = addon_forms.ThemeForm(data=request.POST or None,
+    data = request.POST
+    if 'unsaved_data' in request.session:
+        if request.POST:
+            data = dict(request.POST)
+            data['unsaved_data'] = request.session['unsaved_data']
+        else:
+            del request.session['unsaved_data']
+
+    form = addon_forms.ThemeForm(data=data or None,
                                  files=request.FILES or None,
                                  request=request)
+    if request.POST:
+        print form.unsaved_data
+
     if request.method == 'POST' and form.is_valid():
         addon = form.save()
         return redirect('devhub.themes.submit.done', addon.slug)
+    elif 'unsaved_data' in data:
+        request.session['unsaved_data'] = data['unsaved_data']
+
     return jingo.render(request, 'devhub/personas/submit.html',
                         dict(form=form))
 
