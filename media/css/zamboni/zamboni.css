@@ -1101,6 +1101,17 @@ ul.license li.copyr { background-position: 0 -260px; }
     left: -3px;
     position: absolute;
 }
+.persona-install div:before {
+    background-image: url('../../img/impala/add-small.png');
+    background-size: 10px 10px;
+    border: 0;
+    content: '';
+    display: inline-block;
+    height: 10px;
+    margin: 0;
+    padding: 0;
+    width: 10px;
+}
 .with-details .persona-install {
     bottom: 53px;
 }
@@ -1117,7 +1128,7 @@ ul.license li.copyr { background-position: 0 -260px; }
     border-color: #888;
     text-shadow: none;
 }
-.disabled-install button img {
+.disabled-install button div:before {
     display: none;
 }
 .persona-install button .disabled-icon {
@@ -1139,11 +1150,6 @@ ul.license li.copyr { background-position: 0 -260px; }
 .persona-install button div {
     bottom: 2px;
     position: relative;
-}
-.persona-install button div img {
-    border: 0;
-    margin: 0;
-    padding: 0;
 }
 .persona-hover .persona-install {
     display: block;
@@ -1180,13 +1186,12 @@ ul.license li.copyr { background-position: 0 -260px; }
     background: #fff;
 }
 .persona-preview .approved {
-    color: #339900;
+    color: #390;
 }
 .persona-preview .rejected {
     color: red;
 }
 .persona-preview .artist-tools {
-    -moz-opacity: 0.75;
     background: #F5F5F5;
     border-radius: 1px 0 0 0;
     bottom: 0;
@@ -1196,6 +1201,14 @@ ul.license li.copyr { background-position: 0 -260px; }
     position: absolute;
     right: 0;
 }
+.persona-inner .persona-preview span.artist-tools a {
+    background-image: url('../../img/admin/icon_changelink.gif');
+    background-size: 18px 18px;
+    content: '';
+    display: block;
+    height: 18px;
+    width: 18px;
+}
 .with-details .artist-tools {
     bottom: 54px;
 }
@@ -1203,7 +1216,6 @@ ul.license li.copyr { background-position: 0 -260px; }
     display: inline-block;
 }
 .persona-preview .artist-tools:hover {
-    -moz-opacity: 0.95;
     opacity: .95;
 }
 .persona-inner .persona-preview span.artist-tools a {
@@ -1212,10 +1224,6 @@ ul.license li.copyr { background-position: 0 -260px; }
 }
 .persona-inner .persona-preview span.artist-tools a:hover {
     background: none;
-}
-.persona-preview .artist-tools img {
-    height: 18px;
-    width: 18px;
 }
 .persona-hover .persona-preview [data-browsertheme] {
     border-color: #fff !important;
