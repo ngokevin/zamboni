@@ -12,6 +12,18 @@
     {% endtrans %}
   </a>
 </h1>
+
+<nav class="pill-nav">
+  {% if action_allowed('Apps', 'Review') %}
+    <a {% if 'apps' in request.path %}class="selected" {% endif %}
+       href="{{ url('reviewers.apps.queue_pending') }}">{{ _('Apps') }}</a>
+  {% endif %}
+  <!--<a href="{# url('reviewers.addons.queue_pending') #}">{{ _('Add-ons') }}</a>-->
+  {% if action_allowed('Personas', 'Review') %}
+    <a {% if 'themes' in request.path %}class="selected" {% endif %}
+       href="{{ url('reviewers.themes.list') }}">{{ _('Themes') }}</a>
+  {% endif %}
+</nav>
 {% endblock %}
 
 {% block extrahead %}
