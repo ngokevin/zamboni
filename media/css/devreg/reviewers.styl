@@ -86,8 +86,19 @@ header {
     }
 }
 
+.theme-list-hat {
+    position: relative;
+}
 a.release-theme-lock {
-    float: left;
+    height: 30px;
+    padding: 0 10px;
+    position: absolute;
+    top: 10px;
+    right: 0;
+    span {
+        bottom: 8px;
+        position: relative;
+    }
 }
 h3.theme-queue-link {
     a {
@@ -1886,7 +1897,7 @@ $mobileborder = #d7d2c3;
             font-size: 15px;
             padding: 7px 16px;
             &.selected {
-                gradient-two-color(lighten(#563C4B, 8%), darken(#563C4B, 8%));
+                gradient-two-color(lighten(#563C4B, 10%), darken(#563C4B, 10%));
                 color: #fff;
             }
         }
@@ -1913,6 +1924,9 @@ $mobileborder = #d7d2c3;
         margin: 0 10px;
         position: relative;
         top: 13px;
+        &.themes {
+            display: inline-block;
+        }
     }
     #page .tabnav li {
         display: inline;

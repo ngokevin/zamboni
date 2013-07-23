@@ -40,7 +40,10 @@ def reviewers_breadcrumbs(context, queue=None, items=None):
                   'device': _('Device'),
                   'moderated': _('Moderated Reviews'),
                   'reviewing': _('Reviewing'),
-                  'themes': _('Themes')}
+
+                  'pending_themes': _('Pending Themes'),
+                  'flagged_themes': _('Flagged Themes'),
+                  'rereview_themes': _('Re-review Themes')}
 
         if items:
             url = reverse('reviewers.apps.queue_%s' % queue)
@@ -105,12 +108,6 @@ def queue_tabnav(context):
     else:
         rv = []
 
-    # Themes.
-    if (acl.action_allowed(request, 'Personas', 'Review') and
-        waffle.switch_is_active('mkt-themes')):
-        rv.append(('reviewers.themes.list', 'themes',
-                  _('Themes ({0})').format(counts['themes']),))
-
     if waffle.switch_is_active('buchets') and 'pro' in request.GET:
         device_srch = device_queue_search(request)
         rv.append(('reviewers.apps.queue_device', 'device',
@@ -143,6 +140,26 @@ def logs_tabnav(context):
 @jinja2.contextfunction
 def queue_tabnav_themes(context):
     """Similar to queue_tabnav, but for themes."""
+    tabs = []
+    if acl.action_allowed(context['request'], 'Personas', 'Review'):
+        tabs.append((
+            'reviewers.themes.list', 'pending_themes', _('Pending'),
+        ))
+    if acl.action_allowed(context['request'], 'SeniorPersonasTools', 'View'):
+        tabs.append((
+            'reviewers.themes.list_flagged', 'flagged_themes', _('Flagged'),
+        ))
+        tabs.append((
+            'reviewers.themes.list_rereview', 'rereview_themes',
+            _('Re-review'),
+        ))
+    return tabs
+
+
+@register.function
+@jinja2.contextfunction
+def queue_tabnav_themes_interactive(context):
+    """Tabnav for the interactive shiny theme queues."""
     tabs = []
     if acl.action_allowed(context['request'], 'Personas', 'Review'):
         tabs.append((
