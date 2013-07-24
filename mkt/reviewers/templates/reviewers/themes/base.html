@@ -1,0 +1,21 @@
+{% extends 'reviewers/base.html' %}
+{% from 'site/helpers/form_row.html' import form_row %}
+
+{% block extrahead %}
+  {{ super() }}
+  {{ css('mkt/gaia') }}
+{% endblock %}
+
+{% block breadcrumbs %}
+  {{ reviewers_breadcrumbs(queue=tab) }}
+{% endblock %}
+
+{% block queue_menu %}
+  {% for named_url, tab_code, text in queue_tabnav_themes() %}
+    <li><a href="{{ url(named_url) }}">{{ text }}</a></li>
+  {% endfor %}
+{% endblock %}
+
+{% block log_link %}
+  {{ url('reviewers.themes.logs') }}
+{% endblock %}

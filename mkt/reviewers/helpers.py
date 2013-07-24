@@ -118,21 +118,18 @@ def queue_tabnav(context):
 
 @register.function
 @jinja2.contextfunction
-def logs_tabnav(context):
+def logs_tabnav_themes(context):
     """
     Returns tuple of tab navigation for the log pages.
 
     Each tuple contains three elements: (named url, tab_code, tab_text)
     """
-    rv = []
-    # Apps.
-    if acl.action_allowed(context['request'], 'Apps', 'Review'):
-        rv.append(('reviewers.apps.logs', 'apps', _('Apps')))
+    rv = [
+        ('reviewers.themes.logs', 'themes', _('Reviews'))
+    ]
+    if acl.action_allowed(context['request'], 'SeniorPersonasTools', 'View'):
+        rv.append(('reviewers.themes.deleted', 'deleted', _('Deleted')))
 
-    # Themes.
-    if (acl.action_allowed(context['request'], 'Personas', 'Review') and
-        waffle.switch_is_active('mkt-themes')):
-        rv.append(('reviewers.themes.logs', 'themes', _('Themes')))
     return rv
 
 

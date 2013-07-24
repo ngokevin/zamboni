@@ -51,7 +51,7 @@ def themes_list(request, flagged=False, rereview=False):
     per_page = request.GET.get('per_page', QUEUE_PER_PAGE)
     pager = paginate(request, themes, per_page)
 
-    return jingo.render(request, 'reviewers/themes/list.html', context(
+    return jingo.render(request, 'reviewers/themes/queue_list.html', context(
         request, **{
         'addons': pager.object_list,
         'flagged': flagged,

@@ -15,7 +15,8 @@
 
 <nav class="pill-nav">
   {% if action_allowed('Apps', 'Review') %}
-    <a {% if 'apps' in request.path %}class="selected" {% endif %}
+    {# "selected" logic will change if we ever have more than just apps + themes #}
+    <a {% if 'themes' not in request.path %}class="selected" {% endif %}
        href="{{ url('reviewers.apps.queue_pending') }}">{{ _('Apps') }}</a>
   {% endif %}
   <!--<a href="{# url('reviewers.addons.queue_pending') #}">{{ _('Add-ons') }}</a>-->
@@ -40,18 +41,16 @@
                 in request.path %} class="selected"{% endif %}>
             <a href="#" class="controller trigger-queues">{{ _('Queues') }}</a>
             <ul>
-              {% for named_url, tab_code, text in queue_tabnav() %}
-                <li><a href="{{ url(named_url) }}">{{ text }}</a></li>
-              {% endfor %}
+              {% block queue_menu %}
+                {% for named_url, tab_code, text in queue_tabnav() %}
+                  <li><a href="{{ url(named_url) }}">{{ text }}</a></li>
+                {% endfor %}
+              {% endblock %}
             </ul>
           </li>
           <li{% if 'logs' in request.path %} class="selected"{% endif %}>
-            <a href="#" class="controller logs trigger-logs">{{ _('Logs') }}</a>
-            <ul>
-              {% for named_url, tab, text in logs_tabnav() %}
-                <li><a href="{{ url(named_url) }}">{{ text }}</a></li>
-              {% endfor %}
-            </ul>
+              <a href="{% block log_link %}{{ url('reviewers.apps.logs') }}{% endblock %}">
+                {{ _('Logs') }}</a>
           </li>
           {% if action_allowed('AppReviewerMOTD', 'Edit') %}
             <li class="slim">
@@ -81,24 +80,13 @@
     <header>{{ _('Queues') }}</header>
     <menu class="nav-action-menu">
       <div>
-        {% for named_url, tab_code, text in queue_tabnav() %}
-          <button data-url="{{ url(named_url) }}">{{ text }}</button>
-        {% endfor %}
+        {% block queue_overlay %}
+          {% for named_url, tab_code, text in queue_tabnav() %}
+            <button data-url="{{ url(named_url) }}">{{ text }}</button>
+          {% endfor %}
+        {% endblock %}
       </div>
       <button data-url="#cancel">Cancel</button>
     </menu>
   </form>
-
-  <form id="log-tab-overlay" class="hidden" role="dialog" data-type="action">
-    <header>{{ _('Logs') }}</header>
-    <menu class="nav-action-menu">
-      <div>
-        {% for named_url, tab_code, text in logs_tabnav() %}
-          <button data-url="{{ url(named_url) }}">{{ text }}</button>
-        {% endfor %}
-      </div>
-      <button data-url="#cancel">{{ _('Cancel') }}</button>
-    </menu>
-  </form>
-
 {% endblock %}
