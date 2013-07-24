@@ -17,14 +17,7 @@
   </div>
 
   <div class="theme-list-hat">
-    <ul class="tabnav search-toggle themes">
-      {% for named_url, tab_code, text in queue_tabnav_themes() %}
-        <li{% if tab == tab_code %} class="selected trigger-queues"{% endif %}>
-          <a href="{{ url(named_url) }}">{{ text }}</a>
-          <div class="tabnav-sprite hidden"></div>
-        </li>
-      {% endfor %}
-    </ul>
+    {{ macros.tabnav('queues', tab, queue_tabnav_themes() ) }}
 
     <a class="button release-theme-lock" href="{{ url('reviewers.themes.release_locks') }}">
       <span>{{ _('Release My Theme Locks') }}</span>
@@ -34,7 +27,7 @@
     <section id="queue-island" class="island search-toggle">
     <h3 class="theme-queue-link c">
       <a href="{{ url('reviewers.themes.queue_themes') }}">
-        {{ _('Go to Theme Review Queue') }}
+        {{ _('Interactive Theme Queue') }}
         <img src="{{ media('img/mkt/arrows/blue-med-go.png') }}">
       </a>
     </h3>

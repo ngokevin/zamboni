@@ -118,6 +118,20 @@ def queue_tabnav(context):
 
 @register.function
 @jinja2.contextfunction
+def logs_tabnav(context):
+    """
+    Returns tuple of tab navigation for the log pages.
+
+    Each tuple contains three elements: (named url, tab_code, tab_text)
+    """
+    rv = [
+        ('reviewers.apps.logs', 'apps', _('Reviews'))
+    ]
+    return rv
+
+
+@register.function
+@jinja2.contextfunction
 def logs_tabnav_themes(context):
     """
     Returns tuple of tab navigation for the log pages.

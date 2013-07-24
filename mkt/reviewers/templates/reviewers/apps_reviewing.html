@@ -13,7 +13,7 @@
 
 <section class="island">
   {% if not apps %}
-    <p>{{ _('No apps are being reviewed right now.') }}</p>
+    <p class="no-results">{{ _('You are currently not reviewing any apps.') }}</p>
   {% else %}
     {% if DESKTOP %}
       <table id="apps-reviewing" class="data-grid four-col items">

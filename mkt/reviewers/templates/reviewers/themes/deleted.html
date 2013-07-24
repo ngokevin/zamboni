@@ -11,8 +11,9 @@
 {% block content %}
   {% include "reviewers/themes/includes/logs_filter_deleted.html" %}
 
+  {{ macros.tabnav('logs', tab, logs_tabnav_themes() ) }}
+
   <section class="island">
-    <a href="{{ url('reviewers.themes.logs') }}">{{ _('Back to Theme Logs') }}</a>
     {% if pager.object_list %}
       <table id="log-listing" class="data-grid items">
         <thead>

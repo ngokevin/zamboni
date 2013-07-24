@@ -93,8 +93,8 @@ a.release-theme-lock {
     height: 30px;
     padding: 0 10px;
     position: absolute;
-    top: 10px;
-    right: 0;
+    top: 7px;
+    right: 3px;
     span {
         bottom: 8px;
         position: relative;
@@ -1179,9 +1179,6 @@ span.currently_viewing_warning {
 }
 
 @media $landscape-max {
-    nav.pill-nav {
-        display: none;
-    }
     #id_q {
         font-size: 18px;
     }
@@ -1378,6 +1375,11 @@ span.currently_viewing_warning {
 
 $mobileborder = #d7d2c3;
 @media $portrait-max {
+    nav.pill-nav {
+        left: 9px;
+        top: 0;
+        margin-bottom: 10px;
+    }
     .summary.island {
         padding: 0 0 10px 10px;
     }
@@ -1879,28 +1881,29 @@ $mobileborder = #d7d2c3;
     }
 }
 
+.pill-nav {
+    border-radius: 16px;
+    bottom: 17px;
+    display: inline-block;
+    gradient-two-color(darken(#563C4B, 50%), darken(#563C4B, 30%));
+    left: 170px;
+    padding: 11px 1px;
+    position: relative;
+    a {
+        border-radius: 15px;
+        color: $light-gray;
+        font-size: 15px;
+        padding: 7px 16px;
+        &.selected {
+            gradient-two-color(lighten(#563C4B, 10%), darken(#563C4B, 10%));
+            color: #fff;
+        }
+    }
+}
+
 @media (min-width: 768px) {
     #masthead {
         display: inline-block;
-    }
-    nav.pill-nav {
-        border-radius: 16px;
-        bottom: 17px;
-        display: inline-block;
-        gradient-two-color(darken(#563C4B, 50%), darken(#563C4B, 30%));
-        left: 170px;
-        padding: 11px 1px;
-        position: relative;
-        a {
-            border-radius: 15px;
-            color: $light-gray;
-            font-size: 15px;
-            padding: 7px 16px;
-            &.selected {
-                gradient-two-color(lighten(#563C4B, 10%), darken(#563C4B, 10%));
-                color: #fff;
-            }
-        }
     }
     #scroll_sidebar_parent {
         right: 70px;

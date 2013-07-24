@@ -7,6 +7,8 @@
 {% block content %}
   {% include 'reviewers/logs_filter.html' %}
 
+  {{ macros.tabnav('logs', tab, logs_tabnav() ) }}
+
   <section class="island">
     {% if pager.object_list %}
       <table id="log-listing" class="data-grid one-col items">

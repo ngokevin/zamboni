@@ -418,7 +418,7 @@ def deleted_themes(request):
         'form': form,
         'pager': paginate(request, deleted.order_by('-modified'), 30),
         'queue_counts': queue_counts(request),
-        'tab': 'themes'
+        'tab': 'deleted'
     })
 
 
