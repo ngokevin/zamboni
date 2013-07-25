@@ -2,12 +2,12 @@ from django.conf.urls.defaults import url
 
 import waffle
 from tastypie import http
-from tastypie.authorization import Authorization
 from tastypie.utils import trailing_slash
 from tastypie.validation import CleanedDataFormValidation
 
 from lib.metrics import get_monolith_client
 from mkt.api.authentication import OptionalOAuthAuthentication
+from mkt.api.authorization import StatsPermissionAuthorization
 from mkt.api.base import GenericObject, http_error, MarketplaceResource
 
 from .forms import GlobalStatsForm
@@ -32,7 +32,7 @@ class GlobalStatsResource(MarketplaceResource):
     class Meta(MarketplaceResource.Meta):
         resource_name = 'global'
         authentication = OptionalOAuthAuthentication()
-        authorization = Authorization()
+        authorization = StatsPermissionAuthorization('Stats', 'View')
         detail_allowed_methods = ['get']
         list_allowed_methods = []
         object_class = GenericObject

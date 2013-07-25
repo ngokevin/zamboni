@@ -1,13 +1,16 @@
 from django.contrib.auth.models import AnonymousUser, User
 
+import mock
 from nose.tools import eq_, ok_
 
 from amo.tests import app_factory, TestCase
 from test_utils import RequestFactory
 
 from mkt.api.authorization import (AnonymousReadOnlyAuthorization, flag,
-                                   PermissionAuthorization, switch)
+                                   PermissionAuthorization,
+                                   StatsPermissionAuthorization, switch)
 from mkt.site.fixtures import fixture
+from users.models import UserProfile
 
 from .test_authentication import OwnerAuthorization
 
@@ -64,6 +67,33 @@ class TestPermissionAuthorization(OwnerAuthorization):
     def test_not_has_role(self):
         self.grant_permission(self.profile, 'Drinkers:Scotch')
         ok_(not self.auth.is_authorized(self.request(self.profile), self.app))
+
+
+class TestStatsPermissionAuthorization(OwnerAuthorization):
+    fixtures = fixture('user_999', 'user_2519')
+
+    def setUp(self):
+        super(TestStatsPermissionAuthorization, self).setUp()
+        self.auth = StatsPermissionAuthorization('Stats', 'View')
+        self.app = app_factory()
+
+    @mock.patch('stats.views.check_stats_permission')
+    def test_stats_perms(self, stats_perm_mock):
+        # Not app owner.
+        assert self.auth.is_authorized(
+            self.request(UserProfile.objects.get(username='regularuser')),
+            self.app)
+
+        # App owner.
+        assert self.auth.is_authorized(self.request(self.profile),
+                                       self.app)
+
+        # Can't view global stats.
+        assert not self.auth.is_authorized(self.request(self.profile))
+
+        # Can view global stats with right permissions.
+        self.grant_permission(self.profile, 'Stats:View')
+        assert self.auth.is_authorized(self.request(self.profile))
 
 
 class TestWaffle(TestCase):

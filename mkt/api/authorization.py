@@ -1,5 +1,6 @@
-import commonware.log
+from django.core.exceptions import PermissionDenied
 
+import commonware.log
 from rest_framework.permissions import BasePermission
 from tastypie.authorization import Authorization, ReadOnlyAuthorization
 from waffle import flag_is_active, switch_is_active
@@ -91,6 +92,29 @@ class PermissionAuthorization(Authorization):
             return True
         log.info('Permission authorization failed')
         return False
+
+    has_permission = is_authorized
+
+
+class StatsPermissionAuthorization(PermissionAuthorization):
+
+    def is_authorized(self, request, object=None):
+        from stats.views import check_stats_permission
+
+        if object:
+            # App-level statistics permissions.
+            try:
+                check_stats_permission(request, object)
+            except PermissionDenied:
+                log.info('Permission authorization failed')
+                return False
+            else:
+                return True
+        else:
+            # Global statistics permissions.
+            if acl.action_allowed(request, self.app, self.action):
+                return True
+            return False
 
     has_permission = is_authorized
 

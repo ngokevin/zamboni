@@ -3,11 +3,14 @@ from nose.tools import eq_
 
 from mkt.api.base import list_url
 from mkt.api.tests.test_oauth import BaseOAuth
+from mkt.site.fixtures import fixture
 from mkt.stats.api import STATS
 
 
 @mock.patch('monolith.client.Client')
 class TestGlobalStatsResource(BaseOAuth):
+    fixtures = fixture('group_admin', 'user_admin', 'user_admin_group',
+                       'user_2519')
 
     def setUp(self):
         super(TestGlobalStatsResource, self).setUp('stats')
@@ -27,5 +30,7 @@ class TestGlobalStatsResource(BaseOAuth):
         self._allowed_verbs(self.list_url, [])
 
     def test_bad_metric(self, mocked):
+        assert self.client.login(username='admin@mozilla.com',
+                                 password='password')
         res = self.client.get(self.get_detail_url('global', 'foo'))
         eq_(res.status_code, 404)
