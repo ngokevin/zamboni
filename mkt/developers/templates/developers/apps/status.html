@@ -109,6 +109,51 @@
       {% endif %}
     </div>
 
+    <div class="island c">
+      <h2>{{ _('Communication Dashboard') }}</h2>
+      <p>
+        {% trans %}
+          When Marketplace app reviewers wish to communicate with you about
+          your app, you can respond and reply back through communication
+          threads.
+        {% endtrans %}
+      </p>
+      {# L10n: {0} is app name. #}
+      <h3>{{ _('Communication Threads for {0}')|f(addon.name) }}</h3>
+      {% if comm_threads %}
+        <table id="version-list" class="comm-threads">
+          <thead>
+            <tr>
+              <th></th>
+              <th>{{ _('Status') }}</th>
+              <th>{{ _('Comment Count') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for thread in comm_threads %}
+              {% set thread_url = url('commonplace.commbadge') + 'thread/' ~ thread.thread.id %}
+              <tr>
+                <td><h4><a href="{{ thread_url }}">{{ thread.thread.version }}</a></h4></td>
+                <td>
+                  {% set addon = thread.thread.addon %}
+                  {% set version = thread.thread.version %}
+                  {% if addon.disabled_by_user %}
+                    <span class="{{ mkt_file_status_class(addon, version) }}"><b>{{ _('Disabled') }}</b></span>
+                  {% else %}
+                    <span class="{{ mkt_file_status_class(addon, version) }}"><b>{{ version.status|join(', ') }}</b></span>
+                  {% endif %}
+                </td>
+                <td>{{ thread.note_count }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="no-results">{{ _('No threads have been created yet.') }}</p>
+      {% endif %}
+      <h3><a href="{{ url('commonplace.commbadge') }}">{{ _('View Your Communication Dashboard') }}</a></h3>
+    </div>
+
     {% if check_addon_ownership(request, addon, dev=True) %}
       {% set is_disabled = addon.disabled_by_user and addon.status != amo.STATUS_DISABLED %}
       <div class="island c">

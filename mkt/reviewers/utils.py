@@ -235,7 +235,6 @@ class ReviewBase(object):
     def request_information(self):
         """Send a request for information to the authors."""
         emails = list(self.addon.authors.values_list('email', flat=True))
-        cc_email = self.addon.mozilla_contact or None
         self.log_action(amo.LOG.REQUEST_INFORMATION)
         self.version.update(has_info_request=True)
         log.info(u'Sending request for information for %s to %s' %
@@ -247,7 +246,6 @@ class ReviewBase(object):
 
         subject = u'Submission Update: %s' % data['name']
         self.notify_email('info', subject)
-
 
     def send_escalate_mail(self):
         self.log_action(amo.LOG.ESCALATE_MANUAL)
@@ -404,8 +402,6 @@ class ReviewApp(ReviewBase):
             EscalationQueue.objects.filter(addon=self.addon).delete()
         if self.in_rereview:
             RereviewQueue.objects.filter(addon=self.addon).delete()
-        emails = list(self.addon.authors.values_list('email', flat=True))
-        cc_email = self.addon.mozilla_contact or None
         self.create_comm_thread(action='disable')
         subject = u'App disabled by reviewer: %s' % self.addon.name
         self.notify_email('disabled', subject)

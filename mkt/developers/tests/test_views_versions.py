@@ -4,8 +4,9 @@ from pyquery import PyQuery as pq
 
 import amo
 import amo.tests
+from amo.utils import reverse
 from addons.models import Addon, AddonUser
-from comm.models import CommunicationNote
+from comm.models import CommunicationNote, CommunicationThread
 from devhub.models import ActivityLog, AppLog
 from editors.models import EscalationQueue
 from files.models import File
@@ -21,7 +22,7 @@ class TestVersion(amo.tests.TestCase):
                        'user_admin_group', 'webapp_337141')
 
     def setUp(self):
-        self.client.login(username='admin@mozilla.com', password='password')
+        self.login('admin@mozilla.com')
         self.webapp = self.get_webapp()
         self.url = self.webapp.get_dev_url('versions')
 
@@ -133,6 +134,30 @@ class TestVersion(amo.tests.TestCase):
         eq_(doc('.status-rejected').length, 1)
         eq_(doc('#rejection').length, 1)
         eq_(doc('#rejection blockquote').text(), comments)
+
+    def test_comm_threads(self):
+        self.create_switch('comm-dashboard')
+
+        # /thread
+        comm_thread = CommunicationThread.objects.create(
+            addon=self.webapp, version=self.webapp.current_version)
+        comm_thread_2 = CommunicationThread.objects.create(
+            addon=self.webapp,
+            version=amo.tests.version_factory(addon=self.webapp))
+
+        # RequestFactory doesn't support follow (?).
+        self.login('admin@mozilla.com')
+        r = self.client.get(self.url, follow=True)
+
+        doc = pq(r.content)('.comm-threads tbody tr td a')
+        eq_(doc[1].text, str(comm_thread.id))
+        eq_(pq(doc[1]).attr('href'),
+            '%s%s%s' % (reverse('commonplace.commbadge'), 'thread/',
+                        comm_thread.id))
+        eq_(doc[3].text, str(comm_thread_2.id))
+        eq_(pq(doc[3]).attr('href'),
+            '%s%s%s' % (reverse('commonplace.commbadge'), 'thread/',
+                        comm_thread_2.id))
 
 
 @mock.patch('mkt.webapps.tasks.update_cached_manifests.delay', new=mock.Mock)

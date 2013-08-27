@@ -43,6 +43,7 @@ from users.views import _login
 from versions.models import Version
 
 from mkt.api.models import Access, generate
+from mkt.comm.api import CommunicationNote, CommunicationThread
 from mkt.constants import APP_IMAGE_SIZES
 from mkt.developers.decorators import dev_required
 from mkt.developers.forms import (APIConsumerForm, AppFormBasic,
@@ -266,6 +267,12 @@ def status(request, addon_id, addon, webapp=False):
             entry = None
         # This contains the rejection reason and timestamp.
         ctx['rejection'] = entry and entry.activity_log
+
+    # Link to Commbadge threads.
+    ctx['comm_threads'] = [{
+        'thread': thread,
+        'note_count': CommunicationNote.objects.filter(thread=thread).count()
+    } for thread in CommunicationThread.objects.filter(addon=addon)]
 
     return jingo.render(request, 'developers/apps/status.html', ctx)
 
