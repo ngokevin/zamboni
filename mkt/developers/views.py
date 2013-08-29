@@ -268,6 +268,13 @@ def status(request, addon_id, addon, webapp=False):
         # This contains the rejection reason and timestamp.
         ctx['rejection'] = entry and entry.activity_log
 
+    # Get latest reviewer message that has not been read.
+    latest_note = (CommunicationNote.objects.filter(thread__addon=addon)
+                   .order_by('-created'))
+    if (latest_note.exists() and
+        request.amo_user not in latest_note[0].read_by_users.all()):
+        ctx['latest_note'] = latest_note[0]
+
     # Link to Commbadge threads.
     ctx['comm_threads'] = [{
         'thread': thread,

@@ -21,6 +21,7 @@
     <h2>{{ _('Current Status') }}</h2>
     <div class="island" id="version-status" data-status="{{ addon.status }}">
       <div class="status-info">
+        <!-- App status. -->
         {% if addon.disabled_by_user and addon.status != amo.STATUS_DISABLED %}
           {{ status(_('You have <b>delisted</b> this app.')|safe) }}
         {% elif addon.status == amo.STATUS_NULL %}
@@ -60,45 +61,73 @@
           {{ _('It is awaiting your approval to make public.') }}
         {% endif %}
         {% if not (addon.is_disabled or addon.is_incomplete()) %}
-          <p><a href="https://developer.mozilla.org/en-US/docs/Apps/Marketplace_Review"
-             target="_blank">{{ _('Learn more') }}</a></p>
+          <p>
+            {% trans %}
+              Learn more about <a href="https://developer.mozilla.org/en-US/docs/Apps/Marketplace_Review"target="_blank">
+              Marketplace Reviews</a>
+            {% endtrans %}
+          </p>
         {% endif %}
+        <!-- Rejection comment with resubmit instructions. -->
         {% if addon.status == amo.STATUS_REJECTED %}
-            {% if rejection %}
-              <div class="island swagger" id="rejection">
-                <h3>
-                  {% trans reviewer=rejection.user.name %}
-                    Reviewed by <b>{{ reviewer }}</b>
-                  {% endtrans %}
-                  <time datetime="{{ rejection.created|isotime }}"
-                        title="{{ rejection.created|babel_datetime }}">
-                    ({{ rejection.created|timesince }})</time>
-                </h3>
-                <blockquote>
-                  {{ rejection.details.comments }}
-                </blockquote>
-              </div>
-              <p>
-                {% if addon.is_packaged %}
-                  {% trans resubmit_url='#upload-new-version' %}
-                    Once you have addressed these concerns, you may <a href="{{ resubmit_url }}">resubmit your
-                    app below</a>.
-                  {% endtrans %}
-                {% else %}
-                  {% trans %}
-                    Once you have addressed these concerns, you may resubmit your
-                    app below.
-                  {% endtrans %}
-                {% endif %}
-              </p>
-            {% endif %}
-            {% if not addon.is_packaged %}
-              <form method="post">
-                {{ csrf() }}
-                {{ form_field(form.notes, opt=True) }}
-                <p><button type="submit" name="resubmit-app">{{ _('Resubmit App') }}</button></p>
-              </form>
-            {% endif %}
+          {% if rejection %}
+            <div class="island swagger" id="rejection">
+              <h3>
+                {% trans reviewer=rejection.user.name %}
+                  Reviewed by <b>{{ reviewer }}</b>
+                {% endtrans %}
+                <time datetime="{{ rejection.created|isotime }}"
+                      title="{{ rejection.created|babel_datetime }}">
+                  ({{ rejection.created|timesince }})</time>
+              </h3>
+              <blockquote>
+                {{ rejection.details.comments }}
+              </blockquote>
+            </div>
+            <p>
+              {% if addon.is_packaged %}
+                {% trans resubmit_url='#upload-new-version' %}
+                  Once you have addressed these concerns, you may <a href="{{ resubmit_url }}">resubmit your
+                  app below</a>.
+                {% endtrans %}
+              {% else %}
+                {% trans %}
+                  Once you have addressed these concerns, you may resubmit your
+                  app below.
+                {% endtrans %}
+              {% endif %}
+            </p>
+          {% endif %}
+          {% if not addon.is_packaged %}
+            <form method="post">
+              {{ csrf() }}
+              {{ form_field(form.notes, opt=True) }}
+              <p><button type="submit" name="resubmit-app">{{ _('Resubmit App') }}</button></p>
+            </form>
+          {% endif %}
+        {% endif %}
+        <!--Latest communication thread note.-->
+        {% if latest_note %}
+          <div class="island swagger c">
+            <h3>
+              {% trans reviewer=latest_note.author.name %}
+                Message from <b>{{ reviewer }}</b>
+              {% endtrans %}
+              <time datetime="{{ latest_note.created|isotime }}"
+                    title="{{ latest_note .created|babel_datetime }}">
+                  ({{ latest_note.created|timesince }})</time>
+            </h3>
+            <blockquote>{{ latest_note.body }}</blockquote>
+            <p>
+              {% trans %}
+                A reviewer recently left you a comment. You can read the entire
+                thread and also reply on the communication dashboard.
+              {% endtrans%}
+            </p>
+            <a class="button comm-link" href="{{ url('commonplace.commbadge') + 'thread/' ~ latest_note.thread.id }}">
+              {{ _('Read Thread') }}
+            </a>
+          </div>
         {% endif %}
       </div>
       {% if addon.status == amo.STATUS_PUBLIC_WAITING %}
@@ -153,50 +182,6 @@
       {% endif %}
       <h3><a href="{{ url('commonplace.commbadge') }}">{{ _('View Your Communication Dashboard') }}</a></h3>
     </div>
-
-    {% if check_addon_ownership(request, addon, dev=True) %}
-      {% set is_disabled = addon.disabled_by_user and addon.status != amo.STATUS_DISABLED %}
-      <div class="island c">
-        <h2>{{ _('List App') if is_disabled else _('Delist App') }}</h2>
-        <p>
-          {% if is_disabled %}
-            {% trans %}
-              Your app's listing is disabled and will not appear in the Firefox
-              Marketplace. You may re-list it at any time.
-            {% endtrans %}
-          {% else %}
-            {% trans %}
-              Delisting your app will prevent it from appearing anywhere in the
-              Marketplace.
-            {% endtrans %}
-          {% endif %}
-        </p>
-        <p class="listing-footer">
-          {% if is_disabled %}
-            <a href="{{ addon.get_dev_url('enable') }}" class="button" id="enable-addon">
-              {{ _('List App') }}</a>
-          {% elif not addon.is_disabled %}
-            <a href="#" class="button" id="disable-addon">
-              {{ _('Delist App') }}</a>
-          {% endif %}
-        </p>
-      </div>
-    {% endif %}
-
-    {% if check_addon_ownership(request, addon) and addon.can_be_deleted() %}
-      <div class="island c">
-        <h2>{{ _('Delete App') }}</h2>
-        <p>
-          {% trans %}
-          Deleting your app will permanently delete it from the site. <strong>There is no going back.</strong>
-          {% endtrans %}
-        </p>
-        <p class="listing-footer">
-          <a href="#" class="button bad delete-button" id="delete-addon">
-            {{ _('Delete App') }}</a>
-        </p>
-      </div>
-    {% endif %}
 
     {% if addon.is_packaged %}
       {% set versions = addon.versions.all() %}
@@ -292,9 +277,51 @@
           </form>
         </div>
       {% endif %}
-
     {% endif %}
 
+    {% if check_addon_ownership(request, addon, dev=True) %}
+      {% set is_disabled = addon.disabled_by_user and addon.status != amo.STATUS_DISABLED %}
+      <div class="island c">
+        <h2>{{ _('List App') if is_disabled else _('Delist App') }}</h2>
+        <p>
+          {% if is_disabled %}
+            {% trans %}
+              Your app's listing is disabled and will not appear in the Firefox
+              Marketplace. You may re-list it at any time.
+            {% endtrans %}
+          {% else %}
+            {% trans %}
+              Delisting your app will prevent it from appearing anywhere in the
+              Marketplace.
+            {% endtrans %}
+          {% endif %}
+        </p>
+        <p class="listing-footer">
+          {% if is_disabled %}
+            <a href="{{ addon.get_dev_url('enable') }}" class="button" id="enable-addon">
+              {{ _('List App') }}</a>
+          {% elif not addon.is_disabled %}
+            <a href="#" class="button" id="disable-addon">
+              {{ _('Delist App') }}</a>
+          {% endif %}
+        </p>
+      </div>
+    {% endif %}
+
+    {% if check_addon_ownership(request, addon) and addon.can_be_deleted() %}
+      <div class="island c">
+        <h2>{{ _('Delete App') }}</h2>
+        <p>
+          {% trans %}
+          Deleting your app will permanently delete it from the site. <strong>There is no going back.</strong>
+          {% endtrans %}
+        </p>
+        <p class="listing-footer">
+          <a href="#" class="button bad delete-button" id="delete-addon">
+            {{ _('Delete App') }}</a>
+        </p>
+      </div>
+    {% endif %}
   </section>
 
   <div id="modals">
