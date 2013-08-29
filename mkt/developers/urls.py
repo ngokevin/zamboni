@@ -61,6 +61,12 @@ app_detail_patterns = patterns('',
     url('^status$', views.status, name='mkt.developers.apps.versions'),
     url('^blocklist$', views.blocklist, name='mkt.developers.apps.blocklist'),
 
+    # Commbadge.
+    url('^comm/thread/(?P<thread>\d+)$', views.comm_dashboard,
+        name='mkt.developers.apps.comm_dashboard_thread'),
+    url('^comm/.*$', views.comm_dashboard,
+        name='mkt.developers.apps.comm_dashboard'),
+
     # TODO: '^versions/$'
     url('^versions/(?P<version_id>\d+)$', views.version_edit,
         name='mkt.developers.apps.versions.edit'),

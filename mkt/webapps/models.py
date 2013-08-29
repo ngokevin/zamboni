@@ -35,6 +35,7 @@ from amo.helpers import absolutify
 from amo.storage_utils import copy_stored_file
 from amo.urlresolvers import reverse
 from amo.utils import JSONEncoder, memoize, memoize_key, smart_path
+from comm.models import CommunicationThread
 from constants.applications import DEVICE_TYPES
 from files.models import File, nfd_str, Platform
 from files.utils import parse_addon, WebAppParser
@@ -272,6 +273,14 @@ class Webapp(Addon):
             url = reverse(('mkt.stats.%s' % 'revenue_inapp'),
                           args=[self.app_slug, urlquote(inapp)])
         return url
+
+    def get_comm_thread_url(self):
+        thread_id = None
+        thread = (CommunicationThread.objects.filter(addon=self)
+                  .order_by('-created'))
+        if thread.exists():
+            thread_id = thread[0].id
+        return self.get_dev_url('comm_dashboard_thread', args=[thread_id])
 
     def get_image_asset_url(self, slug, default=64):
         """

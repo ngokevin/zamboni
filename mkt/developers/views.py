@@ -32,6 +32,7 @@ from amo.decorators import (any_permission_required, json_view, login_required,
                             post_required)
 from amo.urlresolvers import reverse
 from amo.utils import escape_all
+from comm.models import CommunicationThread
 from comm.utils import create_comm_thread
 from devhub.models import AppLog
 from files.models import File, FileUpload
@@ -357,6 +358,23 @@ def version_delete(request, addon_id, addon):
     messages.success(request,
                      _('Version "{0}" deleted.').format(version.version))
     return redirect(addon.get_dev_url('versions'))
+
+
+@waffle_switch('comm-dashboard')
+@dev_required
+def comm_dashboard(request, addon_id, addon, thread=None):
+    if not thread and CommunicationThread.objects.filter(addon=addon):
+            # If no thread is given, *for now*, redirect to thread if there is
+            # one. Think about creating one here it does not exist (?).
+            return http.HttpResponseRedirect(addon.get_comm_thread_url())
+
+    return jingo.render(request, 'developers/apps/commbadge.html', {
+        'addon': addon,
+        'thread': thread,
+        'site_settings': {
+            'persona_unverified_issuer': settings.BROWSERID_DOMAIN
+        }
+    })
 
 
 @dev_required(owner_for_post=True, webapp=True)

@@ -250,6 +250,7 @@ class TestEditVersion(amo.tests.TestCase):
     fixtures = fixture('user_999')
 
     def setUp(self):
+        self.create_switch('comm-dashboard')
         self.app = amo.tests.app_factory(is_packaged=True,
                                          version_kw=dict(version='1.0'))
         version = self.app.current_version
@@ -270,12 +271,6 @@ class TestEditVersion(amo.tests.TestCase):
         eq_(ver.releasenotes, rn)
         eq_(ver.approvalnotes, an)
 
-    def test_comm_thread(self):
-        rn = u'Release Notes'
-        an = u'Approval Notes'
-        self.create_switch('comm-dashboard')
-        self.client.post(self.url, {'releasenotes': rn,
-                                    'approvalnotes': an})
         notes = CommunicationNote.objects.all()
         eq_(notes.count(), 1)
         eq_(notes[0].body, an)

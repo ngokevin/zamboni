@@ -31,6 +31,9 @@
     (url('mkt.developers.transactions')|urlparams(app=addon.id), _('View Transactions')),
   ) %}
 {% endif %}
+{% if waffle.switch('comm-dashboard') %}
+  addon.get_comm_thread_url() _('View Communication Dashboard')
+{% endif %}
 
 <section class="secondary manage" role="complementary">
   <div class="island" id="edit-addon-nav">
