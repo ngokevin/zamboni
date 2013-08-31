@@ -62,6 +62,8 @@ app_detail_patterns = patterns('',
     url('^blocklist$', views.blocklist, name='mkt.developers.apps.blocklist'),
 
     # Commbadge.
+    url('^comm/thread/$', views.comm_dashboard,
+        name='mkt.developers.apps.comm_dashboard_thread'),
     url('^comm/thread/(?P<thread>\d+)$', views.comm_dashboard,
         name='mkt.developers.apps.comm_dashboard_thread'),
     url('^comm/.*$', views.comm_dashboard,
@@ -75,14 +77,13 @@ app_detail_patterns = patterns('',
     url('^versions/publicise$', views.version_publicise,
         name='mkt.developers.apps.versions.publicise'),
 
-
     url('^payments/$', views_payments.payments,
         name='mkt.developers.apps.payments'),
     url('^payments/disable$', views_payments.disable_payments,
         name='mkt.developers.apps.payments.disable'),
     url('^payments/bango-portal$', views_payments.bango_portal,
         name='mkt.developers.apps.payments.bango_portal'),
-    # in-app payments.
+    # In-app payments.
     url('^in-app-config/$', views_payments.in_app_config,
         name='mkt.developers.apps.in_app_config'),
     url('^in-app-secret/$', views_payments.in_app_secret,

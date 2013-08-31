@@ -8,7 +8,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
-    <title>Firefox Marketplace</title>
+    <title>{% block title %}Firefox Marketplace{% endblock %}</title>
     <meta property="og:title" content="Firefox Marketplace">
     <meta property="og:type" content="website">
     <meta property="og:image" content="{{ media('/fireplace/img/logos/128.png') }}">
@@ -22,16 +22,19 @@
           rel="search" type="application/opensearchdescription+xml"
           href="{{ url('opensearch') }}">
     <meta name="fragment" content="!">
+    {% block extrahead %}{% endblock %}
   </head>
   <body class="home" data-settings="{{ site_settings|json }}" data-build-id-js="{{ BUILD_ID_JS }}" data-media="{{ MEDIA_URL }}">
-
     <noscript><p>Sorry, you need JavaScript to access the Marketplace.</p></noscript>
     <div id="splash-overlay"><div class="throbber"></div></div>
 
-    <header id="site-header" class="header site-header"></header>
+    {% block header %}
+      <header id="site-header" class="header site-header"></header>
+    {% endblock %}
 
     <div class="cloak"></div>
     <main>
+      {% block page_header %}{% endblock %}
       <div id="cat-dropdown"></div>
       <div id="cat-list"></div>
       <div id="page" class="page" role="main"></div>

@@ -32,7 +32,9 @@
   ) %}
 {% endif %}
 {% if waffle.switch('comm-dashboard') %}
-  addon.get_comm_thread_url() _('View Communication Dashboard')
+  {% do urls.append(
+    (addon.get_comm_thread_url(), _('View Communication Dashboard'))
+  ) %}
 {% endif %}
 
 <section class="secondary manage" role="complementary">

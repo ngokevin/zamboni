@@ -1,33 +1,29 @@
-{% extends 'developers/base_impala.html' %}
+{% extends 'commonplace/index.html' %}
 
 {% block extrahead %}
-  <link rel="stylesheet" href="{{ media('commbadge/css/splash.styl.css') }}">
-  <link rel="stylesheet" href="{{ media('commbadge/css/modal.styl.css') }}">
-  <link rel="stylesheet" href="{{ media('commbadge/css/comm.styl.css') }}">
+  {{ css('mkt/commbadge') }}
+  {{ js('mkt/commbadge') }}
 {% endblock %}
 
 {% set title = _('Communication Dashboard') %}
-{% block title %}{{ hub_page_title(title, addon) }}{% endblock %}
+{% block title %}
+  {{ hub_page_title(title, addon) }}
+{% endblock %}
 
-{% block content %}
+{% block header %}
+  {{ super() }}
+  {% include 'developers/nav.html' %}
+  <div class="account-links-wrapper">
+    <div class="account-links">
+      {% include 'mkt/account-links.html' %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block page_header %}
   <header>
     {{ hub_breadcrumbs(addon, items=[(None, title)]) }}
     <h1>{{ title }}</h1>
   </header>
-
   {% include 'developers/includes/addons_edit_nav.html' %}
-
-  {% if not thread %}
-    <p class="no-results">
-      {{ _('No communication threads have been created yet.') }}
-    </p>
-  {% endif %}
-
-  <section class="primary manage commonplace-body" data-settings="{{ site_settings|json }}">
-    <main><div class="page commonplace-page" role="main"></div></main>
-  </section>
-
-  <script src="{{ settings.BROWSERID_JS_URL or 'https://login.persona.org/include.js' }}" defer></script>
-  <script type="text/javascript" src="{{ media('commbadge/js/l10n.js') }}"></script>
-  <script type="text/javascript" src="{{ media('commbadge/js/include.js') }}" defer></script>
 {% endblock %}

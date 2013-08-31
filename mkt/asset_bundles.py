@@ -134,6 +134,14 @@ CSS = {
         'css/gaia/action_menu.css',
         'css/gaia/switches.css',
         'css/gaia/value_selector.css',
+    ),
+    'mkt/commbadge': (
+        'css/devreg/breadcrumbs.styl',
+        'css/devreg/commbadge.styl',
+        'css/devreg/desktop-account-links.styl',
+        'css/devreg/header.styl',
+        'css/devreg/manage.styl',
+        'css/devreg/typography.styl',
     )
 }
 
@@ -320,6 +328,10 @@ JS = {
     'mkt/debug': (
         'js/debug/tinytools.js',
     ),
+    'mkt/commbadge': (
+        'js/lib/jquery-1.9.1.js',
+        'js/devreg/commbadge.js',
+    )
 }
 
 JS_desktop = list(JS['mkt/consumer'])

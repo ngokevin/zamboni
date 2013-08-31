@@ -280,7 +280,8 @@ class Webapp(Addon):
                   .order_by('-created'))
         if thread.exists():
             thread_id = thread[0].id
-        return self.get_dev_url('comm_dashboard_thread', args=[thread_id])
+        return self.get_dev_url(
+            'comm_dashboard_thread', args=[thread_id] if thread_id else [])
 
     def get_image_asset_url(self, slug, default=64):
         """

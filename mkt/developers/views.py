@@ -370,6 +370,7 @@ def comm_dashboard(request, addon_id, addon, thread=None):
 
     return jingo.render(request, 'developers/apps/commbadge.html', {
         'addon': addon,
+        'repo': 'commbadge',
         'thread': thread,
         'site_settings': {
             'persona_unverified_issuer': settings.BROWSERID_DOMAIN
