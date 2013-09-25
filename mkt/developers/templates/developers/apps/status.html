@@ -109,6 +109,20 @@
       {% endif %}
     </div>
 
+    <div id="preinstall" class="island c">
+      <h2>{{ _('Pre-Installed App Status') }}</h2>
+      <p>
+        {% trans %}
+          <strong>Status:</strong> Not submitted
+        {% endtrans %}
+      </p>
+      <p class="listing-footer">
+        <a class="button" href="{{ url('mkt.developers.apps.preinstall_home', addon.app_slug) }}">
+          {{ _('Learn how to get your app pre-installed on FirefoxOS devices.') }}
+        </a>
+     </p>
+    </div>
+
     {% if check_addon_ownership(request, addon, dev=True) %}
       {% set is_disabled = addon.disabled_by_user and addon.status != amo.STATUS_DISABLED %}
       <div class="island c">

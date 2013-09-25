@@ -273,6 +273,20 @@ def status(request, addon_id, addon, webapp=False):
 
 
 @dev_required
+def preinstall_home(request, addon_id, addon):
+    return jingo.render(request, 'developers/apps/preinstall/home.html', {
+        'addon': addon
+    })
+
+
+@dev_required
+def preinstall_submit(request, addon_id, addon):
+    return jingo.render(request, 'developers/apps/preinstall/submit.html', {
+        'addon': addon
+    })
+
+
+@dev_required
 def version_edit(request, addon_id, addon, version_id):
     show_features = waffle.switch_is_active('buchets') and addon.is_packaged
     formdata = request.POST if request.method == 'POST' else None

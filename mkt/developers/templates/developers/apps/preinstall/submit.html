@@ -1,0 +1,28 @@
+{% extends 'developers/base_impala.html' %}
+
+{% set title = _('Manage Status') %}
+{% block title %}{{ hub_page_title(title, addon) }}{% endblock %}
+
+{% block content %}
+  <header>
+    {{ hub_breadcrumbs(addon, items=[(None, title)]) }}
+    <h1>{{ title }}</h1>
+  </header>
+
+  <section id="preinstall" class="primary manage devhub-form">
+    <div class="island">
+      <h2>{{ _('Preinstalled App Terms and Conditions') }}</h2>
+      {% include "developers/apps/preinstall/termsandconditions.html" %}
+      <form class="submit" method="post">
+        <input id="agree" type="checkbox" name="agree">
+        <label for="agree">{{ _('I agree to the Terms and Conditions') }}</label>
+        <a class="button">{{ _('Upload Your Test Plan') }}</a>
+        <p class="listing-footer">
+          <button type="submit">{{ _('Submit your app') }}</a>
+        </p>
+     </form>
+    </div>
+  </section>
+
+  {% include 'developers/includes/addons_edit_nav.html' %}
+{% endblock %}
