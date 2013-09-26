@@ -17,11 +17,21 @@
     <div class="island">
       <h2>{{ _('Preinstalled App Terms and Conditions') }}</h2>
       {% include "developers/apps/preinstall/termsandconditions.html" %}
-      <form class="submit" method="post">
+      <form class="submit" method="post" enctype="multipart/form-data">
         {{ csrf() }}
-        {{ form.agree }}
-        <label class="agree" for="{{ form.agree.auto_id }}">{{ form.agree.label }}</label>
-        <a class="button upload-test-plan" href="#">{{ _('Upload Your Test Plan') }}</a>
+
+        <div class="agree">
+          {{ form.agree }}
+          <label for="{{ form.agree.auto_id }}">{{ form.agree.label }}</label>
+          {{ form.agree.errors }}
+        </div>
+
+        {{ form.test_plan }}
+        <div class="c">
+          <label for="{{ form.test_plan.auto_id }}">{{ form.test_plan.label }}</label>
+          {{ form.test_plan.errors }}
+        </div>
+
         <p class="listing-footer">
           <button type="submit">{{ _('Submit your app') }}</a>
         </p>

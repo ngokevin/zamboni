@@ -17,7 +17,9 @@
     <div class="island">
       <p>{% include "developers/apps/preinstall/home_help.html" %}</p>
       <p class="listing-footer">
-        <a class="button">{{ _('Download the test plan') }}</a>
+        <a class="button" href="{{ settings.PREINSTALL_TEST_PLAN_URL }}" download>
+          {{ _('Download the test plan') }}
+        </a>
       </p>
     </div>
 

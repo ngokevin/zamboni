@@ -513,3 +513,12 @@ def new_payments_region_email(ids, region_slug, **kw):
                                 'developers/emails/new_payments_region.html',
                                 context, recipient_list=to,
                                 perm_setting='app_regions')
+
+
+@task
+def save_test_plan(f, addon):
+    dst_root = os.path.join(settings.ADDONS_PATH, str(addon.id))
+    dst = os.path.join(dst_root, 'test_plan.pdf')
+    with open(dst, 'wb+') as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)

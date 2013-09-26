@@ -53,7 +53,7 @@ from mkt.developers.forms import (APIConsumerForm, AppFormBasic,
                                   PreviewFormSet, TransactionFilterForm,
                                   trap_duplicate)
 from mkt.developers.utils import check_upload
-from mkt.developers.tasks import run_validator
+from mkt.developers.tasks import run_validator, save_test_plan
 from mkt.submit.forms import AppFeaturesForm, NewWebappVersionForm
 from mkt.webapps.tasks import _update_manifest, update_manifests
 from mkt.webapps.models import Webapp
@@ -282,14 +282,28 @@ def preinstall_home(request, addon_id, addon):
 
 @dev_required(owner_for_post=True, webapp=True)
 def preinstall_submit(request, addon_id, addon, webapp):
-    form = ApiPreinstallTestPlanForm()
     if request.method == 'POST':
-        print request.POST
+        form = ApiPreinstallTestPlanForm(request.POST, request.FILES)
+        if form.is_valid():
+            save_test_plan(request.FILES['test_plan'], addon)
+            messages.success(
+                request,
+                _('Application for preinstall successfully submitted.'))
+        else:
+            messages.error(request, _('There was an error with the form.'))
+    else:
+        form = ApiPreinstallTestPlanForm()
 
     return jingo.render(request, 'developers/apps/preinstall/submit.html', {
         'addon': addon,
         'form': form
     })
+
+
+@json_view
+@dev_required(owner_for_post=True, webapp=True)
+def preinstall_upload(request, addon_id, addon, webapp):
+    pass
 
 
 @dev_required

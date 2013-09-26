@@ -27,6 +27,7 @@ from addons.models import (Addon, AddonCategory, AddonUser, BlacklistedSlug,
 from addons.widgets import CategoriesSelectMultiple
 from amo import get_user
 from amo.fields import SeparatedValuesField
+from amo.urlresolvers import reverse
 from amo.utils import remove_icons, slugify
 from devhub.forms import VersionForm
 from files.models import FileUpload
@@ -1093,8 +1094,15 @@ class AppVersionForm(VersionForm):
 
 
 class ApiPreinstallTestPlanForm(happyforms.Form):
-    app = AddonChoiceField(queryset=None)
+    # app = AddonChoiceField(queryset=None)
     agree = forms.BooleanField(
         widget=forms.CheckboxInput,
         label=_lazy(u'I agree to the Terms and Conditions'))
-    last_submission = forms.DateTimeField()
+    # last_submission = forms.DateTimeField()
+    test_plan = forms.FileField(
+        label=_lazy(u'Upload Your Test Plan'),
+        widget=forms.FileInput(attrs={
+            'class': 'button',
+            # 'data-upload-url': reverse('mkt.developers.apps.preinstall_upload')
+            # 'data-allowed-types': 'application/pdf|application/vnd.ms-excel'
+        }))

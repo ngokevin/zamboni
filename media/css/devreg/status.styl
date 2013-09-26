@@ -145,7 +145,25 @@
 }
 
 #preinstall {
-    label.agree {
+    .agree {
+        float: left;
+    }
+    label[for=id_agree] {
         margin-right: 10px;
+    }
+    label[for=id_test_plan] {
+        clear: right;
+        display: block;
+        float: right;
+        margin: 5px 2px 0;
+
+        + .errorlist {
+            clear: right;
+            float: right;
+        }
+    }
+    input[name=test_plan] {
+        float: right;
+        display: block;
     }
 }

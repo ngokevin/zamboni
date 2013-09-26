@@ -70,6 +70,8 @@ app_detail_patterns = patterns('',
         name='mkt.developers.apps.preinstall_home'),
     url('^status/preinstall/submit$', views.preinstall_submit,
         name='mkt.developers.apps.preinstall_submit'),
+    url('^status/preinstall/upload$', views.preinstall_upload,
+        name='mkt.developers.apps.preinstall_upload'),
     url('^status/preinstall/api$', include(api_preinstall.urls)),
 
     # TODO: '^versions/$'
@@ -79,7 +81,6 @@ app_detail_patterns = patterns('',
         name='mkt.developers.apps.versions.delete'),
     url('^versions/publicise$', views.version_publicise,
         name='mkt.developers.apps.versions.publicise'),
-
 
     url('^payments/$', views_payments.payments,
         name='mkt.developers.apps.payments'),
