@@ -1090,3 +1090,11 @@ class AppVersionForm(VersionForm):
                 make_public = amo.PUBLIC_WAIT
             self.instance.addon.update(make_public=make_public)
         return rval
+
+
+class ApiPreinstallTestPlanForm(happyforms.Form):
+    app = AddonChoiceField(queryset=None)
+    agree = forms.BooleanField(
+        widget=forms.CheckboxInput,
+        label=_lazy(u'I agree to the Terms and Conditions'))
+    last_submission = forms.DateTimeField()

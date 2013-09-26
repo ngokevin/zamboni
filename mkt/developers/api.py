@@ -2,15 +2,21 @@ import json
 
 import commonware
 from curling.lib import HttpClientError, HttpServerError
+from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
+                                   RetrieveModelMixin)
+from rest_framework.serializers import ModelSerializer
+from rest_framework.viewsets import GenericViewSet
 from tastypie import http
 from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse, NotFound
 from tower import ugettext as _
 
-from mkt.api.authentication import OAuthAuthentication
+from mkt.api.authentication import (OAuthAuthentication,
+                                    RestOAuthAuthentication,
+                                    RestSharedSecretAuthentication)
 from mkt.api.base import MarketplaceModelResource
 from mkt.developers.forms_payments import BangoPaymentAccountForm
-from mkt.developers.models import PaymentAccount
+from mkt.developers.models import PaymentAccount, PreinstallTestPlan
 
 log = commonware.log.getLogger('z.devhub')
 
@@ -75,3 +81,22 @@ class AccountResource(MarketplaceModelResource):
                            'could not be found.')
         account.cancel()
         log.info('Account cancelled: %s' % account.pk)
+
+
+class PreinstallTestPlanSerializer(ModelSerializer):
+
+    class Meta:
+        model = PreinstallTestPlan
+        fields = ('id', 'addon', 'last_submission')
+
+
+class PreinstallTestPlanViewSet(GenericViewSet, ListModelMixin,
+                                CreateModelMixin, RetrieveModelMixin):
+    model = PreinstallTestPlan
+    serializer_class = PreinstallTestPlanSerializer
+    authentication_classes = (RestOAuthAuthentication,
+                              RestSharedSecretAuthentication)
+    cors_allowed_methods = ['get', 'post', 'delete', 'patch']
+
+    def get_queryset(self):
+        return PreinstallTestPlan.objects.filter(thread=self.addon)

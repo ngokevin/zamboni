@@ -5,7 +5,11 @@
 
 {% block content %}
   <header>
-    {{ hub_breadcrumbs(addon, items=[(None, title)]) }}
+    {{ hub_breadcrumbs(addon, items=[
+      (addon.get_dev_url('versions'), title),
+      (url('mkt.developers.apps.preinstall_home', addon.app_slug), _('Preinstalled')),
+      (None, _('Submit') )])
+    }}
     <h1>{{ title }}</h1>
   </header>
 
@@ -14,9 +18,10 @@
       <h2>{{ _('Preinstalled App Terms and Conditions') }}</h2>
       {% include "developers/apps/preinstall/termsandconditions.html" %}
       <form class="submit" method="post">
-        <input id="agree" type="checkbox" name="agree">
-        <label for="agree">{{ _('I agree to the Terms and Conditions') }}</label>
-        <a class="button">{{ _('Upload Your Test Plan') }}</a>
+        {{ csrf() }}
+        {{ form.agree }}
+        <label class="agree" for="{{ form.agree.auto_id }}">{{ form.agree.label }}</label>
+        <a class="button upload-test-plan" href="#">{{ _('Upload Your Test Plan') }}</a>
         <p class="listing-footer">
           <button type="submit">{{ _('Submit your app') }}</a>
         </p>

@@ -48,9 +48,10 @@ from mkt.developers.decorators import dev_required
 from mkt.developers.forms import (APIConsumerForm, AppFormBasic,
                                   AppFormDetails, AppFormMedia,
                                   AppFormSupport, AppFormTechnical,
-                                  AppVersionForm, CategoryForm,
-                                  NewPackagedAppForm, PreviewFormSet,
-                                  TransactionFilterForm, trap_duplicate)
+                                  AppVersionForm, ApiPreinstallTestPlanForm,
+                                  CategoryForm, NewPackagedAppForm,
+                                  PreviewFormSet, TransactionFilterForm,
+                                  trap_duplicate)
 from mkt.developers.utils import check_upload
 from mkt.developers.tasks import run_validator
 from mkt.submit.forms import AppFeaturesForm, NewWebappVersionForm
@@ -279,10 +280,15 @@ def preinstall_home(request, addon_id, addon):
     })
 
 
-@dev_required
-def preinstall_submit(request, addon_id, addon):
+@dev_required(owner_for_post=True, webapp=True)
+def preinstall_submit(request, addon_id, addon, webapp):
+    form = ApiPreinstallTestPlanForm()
+    if request.method == 'POST':
+        print request.POST
+
     return jingo.render(request, 'developers/apps/preinstall/submit.html', {
-        'addon': addon
+        'addon': addon,
+        'form': form
     })
 
 

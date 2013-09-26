@@ -1,7 +1,7 @@
 from django import http
 from django.conf.urls import include, patterns, url
 
-from rest_framework.routers import SimpleRouter
+from rest_framework.routers import DefaultRouter, SimpleRouter
 from tastypie.api import Api
 
 from lib.misc.urlconf_decorator import decorate
@@ -9,7 +9,7 @@ from lib.misc.urlconf_decorator import decorate
 import amo
 from amo.decorators import write
 from mkt.api.base import AppRouter
-from mkt.developers.api import AccountResource
+from mkt.developers.api import AccountResource, PreinstallTestPlanViewSet
 from mkt.developers.api_payments import (PaymentAccountViewSet,
                                          PaymentCheckViewSet,
                                          PaymentDebugViewSet, PaymentViewSet,
@@ -46,6 +46,11 @@ def bango_patterns(prefix):
     )
 
 
+api_preinstall = DefaultRouter()
+api_preinstall.register(r'preinstalltestplan', PreinstallTestPlanViewSet,
+                        base_name='test-plan')
+
+
 # These will all start with /app/<app_slug>/
 app_detail_patterns = patterns('',
     url('^edit$', views.edit, name='mkt.developers.apps.edit'),
@@ -65,6 +70,7 @@ app_detail_patterns = patterns('',
         name='mkt.developers.apps.preinstall_home'),
     url('^status/preinstall/submit$', views.preinstall_submit,
         name='mkt.developers.apps.preinstall_submit'),
+    url('^status/preinstall/api$', include(api_preinstall.urls)),
 
     # TODO: '^versions/$'
     url('^versions/(?P<version_id>\d+)$', views.version_edit,

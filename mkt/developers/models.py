@@ -299,3 +299,11 @@ class UserInappKey(amo.models.ModelBase):
 
     class Meta:
         db_table = 'user_inapp_keys'
+
+
+class PreinstallTestPlan(amo.models.ModelBase):
+    addon = models.ForeignKey('addons.Addon')
+    last_submission = models.DateTimeField()
+
+    class Meta:
+        db_table = 'preinstall_test_plan'
