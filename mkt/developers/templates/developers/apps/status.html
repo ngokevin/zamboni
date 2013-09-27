@@ -109,8 +109,9 @@
       {% endif %}
     </div>
 
-    <div id="preinstall" class="island c">
+    <div id="preinstall" class="version island c">
       <h2>{{ _('Pre-Installed App Status') }}</h2>
+      <a class="help" href="{{ addon.get_dev_url('preinstall_home') }}"></a>
       <p>
         {% if test_plan %}
           {% trans last_submission=test_plan.last_submission|datetime %}

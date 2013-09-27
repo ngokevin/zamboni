@@ -1,12 +1,12 @@
-{% trans %}
+{% trans submit_url=addon.get_dev_url('preinstall_submit')%}
 
-Some copy describing the process, offering links to download the
-required forms and where to submit theme. If we're offering an upload form,
-where are we storing this information? Who is reviewing this piece of the app?
-If we have an email address for developer sto send completed documents to
-(recommended because it creates a more personal relationship between the
-developers and whoever it is that is reviewing apps for this pre-install
-status, and to limit developers who are not really serious, forcing them to
-write an email is one more step to making sure.
+You can submit their app to be considered for being <strong>preinstalled and
+shipped with FirefoxOS devices</strong> by phone operators. To opt-in for
+preinstallation, you may download a test template from us below, test your app,
+fill out the template, and upload your results back to us from the <a href="{{
+submit_url }}">app preinstall submission form</a>. We will store your test
+results on our servers where they will be reviewed by interested phone
+operators. If you have further questions, you can email the <a mailto="app-
+reviewers@mozilla.org">Marketplace app reviewers</a>.
 
 {% endtrans %}
