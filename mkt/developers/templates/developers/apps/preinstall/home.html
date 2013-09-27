@@ -27,7 +27,11 @@
       <h3>{{ _('Testing Finished?') }}</h3>
       <p class="listing-footer">
         <a class="button" href="{{ url('mkt.developers.apps.preinstall_submit', addon.app_slug) }}">
-          {{ _('Submit your app for preinstall') }}
+          {% if has_test_plan %}
+            {{ _('Update your test plan') }}
+          {% else %}
+            {{ _('Submit your app for preinstall') }}
+          {% endif %}
         </a>
       </p>
     </div>

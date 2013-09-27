@@ -154,6 +154,7 @@ ADDON_ICONS_DEFAULT_PATH = os.path.join(MEDIA_ROOT, 'img/hub')
 ADDON_ICONS_DEFAULT_URL = MEDIA_URL + '/img/hub'
 
 PREINSTALL_TEST_PLAN_URL = 'http://people.mozilla.org/~kngo/preinstall_test_plan_template.pdf'
+PREINSTALL_TEST_PLAN_LATEST = datetime.datetime(2013, 9, 25)
 
 # Path to store webpay product icons.
 PRODUCT_ICON_PATH = NETAPP_STORAGE + '/product-icons'

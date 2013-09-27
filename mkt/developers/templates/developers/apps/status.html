@@ -112,13 +112,25 @@
     <div id="preinstall" class="island c">
       <h2>{{ _('Pre-Installed App Status') }}</h2>
       <p>
+        {% set test_plan_status = _('Not Submitted') %}
+        {% if test_plan %}
+          {% set test_plan_status = _('Application Submitted') %}
+        {% endif %}
+
         {% trans %}
-          <strong>Status:</strong> Not submitted
+          <strong>{{ test_plan_status }}</strong>
         {% endtrans %}
+        {% if outdated_test_plan %}
+          <span class="outdated">{{ _('New version of the test plan available') }}</span>
+        {% endif %}
       </p>
       <p class="listing-footer">
         <a class="button" href="{{ url('mkt.developers.apps.preinstall_home', addon.app_slug) }}">
-          {{ _('Learn how to get your app pre-installed on FirefoxOS devices.') }}
+          {% if test_plan %}
+            {{ _('Update your test plan') }}
+          {% else %}
+            {{ _('Learn how to get your app pre-installed on FirefoxOS devices') }}
+          {% endif %}
         </a>
      </p>
     </div>

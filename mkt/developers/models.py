@@ -1,5 +1,7 @@
+import os
 import uuid
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
@@ -307,3 +309,7 @@ class PreinstallTestPlan(amo.models.ModelBase):
 
     class Meta:
         db_table = 'preinstall_test_plan'
+
+    def test_plan_path(self):
+        dst_root = os.path.join(settings.ADDONS_PATH, str(self.addon.id))
+        return os.path.join(dst_root, 'test_plan.pdf')
