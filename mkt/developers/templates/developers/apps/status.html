@@ -114,10 +114,10 @@
       <p>
         {% if test_plan %}
           {% trans last_submission=test_plan.last_submission|datetime %}
-            <strong>Application Submitted</strong> on {{ last_submission }}
+            <strong class="submitted">Application Submitted</strong> on {{ last_submission }}
           {% endtrans %}
         {% else %}
-          <strong>{{ _('Not Submitted') }}</strong>
+          <strong class="not-submitted">{{ _('Not Submitted') }}</strong>
         {% endif %}
 
         {% if outdated_test_plan %}
@@ -125,7 +125,9 @@
         {% endif %}
 
       </p>
-      <p><a href="{{ test_plan.test_plan_url() }}" download>{{ _('View your most recently submitted test plan') }}</a></p>
+      {% if test_plan %}
+        <p><a href="{{ test_plan.test_plan_url() }}" download>{{ _('View your most recently submitted test plan') }}</a></p>
+      {% endif %}
       <p class="listing-footer">
         {% set next_url_suffix = '_home' %}
         {% set btn_txt = _('Learn how to get your app pre-installed on FirefoxOS devices') %}

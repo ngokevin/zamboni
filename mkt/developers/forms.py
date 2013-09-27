@@ -1098,8 +1098,28 @@ class PreinstallTestPlanForm(happyforms.Form):
         label=_lazy(u'I agree to the Terms and Conditions'))
     test_plan = forms.FileField(
         label=_lazy(u'Upload Your Test Plan'),
-        widget=forms.FileInput(attrs={
-            'class': 'button',
-            # 'data-upload-url': reverse('mkt.developers.apps.preinstall_upload')
-            # 'data-allowed-types': 'application/pdf|application/vnd.ms-excel'
-        }))
+        widget=forms.FileInput(attrs={'class': 'button'}))
+
+    def clean(self):
+        """Validate test_plan file."""
+        content_types = ['application/pdf', 'application/vnd.ms-excel']
+        max_upload_size=2621440  # 2.5MB
+
+        if not 'test_plan' in self.files:
+            raise forms.ValidationError(_('Test plan required.'))
+
+        file = self.files['test_plan']
+        content_type = file.content_type
+
+        if content_type in content_types:
+            if file._size > max_upload_size:
+                raise forms.ValidationError(
+                    _('File too large. Keep size under %s. Current size %s.') %
+                    (filesizeformat(self.max_upload_size),
+                     filesizeformat(file._size)))
+        else:
+            raise forms.ValidationError(
+                _('Wrong file type. Only %s files are supported.') %
+                str(', '.join(content_types)))
+
+        return self.cleaned_data

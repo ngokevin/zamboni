@@ -1,5 +1,7 @@
+import datetime
 import mock
 from nose.tools import eq_
+import os
 from pyquery import PyQuery as pq
 
 import amo
@@ -13,6 +15,8 @@ from files.models import File
 from users.models import UserProfile
 from versions.models import Version
 
+from mkt.developers.models import PreinstallTestPlan
+from mkt.developers.views import preinstall_submit, status
 from mkt.site.fixtures import fixture
 from mkt.submit.tests.test_views import BasePackagedAppTest
 
@@ -431,6 +435,83 @@ class TestPreinstallSubmit(amo.tests.TestCase):
         self.home_url = self.webapp.get_dev_url('preinstall_home')
         self.submit_url = self.webapp.get_dev_url('preinstall_submit')
 
+        path = os.path.dirname(os.path.abspath(__file__))
+        self.test_pdf = path + '/files/test.pdf'
+        self.test_xls = path + '/files/test.xls'
+
+    @mock.patch('mkt.developers.views.save_test_plan')
+    @mock.patch('mkt.developers.views.messages')
+    def _submit_pdf(self, noop1, noop2):
+        f = open(self.test_pdf, 'r')
+        req = req_factory_factory(self.submit_url, user=self.user, post=True,
+                                  data={'agree': True, 'test_plan': f})
+        return preinstall_submit(req, self.webapp.slug)
+
     def test_get_200(self):
         eq_(self.client.get(self.home_url).status_code, 200)
         eq_(self.client.get(self.submit_url).status_code, 200)
+
+    def test_preinstall_on_status_page(self):
+        req = req_factory_factory(self.url, user=self.user)
+        r = status(req, self.webapp.slug)
+        doc = pq(r.content)
+        eq_(doc('#preinstall .listing-footer a').attr('href'),
+            self.webapp.get_dev_url('preinstall_home'))
+        assert doc('#preinstall .not-submitted')
+
+        self._submit_pdf()
+
+        req = req_factory_factory(self.url, user=self.user)
+        r = status(req, self.webapp.slug)
+        doc = pq(r.content)
+        eq_(doc('#preinstall .listing-footer a').attr('href'),
+            self.webapp.get_dev_url('preinstall_submit'))
+        assert doc('#preinstall .submitted')
+
+    def test_submit_pdf(self):
+        r = self._submit_pdf()
+        self.assert3xx(r, self.submit_url)
+        test_plan = PreinstallTestPlan.objects.get()
+        eq_(test_plan.addon, self.webapp)
+        eq_(test_plan.last_submission.date(), datetime.datetime.now().date())
+
+    @mock.patch('mkt.developers.views.save_test_plan')
+    @mock.patch('mkt.developers.views.messages')
+    def test_submit_xls(self, noop1, noop2):
+        f = open(self.test_xls, 'r')
+        req = req_factory_factory(self.submit_url, user=self.user, post=True,
+                                  data={'agree': True, 'test_plan': f})
+        r = preinstall_submit(req, self.webapp.slug)
+        self.assert3xx(r, self.submit_url)
+        test_plan = PreinstallTestPlan.objects.get()
+        eq_(test_plan.addon, self.webapp)
+        eq_(test_plan.last_submission.date(), datetime.datetime.now().date())
+
+    @mock.patch('mkt.developers.views.save_test_plan')
+    @mock.patch('mkt.developers.views.messages')
+    def test_submit_bad_file(self, noop1, noop2):
+        f = open(os.path.abspath(__file__), 'r')
+        req = req_factory_factory(self.submit_url, user=self.user, post=True,
+                                  data={'agree': True, 'test_plan': f})
+        r = preinstall_submit(req, self.webapp.slug)
+        eq_(r.status_code, 200)
+        eq_(PreinstallTestPlan.objects.count(), 0)
+
+    @mock.patch('mkt.developers.views.save_test_plan')
+    @mock.patch('mkt.developers.views.messages')
+    def test_submit_no_file(self, noop1, noop2):
+        req = req_factory_factory(self.submit_url, user=self.user, post=True,
+                                  data={'agree': True})
+        r = preinstall_submit(req, self.webapp.slug)
+        eq_(r.status_code, 200)
+        eq_(PreinstallTestPlan.objects.count(), 0)
+
+    @mock.patch('mkt.developers.views.save_test_plan')
+    @mock.patch('mkt.developers.views.messages')
+    def test_submit_no_agree(self, noop1, noop2):
+        f = open(self.test_xls, 'r')
+        req = req_factory_factory(self.submit_url, user=self.user, post=True,
+                                  data={'test_plan': f})
+        r = preinstall_submit(req, self.webapp.slug)
+        eq_(r.status_code, 200)
+        eq_(PreinstallTestPlan.objects.count(), 0)

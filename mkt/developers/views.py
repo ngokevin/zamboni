@@ -295,13 +295,14 @@ def preinstall_submit(request, addon_id, addon, webapp):
         form = PreinstallTestPlanForm(request.POST, request.FILES)
         if form.is_valid():
             save_test_plan(request.FILES['test_plan'], addon)
-            messages.success(
-                request,
-                _('Application for preinstall successfully submitted.'))
-
             # Log test plan.
             PreinstallTestPlan.objects.get_or_create(
                 addon=addon, last_submission=datetime.datetime.now())
+
+            messages.success(
+                request,
+                _('Application for preinstall successfully submitted.'))
+            return redirect(addon.get_dev_url('preinstall_submit'))
         else:
             messages.error(request, _('There was an error with the form.'))
     else:
