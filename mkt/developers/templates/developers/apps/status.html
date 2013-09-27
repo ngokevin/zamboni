@@ -133,7 +133,7 @@
           {% set next_url_suffix = '_submit' %}
           {% set btn_txt = _('Update your test plan') %}
         {% endif %}
-        <a class="button" href="{{ url('mkt.developers.apps.preinstall' + next_url_suffix, addon.app_slug) }}">
+        <a class="button" href="{{ addon.get_dev_url('preinstall' + next_url_suffix) }}">
           {{ btn_txt }}
         </a>
      </p>

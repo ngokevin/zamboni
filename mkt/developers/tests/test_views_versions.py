@@ -4,6 +4,7 @@ from pyquery import PyQuery as pq
 
 import amo
 import amo.tests
+from amo.tests import req_factory_factory
 from addons.models import Addon, AddonUser
 from comm.models import CommunicationNote
 from devhub.models import ActivityLog, AppLog
@@ -415,3 +416,21 @@ class TestVersionPackaged(amo.tests.WebappTestCase):
         eq_(app.versions.count(), v_count + 1)
         eq_(app.status, amo.STATUS_BLOCKED)
         eq_(app.versions.latest().files.latest().status, amo.STATUS_BLOCKED)
+
+
+class TestPreinstallSubmit(amo.tests.TestCase):
+    fixtures = fixture('group_admin', 'user_admin', 'user_admin_group',
+                       'webapp_337141')
+
+    def setUp(self):
+        self.user = UserProfile.objects.get(username='admin')
+        self.login(self.user)
+
+        self.webapp = Addon.objects.get(id=337141)
+        self.url = self.webapp.get_dev_url('versions')
+        self.home_url = self.webapp.get_dev_url('preinstall_home')
+        self.submit_url = self.webapp.get_dev_url('preinstall_submit')
+
+    def test_get_200(self):
+        eq_(self.client.get(self.home_url).status_code, 200)
+        eq_(self.client.get(self.submit_url).status_code, 200)

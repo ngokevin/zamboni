@@ -26,7 +26,7 @@
     <div class="island">
       <h3>{{ _('Testing Finished?') }}</h3>
       <p class="listing-footer">
-        <a class="button" href="{{ url('mkt.developers.apps.preinstall_submit', addon.app_slug) }}">
+        <a class="button" href="{{ addon.get_dev_url('preinstall_submit') }}">
           {{ _('Submit your app for preinstall') }}
         </a>
       </p>
