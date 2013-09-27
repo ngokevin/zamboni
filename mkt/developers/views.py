@@ -314,12 +314,6 @@ def preinstall_submit(request, addon_id, addon, webapp):
     })
 
 
-@json_view
-@dev_required(owner_for_post=True, webapp=True)
-def preinstall_upload(request, addon_id, addon, webapp):
-    pass
-
-
 @dev_required
 def version_edit(request, addon_id, addon, version_id):
     show_features = waffle.switch_is_active('buchets') and addon.is_packaged

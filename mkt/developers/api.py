@@ -81,22 +81,3 @@ class AccountResource(MarketplaceModelResource):
                            'could not be found.')
         account.cancel()
         log.info('Account cancelled: %s' % account.pk)
-
-
-class PreinstallTestPlanSerializer(ModelSerializer):
-
-    class Meta:
-        model = PreinstallTestPlan
-        fields = ('id', 'addon', 'last_submission')
-
-
-class PreinstallTestPlanViewSet(GenericViewSet, ListModelMixin,
-                                CreateModelMixin, RetrieveModelMixin):
-    model = PreinstallTestPlan
-    serializer_class = PreinstallTestPlanSerializer
-    authentication_classes = (RestOAuthAuthentication,
-                              RestSharedSecretAuthentication)
-    cors_allowed_methods = ['get', 'post', 'delete', 'patch']
-
-    def get_queryset(self):
-        return PreinstallTestPlan.objects.filter(thread=self.addon)
