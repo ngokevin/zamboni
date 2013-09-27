@@ -1,4 +1,5 @@
 import os
+import posixpath
 import uuid
 
 from django.conf import settings
@@ -310,6 +311,8 @@ class PreinstallTestPlan(amo.models.ModelBase):
     class Meta:
         db_table = 'preinstall_test_plan'
 
-    def test_plan_path(self):
-        dst_root = os.path.join(settings.ADDONS_PATH, str(self.addon.id))
-        return os.path.join(dst_root, 'test_plan.pdf')
+    def test_plan_url(self):
+        filename = 'test_plan.pdf'
+        host = (settings.PRIVATE_MIRROR_URL if self.addon.is_disabled
+                else settings.LOCAL_MIRROR_URL)
+        return posixpath.join(host, str(self.addon.id), filename or '')

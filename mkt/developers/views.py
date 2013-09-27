@@ -286,7 +286,6 @@ def status(request, addon_id, addon, webapp=False):
 def preinstall_home(request, addon_id, addon):
     return jingo.render(request, 'developers/apps/preinstall/home.html', {
         'addon': addon,
-        'has_test_plan': PreinstallTestPlan.objects.filter(addon=addon).exists()
     })
 
 

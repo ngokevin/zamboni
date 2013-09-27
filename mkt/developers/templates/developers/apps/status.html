@@ -112,25 +112,29 @@
     <div id="preinstall" class="island c">
       <h2>{{ _('Pre-Installed App Status') }}</h2>
       <p>
-        {% set test_plan_status = _('Not Submitted') %}
         {% if test_plan %}
-          {% set test_plan_status = _('Application Submitted') %}
+          {% trans last_submission=test_plan.last_submission|datetime %}
+            <strong>Application Submitted</strong> on {{ last_submission }}
+          {% endtrans %}
+        {% else %}
+          <strong>{{ _('Not Submitted') }}</strong>
         {% endif %}
 
-        {% trans %}
-          <strong>{{ test_plan_status }}</strong>
-        {% endtrans %}
         {% if outdated_test_plan %}
           <span class="outdated">{{ _('New version of the test plan available') }}</span>
         {% endif %}
+
       </p>
+      <p><a href="{{ test_plan.test_plan_url() }}" download>{{ _('View your most recently submitted test plan') }}</a></p>
       <p class="listing-footer">
-        <a class="button" href="{{ url('mkt.developers.apps.preinstall_home', addon.app_slug) }}">
-          {% if test_plan %}
-            {{ _('Update your test plan') }}
-          {% else %}
-            {{ _('Learn how to get your app pre-installed on FirefoxOS devices') }}
-          {% endif %}
+        {% set next_url_suffix = '_home' %}
+        {% set btn_txt = _('Learn how to get your app pre-installed on FirefoxOS devices') %}
+        {% if test_plan %}
+          {% set next_url_suffix = '_submit' %}
+          {% set btn_txt = _('Update your test plan') %}
+        {% endif %}
+        <a class="button" href="{{ url('mkt.developers.apps.preinstall' + next_url_suffix, addon.app_slug) }}">
+          {{ btn_txt }}
         </a>
      </p>
     </div>
