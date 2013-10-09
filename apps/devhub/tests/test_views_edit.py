@@ -1311,6 +1311,20 @@ class TestThemeEdit(amo.tests.TestCase):
         AddonUser.objects.create(addon=self.addon, user=self.user)
 
     @mock.patch('amo.messages.error')
+    def test_carriage_return(self, message_mock):
+        # \r\naaa...\r\n...aaa\r\n.
+        # Leading/trailing WS and \r should be stripped.
+        data = {'description': '\r\n' + 'a' * 497 + '\r\n' + 'a' + '\r\n'}
+        req = req_factory_factory(
+            self.addon.get_dev_url('edit'),
+            user=self.user, post=True, data=data)
+        r = edit_theme(req, self.addon.slug, self.addon)
+        doc = pq(r.content)
+        edit_theme(req, self.addon.slug, self.addon)
+        # Should be no errors with description, under 500 limit.
+        assert not doc('#trans-description + ul li').text()
+
+    @mock.patch('amo.messages.error')
     def test_desc_too_long_error(self, message_mock):
         data = {'description': 'a' * 501}
         req = req_factory_factory(

@@ -144,7 +144,7 @@ class AddonFormBasic(AddonFormBase):
     name = TransField(max_length=50)
     slug = forms.CharField(max_length=30)
     summary = TransField(widget=TransTextarea(attrs={'rows': 4}),
-                         max_length=250)
+                         max_length=500)
     tags = forms.CharField(required=False)
 
     class Meta:
@@ -517,7 +517,7 @@ class ThemeForm(ThemeFormBase):
     category = forms.ModelChoiceField(queryset=Category.objects.all(),
                                       widget=forms.widgets.RadioSelect)
     description = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}),
-                                  max_length=500, required=False)
+                                  max_length=250, required=False)
     tags = forms.CharField(required=False)
 
     license = forms.TypedChoiceField(choices=amo.PERSONA_LICENSES_CHOICES,
@@ -589,7 +589,9 @@ class EditThemeForm(AddonFormBase):
                                       widget=forms.widgets.RadioSelect)
     description = TransField(
         widget=TransTextarea(attrs={'rows': 4}),
-        max_length=500, required=False, label=_lazy('Describe your Theme.'))
+        required=False, label=_lazy('Describe your Theme.'))
+    DESCRIPTION_MAX_LENGTH = 500
+
     tags = forms.CharField(required=False)
     accentcolor = ColorField(required=False)
     textcolor = ColorField(required=False)
@@ -653,6 +655,20 @@ class EditThemeForm(AddonFormBase):
                                                  'persona_%s' % field]),
                 'data-allowed-types': 'image/jpeg|image/png'
             }
+
+    def clean(self):
+        cleaned_data = super(EditThemeForm, self).clean()
+        max_len = self.DESCRIPTION_MAX_LENGTH
+        for key in [k for k in self.data if k.startswith('description')]:
+            cleaned_desc = self.data[key].strip().replace('\r', '')
+            if len(cleaned_desc) > max_len:
+                # Max length.
+                self._errors['description'] = self.error_class([_(
+                    'Ensure this value has at most %s characters. '
+                    '(it has %s).' % (len(cleaned_desc), max_len))])
+            else:
+                cleaned_data[key] = cleaned_desc
+        return cleaned_data
 
     def save(self):
         addon = self.instance
