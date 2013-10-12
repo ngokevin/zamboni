@@ -48,6 +48,7 @@ from zadmin.models import set_config, unmemoized_get_config
 
 import mkt
 from mkt.comm.forms import CommAttachmentFormSet
+from mkt.constants import comm as cmb
 from mkt.regions.utils import parse_region
 from mkt.reviewers.forms import ApiReviewersSearchForm
 from mkt.reviewers.utils import (AppsReviewing, clean_sort_param,
@@ -402,7 +403,8 @@ def _review(request, addon, version):
                   actions=actions, actions_minimal=actions_minimal,
                   tab=queue_type, product_attrs=product_attrs,
                   attachment_formset=attachment_formset,
-                  appfeatures_form=appfeatures_form)
+                  appfeatures_form=appfeatures_form,
+                  cmb=cmb)
 
     if features_list is not None:
         ctx['feature_list'] = features_list
