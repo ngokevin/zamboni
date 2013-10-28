@@ -248,3 +248,9 @@ REGION_IDS = sorted(REGIONS_CHOICES_ID_DICT.keys())[1:]
 
 # Regions that have ratings bodies.
 ALL_REGIONS_WITH_CONTENT_RATINGS = [x for x in ALL_REGIONS if x.ratingsbodies]
+
+# Regions without ratings bodies and fallback to the GENERIC rating body.
+ALL_REGIONS_WO_CONTENT_RATINGS = (set(ALL_REGIONS) -
+                                  set(ALL_REGIONS_WITH_CONTENT_RATINGS))
+
+GENERIC_RATING_REGION_SLUG = 'generic'
