@@ -1103,6 +1103,12 @@ class IARCGetAppInfoForm(happyforms.Form):
 
         if data.get('rows'):
             row = data['rows'][0]
+
+            if not _verify_iarc_app_info(app, row):
+                msg = _('Content rating record does not belong to this app.')
+                self._errors['submission_id'] = self.error_class([msg])
+                raise forms.ValidationError(msg)
+
             # We found a rating, so store the id and code for future use.
             app.set_iarc_info(iarc_id, iarc_code)
             app.set_content_ratings(row.get('ratings', {}))
@@ -1113,6 +1119,20 @@ class IARCGetAppInfoForm(happyforms.Form):
             msg = _('Content rating record not found.')
             self._errors['submission_id'] = self.error_class([msg])
             raise forms.ValidationError(msg)
+
+
+def _verify_iarc_app_info(app, data):
+    """
+    Small check to see if the app's info is actually for the app.
+    But the form is not completely secure.
+    """
+    with amo.utils.no_translation(app.default_locale):
+        app = Webapp.objects.get(pk=app.pk)
+
+    # Sadly, the name is all we got to identify.
+    if unicode(app.name) != data['title']:
+        return False
+    return True
 
 
 class ContentRatingForm(happyforms.Form):

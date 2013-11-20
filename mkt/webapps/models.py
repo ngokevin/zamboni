@@ -1156,7 +1156,7 @@ class Webapp(Addon):
             return
 
         with amo.utils.no_translation(self.default_locale):
-            delocalized_self = Addon.objects.get(pk=self.pk)
+            delocalized_self = Webapp.objects.get(pk=self.pk)
 
         xmls = []
         for cr in self.content_ratings.all():

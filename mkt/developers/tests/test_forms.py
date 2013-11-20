@@ -749,6 +749,11 @@ class TestAdminSettingsForm(TestAdmin):
 
 class TestIARCGetAppInfoForm(amo.tests.WebappTestCase):
 
+    def setUp(self):
+        super(TestIARCGetAppInfoForm, self).setUp()
+        self.app.name = 'Twitter'
+        self.app.save()
+
     def test_good(self):
         with self.assertRaises(IARCInfo.DoesNotExist):
             self.app.iarc_info
@@ -790,3 +795,12 @@ class TestIARCGetAppInfoForm(amo.tests.WebappTestCase):
         assert form.is_valid(), form.errors
         with self.assertRaises(django_forms.ValidationError):
             form.save('app')  # Just pass string to avoid making a Webapp obj.
+
+    def test_wrong_app_mismatch(self):
+        self.app.name = 'YouTwitFace'
+        self.app.save()
+        form = forms.IARCGetAppInfoForm({'submission_id': 1,
+                                         'security_code': 'a'})
+        assert form.is_valid(), form.errors
+        with self.assertRaises(django_forms.ValidationError):
+            form.save(self.app)
