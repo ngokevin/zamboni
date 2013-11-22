@@ -40,6 +40,7 @@ from users.models import UserProfile
 from versions.models import update_status, Version
 
 import mkt
+from mkt.comm.utils import create_comm_note
 from mkt.constants import apps
 from mkt.developers.models import (AddonPaymentAccount, PaymentAccount,
                                    SolitudeSeller)
