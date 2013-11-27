@@ -1073,7 +1073,7 @@ class PreloadTestPlanForm(happyforms.Form):
 
 class IARCGetAppInfoForm(happyforms.Form):
     submission_id = forms.CharField()
-    security_code = forms.CharField()
+    security_code = forms.CharField(max_length=10)
 
     def clean_submission_id(self):
         submission_id = (

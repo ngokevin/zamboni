@@ -54,6 +54,9 @@ class IARC_Parser(object):
             interactives = []
 
             for k, v in row.items():
+                if not v:
+                    continue
+
                 # Get ratings body constant.
                 ratings_body = RATINGS_BODY_MAPPING.get(
                     k.split('_')[-1].lower(), ratingsbodies.GENERIC)

@@ -94,7 +94,7 @@ MOCK_GET_APP_INFO = '''<?xml version="1.0" encoding="utf-16"?>
         <FIELD NAME="company" TYPE="string" VALUE="Mozilla" />
         <FIELD NAME="platform" TYPE="string" VALUE="Firefox" />
         <FIELD NAME="rating_PEGI" TYPE="string" VALUE="16+" />
-        <FIELD NAME="descriptors_PEGI" TYPE="string" VALUE="Language, Online" />
+        <FIELD NAME="descriptors_PEGI" TYPE="string" />
         <FIELD NAME="rating_USK" TYPE="string" VALUE="12+" />
         <FIELD NAME="descriptors_USK" TYPE="string" VALUE="Explizite Sprache" />
         <FIELD NAME="rating_ESRB" TYPE="string" VALUE="Mature 17+" />
