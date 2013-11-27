@@ -43,26 +43,6 @@ def send_mail(subject, template, context, emails, perm_setting=None, cc=None,
                     cc=cc, attachments=attachments)
 
 
-def send_note_emails(note):
-    if not waffle.switch_is_active('comm-dashboard'):
-        return
-
-    recipients = get_recipients(note, False)
-    name = note.thread.addon.name
-    data = {
-        'name': name,
-        'sender': note.author.name,
-        'comments': note.body,
-        'thread_id': str(note.thread.id)
-    }
-    for email, tok in recipients:
-        reply_to = '{0}{1}@{2}'.format(comm.REPLY_TO_PREFIX, tok,
-                                       settings.POSTFIX_DOMAIN)
-        subject = u'%s has been reviewed.' % name
-        send_mail(subject, 'reviewers/emails/decisions/post.txt', data,
-                  [email], perm_setting='app_reviewed', reply_to=reply_to)
-
-
 class ReviewBase(object):
 
     def __init__(self, request, addon, version, review_type,
@@ -129,6 +109,10 @@ class ReviewBase(object):
 
     def notify_email(self, template, subject, fresh_thread=False):
         """Notify the authors that their app has been reviewed."""
+        if waffle.switch_is_active('comm-dashboard'):
+            # Communication dashboard uses send_mail_comm.
+            return
+
         data = self.data.copy()
         data.update(self.get_context_data())
         data['tested'] = ''
@@ -140,28 +124,14 @@ class ReviewBase(object):
         elif not dt and br:
             data['tested'] = 'Tested with %s' % br
 
-        if self.comm_thread and waffle.switch_is_active('comm-dashboard'):
-            # Send via Commbadge.
-            recipients = get_recipients(self.comm_note)
+        emails = list(self.addon.authors.values_list('email', flat=True))
+        cc_email = self.addon.mozilla_contact or None
 
-            data['thread_id'] = str(self.comm_thread.id)
-            for email, tok in recipients:
-                subject = u'%s has been reviewed.' % data['name']
-                reply_to = '{0}{1}@{2}'.format(comm.REPLY_TO_PREFIX, tok,
-                                               settings.POSTFIX_DOMAIN)
-                send_mail(subject,
-                          'reviewers/emails/decisions/%s.txt' % template, data,
-                          [email], perm_setting='app_reviewed',
-                          attachments=self.get_attachments(),
-                          reply_to=reply_to)
-        else:
-            emails = list(self.addon.authors.values_list('email', flat=True))
-            cc_email = self.addon.mozilla_contact or None
-
-            send_mail(subject % data['name'],
-                      'reviewers/emails/decisions/%s.txt' % template, data,
-                      emails, perm_setting='app_reviewed', cc=cc_email,
-                      attachments=self.get_attachments())
+        log.info(u'Sending email for %s' % self.addon)
+        send_mail(subject % data['name'],
+                  'reviewers/emails/decisions/%s.txt' % template, data,
+                  emails, perm_setting='app_reviewed', cc=cc_email,
+                  attachments=self.get_attachments())
 
     def get_context_data(self):
         # We need to display the name in some language that is relevant to the
@@ -197,17 +167,6 @@ class ReviewBase(object):
         self._create_comm_note(comm.MORE_INFO_REQUIRED)
         self.notify_email('info', u'Submission Update: %s')
 
-    def send_escalate_mail(self):
-        self.log_action(amo.LOG.ESCALATE_MANUAL)
-        log.info(u'Escalated review requested for %s' % self.addon)
-        data = self.get_context_data()
-
-        if not waffle.switch_is_active('comm-dashboard'):
-            send_mail(u'Escalated Review Requested: %s' % data['name'],
-                      'reviewers/emails/super_review.txt',
-                      data, [settings.MKT_SENIOR_EDITORS_EMAIL],
-                      attachments=self.get_attachments())
-
 
 class ReviewApp(ReviewBase):
 
@@ -220,7 +179,7 @@ class ReviewApp(ReviewBase):
         # For escalation/comment, exclude the developer from the conversation.
         perm_overrides = {
             comm.ESCALATION: {'developer': False},
-            comm.COMMENT: {'developer': False},
+            comm.REVIEWER_COMMENT: {'developer': False},
         }
 
         self.comm_thread, self.comm_note = create_comm_note(
@@ -229,6 +188,11 @@ class ReviewApp(ReviewBase):
             perms=perm_overrides.get(note_type))
 
     def process_public(self):
+        """
+        Makes an app public or public waiting.
+        Changes status to Public/Public Waiting.
+        Creates Approval note/email.
+        """
         if self.addon.is_incomplete():
             # Failsafe.
             return
@@ -236,9 +200,9 @@ class ReviewApp(ReviewBase):
         # Hold onto the status before we change it.
         status = self.addon.status
         if self.addon.make_public == amo.PUBLIC_IMMEDIATELY:
-            self.process_public_immediately()
+            self._process_public_immediately()
         else:
-            self.process_public_waiting()
+            self._process_public_waiting()
 
         if self.in_escalate:
             EscalationQueue.objects.filter(addon=self.addon).delete()
@@ -249,8 +213,8 @@ class ReviewApp(ReviewBase):
         # Assign reviewer incentive scores.
         return ReviewerScore.award_points(self.request.amo_user, self.addon, status)
 
-    def process_public_waiting(self):
-        """Make an app pending."""
+    def _process_public_waiting(self):
+        """Changes status to Public Waiting."""
         if self.addon.is_incomplete():
             # Failsafe.
             return
@@ -266,10 +230,9 @@ class ReviewApp(ReviewBase):
                           u'App Approved but waiting: %s')
 
         log.info(u'Making %s public but pending' % self.addon)
-        log.info(u'Sending email for %s' % self.addon)
 
-    def process_public_immediately(self):
-        """Approve an app."""
+    def _process_public_immediately(self):
+        """Changes status to Public."""
         if self.addon.is_incomplete():
             # Failsafe.
             return
@@ -298,10 +261,13 @@ class ReviewApp(ReviewBase):
         self.notify_email('pending_to_public', u'App Approved: %s')
 
         log.info(u'Making %s public' % self.addon)
-        log.info(u'Sending email for %s' % self.addon)
 
-    def process_sandbox(self):
-        """Reject an app."""
+    def process_reject(self):
+        """
+        Reject an app.
+        Changes status to Rejected.
+        Creates Rejection note/email.
+        """
         # Hold onto the status before we change it.
         status = self.addon.status
 
@@ -325,32 +291,58 @@ class ReviewApp(ReviewBase):
         self.notify_email('pending_to_sandbox', u'Submission Update: %s')
 
         log.info(u'Making %s disabled' % self.addon)
-        log.info(u'Sending email for %s' % self.addon)
 
         # Assign reviewer incentive scores.
         return ReviewerScore.award_points(self.request.amo_user, self.addon, status,
                                           in_rereview=self.in_rereview)
 
     def process_escalate(self):
-        """Ask for escalation for an app."""
+        """
+        Ask for escalation for an app (EscalationQueue).
+        Doesn't change status.
+        Creates Escalation note/email.
+        """
         EscalationQueue.objects.get_or_create(addon=self.addon)
         self._create_comm_note(comm.ESCALATION)
         self.notify_email('author_super_review', u'Submission Update: %s')
-        self.send_escalate_mail()
+
+        self.log_action(amo.LOG.ESCALATE_MANUAL)
+        log.info(u'Escalated review requested for %s' % self.addon)
+
+        # Special senior reviewer email.
+        if not waffle.switch_is_active('comm-dashboard'):
+            data = self.get_context_data()
+            send_mail(u'Escalated Review Requested: %s' % data['name'],
+                       'reviewers/emails/super_review.txt', data,
+                       [settings.MKT_SENIOR_EDITORS_EMAIL],
+                       attachments=self.get_attachments())
 
     def process_comment(self):
+        """
+        Editor comment (not visible to developer).
+        Doesn't change status.
+        Creates Reviewer Comment note/email.
+        """
         self.version.update(has_editor_comment=True)
         self.log_action(amo.LOG.COMMENT_VERSION)
         self._create_comm_note(comm.REVIEWER_COMMENT)
 
     def process_clear_escalation(self):
-        """Clear app from escalation queue."""
+        """
+        Clear app from escalation queue.
+        Doesn't change status.
+        Doesn't create note/email.
+        """
         EscalationQueue.objects.filter(addon=self.addon).delete()
         self.log_action(amo.LOG.ESCALATION_CLEARED)
         log.info(u'Escalation cleared for app: %s' % self.addon)
 
     def process_clear_rereview(self):
-        """Clear app from re-review queue."""
+        """
+        Clear app from re-review queue.
+        Doesn't change status.
+        Doesn't create note/email.
+        """
         RereviewQueue.objects.filter(addon=self.addon).delete()
         self.log_action(amo.LOG.REREVIEW_CLEARED)
         log.info(u'Re-review cleared for app: %s' % self.addon)
@@ -359,7 +351,11 @@ class ReviewApp(ReviewBase):
                                           self.addon.status, in_rereview=True)
 
     def process_disable(self):
-        """Disables app."""
+        """
+        Disables app, clears app from all queues.
+        Changes status to Disabled.
+        Creates Disabled note/email.
+        """
         if not acl.action_allowed(self.request, 'Addons', 'Edit'):
             return
 
@@ -413,6 +409,7 @@ class ReviewHelper(object):
                                  attachment_formset=self.attachment_formset)
 
     def get_actions(self):
+        """Get the appropriate handler based on the action."""
         public = {
             'method': self.handler.process_public,
             'minimal': False,
@@ -420,7 +417,7 @@ class ReviewHelper(object):
             'details': _lazy(u'This will approve the sandboxed app so it '
                              u'appears on the public side.')}
         reject = {
-            'method': self.handler.process_sandbox,
+            'method': self.handler.process_reject,
             'label': _lazy(u'Reject'),
             'minimal': False,
             'details': _lazy(u'This will reject the app and remove it from '
@@ -530,6 +527,7 @@ class ReviewHelper(object):
         return actions
 
     def process(self):
+        """Call handler."""
         action = self.handler.data.get('action', '')
         if not action:
             raise NotImplementedError
