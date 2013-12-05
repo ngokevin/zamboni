@@ -26,13 +26,13 @@ from comm.models import (CommunicationNote, CommunicationNoteRead,
                          CommunicationThread, user_has_perm_note,
                          user_has_perm_thread)
 from comm.tasks import consume_email, mark_thread_read
-from comm.utils import filter_notes_by_read_status
+from comm.utils import create_comm_note, filter_notes_by_read_status
 from versions.models import Version
 
 from mkt.api.authentication import (RestOAuthAuthentication,
                                     RestSharedSecretAuthentication)
 from mkt.api.base import CORSMixin, MarketplaceView, SilentListModelMixin
-from mkt.comm.forms import AppSlugForm
+from mkt.comm.forms import AppSlugForm, CreateCommThreadForm
 from mkt.reviewers.utils import send_note_emails
 
 
@@ -283,6 +283,21 @@ class ThreadViewSet(SilentListModelMixin, RetrieveModelMixin,
             CommunicationThread.objects.filter(addon_id=res.data['addon'])
             .order_by('version__version').values('id', 'version__version'))
         return res
+
+    def create(self, request, *args, **kwargs):
+        form = CreateCommThreadForm(request.DATA)
+        if not form.is_valid():
+            return Response(
+                str(form.errors), status=status.HTTP_400_BAD_REQUEST)
+
+        app = form.cleaned_data['app']
+        version = form.cleaned_data['version']
+        thread, note = create_comm_note(
+            app, version, request.amo_user, form.cleaned_data['body'],
+            note_type=form.cleaned_data['note_type'])
+
+        NoteSerializer.get_request = ThreadSerializer().get_request
+        return Response(NoteSerializer(note).data, status=200)
 
     def mark_as_read(self, profile):
         mark_thread_read(self.get_object(), profile)
