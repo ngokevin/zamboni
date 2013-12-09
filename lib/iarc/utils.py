@@ -269,7 +269,7 @@ DESC_MAPPING = {
     },
 
     ratingsbodies.ESRB: {
-        u'Alcohol Reference': 'alcohol',
+        u'Alcohol Reference': 'alcohol_ref',
         u'Blood': 'blood',
         u'Blood and Gore': 'blood_gore',
         u'Crude Humor': 'crude_humor',
@@ -312,30 +312,6 @@ DESC_MAPPING = {
         u'Criminal Instruction': 'crime_instruct',
     },
 
-    ratingsbodies.GENERIC: {
-        u'Alcohol Reference': 'alcohol_ref',
-        u'Blood': 'blood',
-        u'Blood and Gore': 'blood_gore',
-        u'Crude Humor': 'crude_humor',
-        u'Drug Reference': 'drug_ref',
-        u'Fantasy Violence': 'fantasy_violence',
-        u'Intense Violence': 'intense_violence',
-        u'Language': 'lang',
-        u'Mild Blood': 'mild_blood',
-        u'Mild Fantasy Violence': 'mild_fantasy_violence',
-        u'Mild Language': 'mild_lang',
-        u'Mild Violence': 'mild_violence',
-        u'Nudity': 'nudity',
-        u'Partial Nudity': 'partial_nudity',
-        u'Real Gambling': 'real_gambling',
-        u'Sexual Content': 'sex_content',
-        u'Sexual Themes': 'sex_themes',
-        u'Simulated Gambling': 'sim_gambling',
-        u'Strong Language': 'strong_lang',
-        u'Strong Sexual Content': 'strong_sex_content',
-        u'Suggestive Themes': 'suggestive',
-    },
-
     ratingsbodies.PEGI: {
         u'Violence': 'violence',
         u'Language': 'lang',
@@ -358,8 +334,11 @@ DESC_MAPPING = {
         u'Gewalt': 'violence',
     },
 }
+# Generic descriptors same as ESRB descriptors, copy 'em over.
+DESC_MAPPING[ratingsbodies.GENERIC] = {}
+DESC_MAPPING[ratingsbodies.GENERIC].update(DESC_MAPPING[ratingsbodies.ESRB])
 
-
+# Expand the mapping key names (e.g. 'blood' to 'has_esrb_blood').
 for body, mappings in DESC_MAPPING.items():
     for native_desc, desc_slug in mappings.items():
         DESC_MAPPING[body][native_desc] = 'has_{0}_{1}'.format(
@@ -372,7 +351,6 @@ REVERSE_DESC_MAPPING_BY_BODY = (
 REVERSE_DESC_MAPPING = {}
 for mapping in REVERSE_DESC_MAPPING_BY_BODY:
     REVERSE_DESC_MAPPING.update(mapping)
-
 
 INTERACTIVES_MAPPING = {
     'Users Interact': 'has_users_interact',
