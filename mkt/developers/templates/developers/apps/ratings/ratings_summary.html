@@ -27,6 +27,7 @@
           <th>{{ _('Descriptors') }}</th>
         </thead>
         <tbody>
+          {% set descriptors = addon.get_descriptors() %}
           {% for cr in addon.content_ratings.order_by('ratings_body') %}
             {% set ratings_body = cr.get_body() %}
             {% set rating = cr.get_rating() %}
@@ -35,7 +36,7 @@
               <td class="regions">{{ ratings_body.description or '&mdash;'|safe }}</td>
               <td class="content-rating">{{ iarc_rating_icon(cr) }}</td>
               <td class="content-descriptors">
-                {% for descriptor in addon.get_descriptors(body=ratings_body.label) %}
+                {% for descriptor in descriptors[ratings_body.label] %}
                   {% if ratings_body.label == 'pegi' and descriptor.label != 'pegi-no-descs' %}
                     <img class="icon {{ descriptor.label }}" title="{{ descriptor.name }}">
                   {% else %}
