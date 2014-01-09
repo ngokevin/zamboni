@@ -273,5 +273,5 @@ class TestSQLModel(unittest.TestCase):
         row = Summary.objects.all().order_by('category')[0]
         eq_(row.category, 'apparel')
         eq_(row.total, 1)
-        eq_(row.latest_product_date.timetuple()[0:3],
-            datetime.now().timetuple()[0:3])
+        eq_(row.latest_product_date.timetuple()[0:2],
+            datetime.now().timetuple()[0:2])
