@@ -1,17 +1,19 @@
 import json
-from os import path
+import os
 
 from django.conf import settings
 from django.core import mail
 from django.core.urlresolvers import reverse
+from django.test.client import BOUNDARY, encode_multipart, MULTIPART_CONTENT
 from django.test.utils import override_settings
 
 import mock
 from nose.tools import eq_
 
 from amo.tests import addon_factory, req_factory_factory, version_factory
-from comm.models import (CommunicationNote, CommunicationThread,
-                         CommunicationThreadCC)
+from comm.models import (CommAttachment, CommunicationNote,
+                         CommunicationThread, CommunicationThreadCC)
+from devhub.tests.test_models import ATTACHMENTS_DIR
 from users.models import UserProfile
 
 from mkt.api.tests.test_oauth import RestOAuth
@@ -20,7 +22,7 @@ from mkt.site.fixtures import fixture
 from mkt.webapps.models import Webapp
 
 
-TESTS_DIR = path.dirname(path.abspath(__file__))
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class CommTestMixin(object):
@@ -50,6 +52,34 @@ class CommTestMixin(object):
         kw.update(create_perms)
 
         return thread.notes.create(author=author, body=body, **kw)
+
+
+class AttachmentManagementMixin(object):
+
+    def _attachment_management_form(self, num=1):
+        """
+        Generate and return data for a management form for `num` attachments
+        """
+        return {'attachment-TOTAL_FORMS': max(1, num),
+                'attachment-INITIAL_FORMS': 0,
+                'attachment-MAX_NUM_FORMS': 1000}
+
+    def _attachments(self, num):
+        """Generate and return data for `num` attachments """
+        data = {}
+        files = ['bacon.jpg', 'bacon.txt']
+        descriptions = ['mmm, bacon', '']
+        if num > 0:
+            for n in xrange(num):
+                i = 0 if n % 2 else 1
+                path = os.path.join(settings.REVIEWER_ATTACHMENTS_PATH,
+                                    files[i])
+                attachment = open(path)
+                data.update({
+                    'attachment-%d-attachment' % n: attachment,
+                    'attachment-%d-description' % n: descriptions[i]
+                })
+        return data
 
 
 class TestThreadDetail(RestOAuth, CommTestMixin):
@@ -202,11 +232,13 @@ class TestThreadDetail(RestOAuth, CommTestMixin):
                 [{"id": thread2.id, "version__version": version2.version},
                  {"id": thread1.id, "version__version": version1.version}])
 
+
 class TestThreadList(RestOAuth, CommTestMixin):
     fixtures = fixture('webapp_337141', 'user_2519')
 
     def setUp(self):
         super(TestThreadList, self).setUp()
+        self.create_switch('comm-dashboard')
         self.addon = Webapp.objects.get(pk=337141)
         self.list_url = reverse('comm-thread-list')
 
@@ -266,16 +298,18 @@ class TestThreadList(RestOAuth, CommTestMixin):
         }
         self.addon.addonuser_set.create(user=self.user.get_profile())
         res = self.client.post(self.list_url, data=json.dumps(data))
-        eq_(res.status_code, 200)
+        eq_(res.status_code, 201)
         assert self.addon.threads.count()
 
 
-class TestNote(RestOAuth, CommTestMixin):
+class NoteSetupMixin(RestOAuth, CommTestMixin, AttachmentManagementMixin):
     fixtures = fixture('webapp_337141', 'user_2519', 'user_999',
                        'user_support_staff')
 
     def setUp(self):
-        super(TestNote, self).setUp()
+        super(NoteSetupMixin, self).setUp()
+        self.create_switch('comm-dashboard')
+
         self.addon = Webapp.objects.get(pk=337141)
         self.thread = self._thread_factory(
             perms=['developer'], version=self.addon.current_version)
@@ -285,6 +319,9 @@ class TestNote(RestOAuth, CommTestMixin):
             'comm-note-list', kwargs={'thread_id': self.thread.id})
 
         self.profile.addonuser_set.create(addon=self.addon)
+
+
+class TestNote(NoteSetupMixin):
 
     @mock.patch.object(settings, 'SITE_URL', 'http://testserver')
     @override_settings(REVIEWER_ATTACHMENTS_PATH=TESTS_DIR)
@@ -347,13 +384,13 @@ class TestNote(RestOAuth, CommTestMixin):
         res = self.client.get(self.list_url)
         eq_(len(res.json['objects']), 2)
 
-    def test_creation(self):
+    def test_create(self):
         res = self.client.post(self.list_url, data=json.dumps(
-            {'note_type': '0', 'body': 'something'}))
+                               {'note_type': '0', 'body': 'something'}))
         eq_(res.status_code, 201)
         eq_(res.json['body'], 'something')
 
-    def test_creation_denied(self):
+    def test_create_perm(self):
         self.thread.update(read_permission_developer=False)
         res = self.client.post(self.list_url, data=json.dumps(
             {'note_type': '0', 'body': 'something'}))
@@ -361,7 +398,7 @@ class TestNote(RestOAuth, CommTestMixin):
 
     def test_cors_allowed(self):
         res = self.client.get(self.list_url)
-        self.assertCORS(res, 'get', 'post', 'delete', 'patch')
+        self.assertCORS(res, 'get', 'post')
 
     def test_reply_list(self):
         note = self._note_factory(self.thread)
@@ -412,6 +449,44 @@ class TestNote(RestOAuth, CommTestMixin):
                     data=json.dumps({'is_read': True}))
         eq_(res.status_code, 204)
         assert note.read_by_users.filter(user=self.profile).exists()
+
+
+class TestAttachment(NoteSetupMixin):
+
+    def setUp(self):
+        super(TestAttachment, self).setUp()
+        self.note = self._note_factory(self.thread)
+        self.attachment_url = reverse(
+            'comm-attachment-list', kwargs={'thread_id': self.thread.id,
+                                            'note_id': self.note.id})
+
+    def test_cors_bad_request(self):
+        res = self.client.post(self.attachment_url, data={},
+                               content_type=MULTIPART_CONTENT)
+        eq_(res.status_code, 400)
+        self.assertCORS(res, 'post')
+
+    @override_settings(REVIEWER_ATTACHMENTS_PATH=ATTACHMENTS_DIR)
+    def test_create_attachment(self):
+        data = self._attachment_management_form(num=2)
+        data.update(self._attachments(num=2))
+        res = self.client.post(self.attachment_url, data=data,
+                               content_type=MULTIPART_CONTENT)
+
+        eq_(res.status_code, 201)
+        eq_(CommAttachment.objects.count(), 2)
+
+        attach1 = CommAttachment.objects.all()[0]
+        eq_(attach1.note, self.note)
+        eq_(attach1.filepath, 'bacon.txt')
+        eq_(attach1.description, '')
+        assert not attach1.is_image()
+
+        attach2 = CommAttachment.objects.all()[1]
+        eq_(attach2.note, self.note)
+        eq_(attach2.filepath, 'bacon.jpg')
+        eq_(attach2.description, 'mmm, bacon')
+        assert attach2.is_image()
 
 
 @mock.patch.object(settings, 'WHITELISTED_CLIENTS_EMAIL_API',

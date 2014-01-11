@@ -25,7 +25,7 @@ import amo.tests
 import reviews
 from abuse.models import AbuseReport
 from access.models import Group, GroupUser
-from addons.models import Addon, AddonDeviceType
+from addons.models import AddonDeviceType
 from amo.helpers import absolutify
 from amo.tests import (app_factory, check_links, days_ago, formset, initial,
                        req_factory_factory, version_factory)
@@ -44,6 +44,7 @@ from versions.models import Version
 from zadmin.models import get_config, set_config
 
 import mkt
+from mkt.comm.tests.test_api import AttachmentManagementMixin
 from mkt.constants.features import FeatureProfile
 from mkt.reviewers.views import (_do_sort, _progress, app_review, queue_apps,
                                  route_reviewer)
@@ -51,16 +52,6 @@ from mkt.site.fixtures import fixture
 from mkt.submit.tests.test_views import BasePackagedAppTest
 from mkt.webapps.models import Webapp
 from mkt.webapps.tests.test_models import PackagedFilesMixin
-
-
-class AttachmentManagementMixin(object):
-    def _attachment_management_form(self, num=1):
-        """
-        Generate and return data for a management form for `num` attachments
-        """
-        return {'attachment-TOTAL_FORMS': max(1, num),
-                'attachment-INITIAL_FORMS': 0,
-                'attachment-MAX_NUM_FORMS': 1000}
 
 
 class AppReviewerTest(amo.tests.TestCase):
@@ -1966,23 +1957,6 @@ class TestReviewApp(AppReviewerTest, AccessMixin, AttachmentManagementMixin,
         eq_(dd.text(), u'1')
         eq_(dd.find('a').attr('href'), reverse('reviewers.apps.review.abuse',
                                                args=[self.app.app_slug]))
-
-    def _attachments(self, num):
-        """ Generate and return data for `num` attachments """
-        data = {}
-        files = ['bacon.jpg', 'bacon.txt']
-        descriptions = ['mmm, bacon', '']
-        if num > 0:
-            for n in xrange(num):
-                i = 0 if n % 2 else 1
-                path = os.path.join(settings.REVIEWER_ATTACHMENTS_PATH,
-                                    files[i])
-                attachment = open(path)
-                data.update({
-                    'attachment-%d-attachment' % n: attachment,
-                    'attachment-%d-description' % n: descriptions[i]
-                })
-        return data
 
     def _attachment_form_data(self, num=1, action='comment'):
         data = {'action': action,

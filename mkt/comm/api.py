@@ -29,12 +29,12 @@ from comm.models import (CommAttachment, CommunicationNote,
 from comm.tasks import consume_email, mark_thread_read
 from versions.models import Version
 
+import mkt.comm.forms as forms
 from mkt.api.authentication import (RestOAuthAuthentication,
                                     RestSharedSecretAuthentication)
 from mkt.api.base import CORSMixin, MarketplaceView, SilentListModelMixin
-from mkt.comm.forms import AppSlugForm, CreateCommThreadForm
-from mkt.comm.utils import (create_comm_note, filter_notes_by_read_status,
-                            post_create_comm_note)
+from mkt.comm.utils import (create_attachments, create_comm_note,
+                            filter_notes_by_read_status)
 
 
 class AuthorSerializer(ModelSerializer):
@@ -67,7 +67,7 @@ class NoteSerializer(ModelSerializer):
 
     def is_read_by_user(self, obj):
         return obj.read_by_users.filter(
-            pk=self.get_request().amo_user.id).exists()
+            pk=self.context['request'].amo_user.id).exists()
 
     class Meta:
         model = CommunicationNote
@@ -108,10 +108,10 @@ class ThreadSerializer(ModelSerializer):
         view_name = 'comm-thread-detail'
 
     def get_recent_notes(self, obj):
-        NoteSerializer.get_request = self.get_request
         notes = (obj.notes.with_perms(self.get_request().amo_user, obj)
                           .order_by('-created')[:5])
-        return NoteSerializer(notes, many=True).data
+        return NoteSerializer(
+            notes, many=True, context={'request': self.get_request()}).data
 
     def get_notes_count(self, obj):
         return obj.notes.count()
@@ -266,7 +266,7 @@ class ThreadViewSet(SilentListModelMixin, RetrieveModelMixin,
         # This gives 404 when an app with given slug/id is not found.
         data = {}
         if 'app' in request.GET:
-            form = AppSlugForm(request.GET)
+            form = forms.AppSlugForm(request.GET)
             if not form.is_valid():
                 raise Http404()
 
@@ -303,7 +303,7 @@ class ThreadViewSet(SilentListModelMixin, RetrieveModelMixin,
         return res
 
     def create(self, request, *args, **kwargs):
-        form = CreateCommThreadForm(request.DATA)
+        form = forms.CreateCommThreadForm(request.DATA)
         if not form.is_valid():
             return Response(
                 form.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -314,8 +314,9 @@ class ThreadViewSet(SilentListModelMixin, RetrieveModelMixin,
             app, version, request.amo_user, form.cleaned_data['body'],
             note_type=form.cleaned_data['note_type'])
 
-        NoteSerializer.get_request = ThreadSerializer().get_request
-        return Response(NoteSerializer(note).data, status=200)
+        return Response(
+            NoteSerializer(note, context={'request': self.request}).data,
+            status=status.HTTP_201_CREATED)
 
     def mark_as_read(self, profile):
         mark_thread_read(self.get_object(), profile)
@@ -328,47 +329,75 @@ class NoteViewSet(ListModelMixin, CreateModelMixin, RetrieveModelMixin,
     authentication_classes = (RestOAuthAuthentication,
                               RestSharedSecretAuthentication,)
     permission_classes = (NotePermission,)
-    filter_backends = (OrderingFilter, ReadUnreadFilter)
-    cors_allowed_methods = ['get', 'post', 'delete', 'patch']
+    cors_allowed_methods = ['get', 'post']
 
     def get_queryset(self):
         return CommunicationNote.objects.with_perms(
             self.request.amo_user, self.comm_thread)
 
-    def get_serializer(self, instance=None, data=None,
-                       files=None, many=False, partial=False):
-        if self.action == 'create':
-            # HACK: We want to set the `author` as the current user
-            # (read-only), yet we can't specify `author` as a `read_only`
-            # field because then the serializer won't pick it up at the time
-            # of deserialization.
-            data_dict = {'author': self.request.amo_user.id,
-                         'thread': self.comm_thread.id,
-                         'note_type': data['note_type'],
-                         'body': data['body']}
+    def create(self, request, *args, **kwargs):
+        thread = get_object_or_404(CommunicationThread, id=kwargs['thread_id'])
+
+        # Validate note.
+        form = forms.CreateCommNoteForm(request.DATA)
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create notes.
+        thread, note = create_comm_note(
+            thread.addon, thread.version, self.request.amo_user,
+            form.cleaned_data['body'],
+            note_type=form.cleaned_data['note_type'])
+        self.attach_as_reply(note)
+
+        return Response(
+            NoteSerializer(note, context={'request': request}).data,
+            status=status.HTTP_201_CREATED)
+
+    def attach_as_reply(self, note):
+        # Overridden in ReplyViewSet.
+        pass
+
+    def mark_as_read(self, profile):
+        CommunicationNoteRead.objects.get_or_create(note=self.get_object(),
+            user=profile)
+
+
+class AttachmentViewSet(CreateModelMixin, CommViewSet):
+    model = CommAttachment
+    authentication_classes = (RestOAuthAuthentication,
+                              RestSharedSecretAuthentication,)
+    permission_classes = (NotePermission,)
+    cors_allowed_methods = ['post']
+
+    def create(self, request, *args, **kwargs):
+        note = get_object_or_404(CommunicationNote, id=kwargs['note_id'])
+        if not user_has_perm_note(note, request.amo_user):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        # Validate attachment.
+        attachment_formset = None
+        if request.FILES:
+            attachment_formset = forms.CommAttachmentFormSet(
+                data=request.POST or None, files=request.FILES or None,
+                prefix='attachment')
+            if not attachment_formset.is_valid():
+                return Response(attachment_formset.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
         else:
-            data_dict = data
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        return super(NoteViewSet, self).get_serializer(data=data_dict,
-            files=files, instance=instance, many=many, partial=partial)
+        # Create attachment.
+        if attachment_formset:
+            create_attachments(note, attachment_formset)
 
-    def inherit_permissions(self, obj, parent):
-        """
-        Inherit parent's permission flags as pre_save.
-        If note, inherit from thread. If reply, inherit from note.
-        """
-        for key in ('developer', 'reviewer', 'senior_reviewer', 'staff',
-                    'mozilla_contact'):
-            perm = 'read_permission_%s' % key
-            setattr(obj, perm, getattr(parent, perm))
+        return Response(
+            NoteSerializer(note, context={'request': request}).data,
+            status=status.HTTP_201_CREATED)
 
-    def pre_save(self, obj):
-        """Inherit permissions from the thread."""
-        self.inherit_permissions(obj, self.comm_thread)
-
-    def post_save(self, obj, created=False):
-        if created:
-            post_create_comm_note(obj)
+    def attach_as_reply(self, note):
+        # Overridden in ReplyViewSet.
+        pass
 
     def mark_as_read(self, profile):
         CommunicationNoteRead.objects.get_or_create(note=self.get_object(),
@@ -388,10 +417,8 @@ class ReplyViewSet(NoteViewSet):
     def get_queryset(self):
         return self.parent_note.replies.all()
 
-    def pre_save(self, obj):
-        """Inherit permissions from the parent note."""
-        self.inherit_permissions(obj, self.parent_note)
-        obj.reply_to = self.parent_note
+    def attach_as_reply(self, obj):
+        obj.update(reply_to=self.parent_note)
 
 
 @api_view(['POST'])
@@ -404,4 +431,4 @@ def post_email(request):
             detail='email_body not present in the POST data.')
 
     consume_email.apply_async((email_body,))
-    return Response(status=201)
+    return Response(status=status.HTTP_201_CREATED)
