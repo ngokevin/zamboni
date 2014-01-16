@@ -352,8 +352,8 @@ def remove_region_exclusions(app):
     """
     Remove AddonRegionExclusions based on attained content ratings.
     """
-    exclusions = app.addonexcludedregion.exclude(
-        region__in=mkt.regions.SPECIAL_REGION_IDS)
+    exclusions = (app.addonexcludedregion.filter(is_iarc_excluded=True)
+        .exclude(region__in=mkt.regions.SPECIAL_REGION_IDS))
     log.info('Un-excluding app:%s in regions %s' %
              (app.id, exclusions.values_list('region', flat=True)))
     exclusions.delete()

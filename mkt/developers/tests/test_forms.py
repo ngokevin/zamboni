@@ -827,7 +827,8 @@ class TestIARCGetAppInfoForm(amo.tests.WebappTestCase):
         with self.assertRaises(IARCInfo.DoesNotExist):
             self.app.iarc_info
 
-        self.app.addonexcludedregion.create(region=mkt.regions.BR.id)
+        self.app.addonexcludedregion.create(region=mkt.regions.BR.id,
+                                            is_iarc_excluded=True)
 
         form = forms.IARCGetAppInfoForm({'submission_id': 1,
                                          'security_code': 'a'})

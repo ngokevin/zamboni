@@ -194,6 +194,8 @@ class TestContentRatingPingback(RestOAuth):
     def test_post_content_ratings_pingback(self, details_mock):
         details_mock.return_value = True
         eq_(self.app.status, amo.STATUS_NULL)
+        self.app.addonexcludedregion.create(region=mkt.regions.BR.id,
+                                            is_iarc_excluded=True)
         self.app.addonexcludedregion.create(region=mkt.regions.BR.id)
         self.app.addonexcludedregion.create(region=mkt.regions.CN.id)
 
@@ -234,6 +236,8 @@ class TestContentRatingPingback(RestOAuth):
 
         eq_(app.status, amo.STATUS_PENDING)
         assert not app.addonexcludedregion.filter(
+            region=mkt.regions.BR.id, is_iarc_excluded=True).exists()
+        assert app.addonexcludedregion.filter(
             region=mkt.regions.BR.id).exists()
         assert app.addonexcludedregion.filter(
             region=mkt.regions.CN.id).exists()

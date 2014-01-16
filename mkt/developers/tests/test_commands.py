@@ -123,6 +123,8 @@ class TestExcludeUnratedGames(amo.tests.TestCase):
         self._assert_excluded(self.br)
         self._assert_listed(self.de)
 
+        assert self.webapp.addonexcludedregion.all()[0].is_iarc_excluded
+
     def test_dont_exclude_non_game(self):
         exclude_games.Command().handle('br')
         self._assert_listed(self.br)

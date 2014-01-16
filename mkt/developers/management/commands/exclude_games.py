@@ -38,7 +38,7 @@ class Command(BaseCommand):
 
             elif region.ratingsbody and not app.content_ratings_in(region):
                 aer, created = app.addonexcludedregion.get_or_create(
-                    region=region.id)
+                    region=region.id, is_iarc_excluded=True)
                 if created:
                     log.info('[App %s - %s] Excluded in region %r'
                              % (app.pk, app.slug, region.slug))

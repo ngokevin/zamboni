@@ -1796,10 +1796,11 @@ class AddonExcludedRegion(amo.models.ModelBase):
                               related_name='addonexcludedregion')
     region = models.PositiveIntegerField(
         choices=mkt.regions.REGIONS_CHOICES_ID)
+    is_iarc_excluded = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'addons_excluded_regions'
-        unique_together = ('addon', 'region')
+        unique_together = ('addon', 'region', 'is_iarc_excluded')
 
     def __unicode__(self):
         region = self.get_region()
