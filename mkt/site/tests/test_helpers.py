@@ -44,8 +44,8 @@ class TestCSS(amo.tests.TestCase):
         context = {'request': request}
 
         # Should be called with `debug=True`.
-        fake_css.expects('css').with_args('mkt/devreg', False, True)
-        css(context, 'mkt/devreg')
+        fake_css.expects('css').with_args('mkt/devhub', False, True)
+        css(context, 'mkt/devhub')
 
     @mock.patch.object(settings, 'TEMPLATE_DEBUG', False)
     @fudge.patch('mkt.site.helpers.jingo_minify_helpers')
@@ -55,8 +55,8 @@ class TestCSS(amo.tests.TestCase):
         context = {'request': request}
 
         # Should be called with `debug=False`.
-        fake_css.expects('css').with_args('mkt/devreg', False, False)
-        css(context, 'mkt/devreg')
+        fake_css.expects('css').with_args('mkt/devhub', False, False)
+        css(context, 'mkt/devhub')
 
     @mock.patch.object(settings, 'TEMPLATE_DEBUG', True)
     @fudge.patch('mkt.site.helpers.jingo_minify_helpers')
@@ -66,8 +66,8 @@ class TestCSS(amo.tests.TestCase):
         context = {'request': request}
 
         # Should be called with `debug=True`.
-        fake_css.expects('css').with_args('mkt/devreg', False, True)
-        css(context, 'mkt/devreg')
+        fake_css.expects('css').with_args('mkt/devhub', False, True)
+        css(context, 'mkt/devhub')
 
     @mock.patch.object(settings, 'TEMPLATE_DEBUG', False)
     @fudge.patch('mkt.site.helpers.jingo_minify_helpers')
@@ -77,8 +77,8 @@ class TestCSS(amo.tests.TestCase):
         context = {'request': request}
 
         # Should be called with `debug=True`.
-        fake_css.expects('css').with_args('mkt/devreg', False, True)
-        css(context, 'mkt/devreg')
+        fake_css.expects('css').with_args('mkt/devhub', False, True)
+        css(context, 'mkt/devhub')
 
 
 class TestJS(amo.tests.TestCase):

@@ -1,108 +1,108 @@
 # A list of our CSS and JS assets for jingo-minify.
 
 CSS = {
-    'mkt/devreg': (
+    'mkt/devhub': (
         # Contains reset, clearfix, etc.
-        'css/devreg/base.css',
+        'css/mkt/base.css',
 
         # Base styles (body, breadcrumbs, islands, columns).
-        'css/devreg/base.styl',
-        'css/devreg/breadcrumbs.styl',
+        'css/mkt/base.styl',
+        'css/mkt/breadcrumbs.styl',
 
         # Typographical styles (font treatments, headings).
-        'css/devreg/typography.styl',
+        'css/mkt/typography.styl',
 
         # Header (aux-nav, masthead, site-nav).
-        'css/devreg/desktop-account-links.styl',
-        'css/devreg/header.styl',
+        'css/mkt/desktop-account-links.styl',
+        'css/mkt/header.styl',
 
         # Item rows (used on Dashboard).
-        'css/devreg/listing.styl',
-        'css/devreg/legacy-paginator.styl',
+        'css/mkt/listing.styl',
+        'css/mkt/legacy-paginator.styl',
 
         # Buttons (used for paginator, "Edit" buttons, Refunds page).
-        'css/devreg/buttons.styl',
+        'css/mkt/buttons.styl',
 
         # Popups, Modals, Tooltips.
-        'css/devreg/notification.styl',
-        'css/devreg/overlay.styl',
-        'css/devreg/popups.styl',
-        'css/devreg/device.styl',
-        'css/devreg/tooltips.styl',
+        'css/mkt/notification.styl',
+        'css/mkt/overlay.styl',
+        'css/mkt/popups.styl',
+        'css/mkt/device.styl',
+        'css/mkt/tooltips.styl',
 
         # L10n menu ("Localize for ...").
-        'css/devreg/l10n.styl',
+        'css/mkt/l10n.styl',
 
         # Forms (used for tables on "Manage ..." pages).
-        'css/devreg/forms.styl',
+        'css/mkt/forms.styl',
 
         # Tables.
-        'css/devreg/data-grid.styl',
+        'css/mkt/data-grid.styl',
 
         # Landing page
-        'css/devreg/landing.styl',
+        'css/mkt/landing.styl',
 
         # "Manage ..." pages.
-        'css/devreg/manage.styl',
-        'css/devreg/prose.styl',
-        'css/devreg/authors.styl',
-        'css/devreg/in-app-config.styl',
-        'css/devreg/payments.styl',
-        'css/devreg/refunds.styl',
-        'css/devreg/transactions.styl',
-        'css/devreg/status.styl',
-        'css/devreg/content_ratings.styl',
+        'css/mkt/manage.styl',
+        'css/mkt/prose.styl',
+        'css/mkt/authors.styl',
+        'css/mkt/in-app-config.styl',
+        'css/mkt/payments.styl',
+        'css/mkt/refunds.styl',
+        'css/mkt/transactions.styl',
+        'css/mkt/status.styl',
+        'css/mkt/content_ratings.styl',
 
         # Image Uploads (used for "Edit Listing" Images and Submission).
-        'css/devreg/media.styl',
-        'css/devreg/invisible-upload.styl',
+        'css/mkt/media.styl',
+        'css/mkt/invisible-upload.styl',
 
         # Submission.
-        'css/devreg/submit-progress.styl',
-        'css/devreg/submit-terms.styl',
-        'css/devreg/submit-manifest.styl',
-        'css/devreg/submit-details.styl',
-        'css/devreg/validation.styl',
-        'css/devreg/submit.styl',
-        'css/devreg/tabs.styl',
+        'css/mkt/submit-progress.styl',
+        'css/mkt/submit-terms.styl',
+        'css/mkt/submit-manifest.styl',
+        'css/mkt/submit-details.styl',
+        'css/mkt/validation.styl',
+        'css/mkt/submit.styl',
+        'css/mkt/tabs.styl',
 
         # Developer Log In / Registration.
-        'css/devreg/login.styl',
+        'css/mkt/login.styl',
 
         # Footer.
-        'css/devreg/footer.styl',
+        'css/mkt/footer.styl',
     ),
     'mkt/reviewers': (
         'css/zamboni/editors.css',
-        'css/devreg/consumer-buttons.styl',
-        'css/devreg/content_ratings.styl',
-        'css/devreg/data-grid.styl',
-        'css/devreg/manifest.styl',
-        'css/devreg/reviewers.styl',
-        'css/devreg/reviewers-header.styl',
-        'css/devreg/reviewers-mobile.styl',
-        'css/devreg/themes_review.styl',
-        'css/devreg/legacy-paginator.styl',
-        'css/devreg/files.styl',
+        'css/mkt/consumer-buttons.styl',
+        'css/mkt/content_ratings.styl',
+        'css/mkt/data-grid.styl',
+        'css/mkt/manifest.styl',
+        'css/mkt/reviewers.styl',
+        'css/mkt/reviewers-header.styl',
+        'css/mkt/reviewers-mobile.styl',
+        'css/mkt/themes_review.styl',
+        'css/mkt/legacy-paginator.styl',
+        'css/mkt/files.styl',
     ),
     'mkt/ecosystem': (
-        'css/devreg/reset.styl',
-        'css/devreg/consumer-typography.styl',
-        'css/devreg/login.styl',
-        'css/devreg/forms.styl',
+        'css/mkt/reset.styl',
+        'css/mkt/consumer-typography.styl',
+        'css/mkt/login.styl',
+        'css/mkt/forms.styl',
         'css/ecosystem/landing.styl',
         'css/ecosystem/documentation.styl',
     ),
     'mkt/in-app-payments': (
-        'css/devreg/reset.styl',
-        'css/devreg/consumer-typography.styl',
-        'css/devreg/buttons.styl',
-        'css/devreg/in-app-payments.styl',
+        'css/mkt/reset.styl',
+        'css/mkt/consumer-typography.styl',
+        'css/mkt/buttons.styl',
+        'css/mkt/in-app-payments.styl',
     ),
     'mkt/lookup': (
-        'css/devreg/manifest.styl',
-        'css/devreg/lookup-tool.styl',
-        'css/devreg/activity.styl',
+        'css/mkt/manifest.styl',
+        'css/mkt/lookup-tool.styl',
+        'css/mkt/activity.styl',
     ),
     'mkt/gaia': (
         # Gaia building blocks.
@@ -111,9 +111,9 @@ CSS = {
         'css/gaia/value_selector.css',
     ),
     'mkt/operators': (
-        'css/devreg/legacy-paginator.styl',
-        'css/devreg/data-grid.styl',
-        'css/devreg/operators.styl',
+        'css/mkt/legacy-paginator.styl',
+        'css/mkt/data-grid.styl',
+        'css/mkt/operators.styl',
     ),
 }
 
