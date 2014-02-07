@@ -12,8 +12,7 @@ from access.models import Group
 from users.models import UserProfile
 
 from mkt.comm.models import (CommunicationNote, CommunicationNoteRead,
-                             CommunicationThread, CommunicationThreadToken,
-                             user_has_perm_thread)
+                             CommunicationThreadToken, user_has_perm_thread)
 from mkt.constants import comm
 
 
@@ -175,7 +174,7 @@ def send_mail_comm(note):
 
 
 def create_comm_note(app, version, author, body, note_type=comm.NO_ACTION,
-                     perms=None, no_switch=False):
+                     perms=None, no_switch=False, attachments=None):
     """
     Creates a note on an app version's thread.
     Creates a thread if a thread doesn't already exist.
@@ -189,9 +188,12 @@ def create_comm_note(app, version, author, body, note_type=comm.NO_ACTION,
                  (e.g. comm.APPROVAL, comm.REJECTION, comm.NO_ACTION).
     perms -- object of groups to grant permission to, will set flags on Thread.
              (e.g. {'developer': False, 'staff': True}).
+    no_switch -- whether to ignore comm switch, needed after we migrate
+                 reviewer tools from ActivityLog to notes.
+    attachments -- formset of attachment files
 
     """
-    if not no_switch and waffle.switch_is_active('comm-dashboard'):
+    if not no_switch and not waffle.switch_is_active('comm-dashboard'):
         return None, None
 
     # Dict of {'read_permission_GROUP_TYPE': boolean}.
@@ -209,6 +211,9 @@ def create_comm_note(app, version, author, body, note_type=comm.NO_ACTION,
         version=version, defaults=create_perms)
     note = thread.notes.create(
         note_type=note_type, body=body, author=author, **create_perms)
+
+    if attachments:
+        create_attachments(note, attachments)
 
     post_create_comm_note(note)
 
@@ -254,6 +259,9 @@ def create_attachments(note, formset):
             continue
 
         data = form.cleaned_data
+        if not data:
+            continue
+
         attachment = data['attachment']
         attachment_name = _save_attachment(
             storage, attachment,
