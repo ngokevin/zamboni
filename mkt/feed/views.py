@@ -1,3 +1,6 @@
+import string
+
+from django.conf import settings
 from django.db.models import Q
 
 from elasticutils.contrib.django import S
@@ -25,8 +28,9 @@ from .models import FeedApp, FeedBrand, FeedCollection, FeedItem, FeedShelf
 from .serializers import (FeedAppSerializer, FeedAppSearchSerializer,
                           FeedBrandSerializer, FeedBrandSearchSerializer,
                           FeedCollectionSerializer,
-                          FeedCollectionSearchSerializer, FeedItemSerializer,
-                          FeedShelfSerializer, FeedShelfSearchSerializer)
+                          FeedCollectionSearchSerializer, FeedItemESSerializer,
+                          FeedItemSerializer, FeedShelfSerializer,
+                          FeedShelfSearchSerializer)
 
 
 class BaseFeedCollectionViewSet(CORSMixin, SlugOrIdMixin, MarketplaceView,
@@ -370,16 +374,123 @@ class FeedView(CORSMixin, APIView):
     permission_classes = []
     cors_allowed_methods = ('get',)
 
-    def get(self, request, *args, **kwargs):
-        filterer = RegionCarrierFilter()
-        data = {
-            'feed': [],
-            'shelf': None
+    def get_es_feed_query(self, region=None, carrier=None):
+        """
+        Build ES query for feed.
+        Weights on region and carrier if passed in.
+        Operator shelf on top if region and carrier passed in.
+
+        region -- region ID (integer)
+        carrier -- carrier ID (integer)
+        """
+        query = {
+            'function_score': {
+                'functions': []
+            }
         }
-        feed = filterer.filter_queryset(request, FeedItem.objects.all(), self)
-        data['feed'] = FeedItemSerializer(feed).data
-        for index, item in enumerate(data['feed']):
-            if item['item_type'] == FEED_TYPE_SHELF:
-                data['shelf'] = data['feed'].pop(index)
-                break
-        return response.Response(data, status=status.HTTP_200_OK)
+
+        if region:
+            # Filter by region.
+            query['function_score']['filter'] = {
+                'bool': {
+                    'must': [
+                        {'term': {'region': region}}
+                    ],
+                    'must_not': []
+                }
+            }
+
+        if region and carrier:
+            # Boost shelf to top.
+            query['function_score']['functions'].append({
+                'boost_factor': 10000.0,
+                'filter': {
+                    'term': {'item_type': feed.FEED_TYPE_SHELF},
+                }
+            })
+
+            # Exclude shelves that do not match region + carrier.
+            query['function_score']['filter']['bool']['must_not'].append({
+                'and': [
+                    {'term': {'item_type': feed.FEED_TYPE_SHELF}},
+                    {'not': {'term': {'carrier': carrier}}}
+                ]
+            })
+
+        return {
+            'query': query
+        }
+
+    def get_es_feed_element_query(self, feed_items):
+        """
+        From a list of FeedItems with normalized feed element IDs,
+        return an ES query that fetches the feed elements for each feed item.
+        """
+        or_filters = []
+        for feed_item in feed_items:
+            or_filters.append({
+                'term': {
+                    'id': feed_item[feed_item['item_type']],
+                    'item_type': feed_item['item_type']
+                }
+            })
+
+        return {
+            'query': {
+                'filtered': {
+                    'query': {
+                        'match_all': {},
+                    },
+                    'filter': {
+                        'or': or_filters
+                    }
+                }
+            }
+        }
+
+    def get(self, request, *args, **kwargs):
+        indexer = FeedItem.get_indexer()
+        es = indexer.get_es(urls=settings.ES_URLS)
+
+        # Get carrier and region.
+        q = request.QUERY_PARAMS
+        region = None
+        carrier = None
+        if q.get('region'):
+            region = mkt.regions.REGIONS_DICT[q['region']].id
+        if q.get('carrier'):
+            carrier = mkt.carriers.CARRIER_MAP[q['carrier']].id
+
+        # Get FeedItems.
+        results = (
+            es.search(self.get_es_feed_query(region=region, carrier=carrier),
+                      index=indexer.get_index())['hits']['hits'])
+        feed_items = FeedItemESSerializer(results, many=True).data
+
+        if not feed_items:
+            return response.Response({'objects': []},
+                                     status=status.HTTP_200_OK)
+
+        # Fetch feed elements from ES and attach to FeedItems (denormalize).
+        index = string.join(
+            [settings.ES_INDEXES['mkt_feed_app'],
+             settings.ES_INDEXES['mkt_feed_brand'],
+             settings.ES_INDEXES['mkt_feed_collection'],
+             settings.ES_INDEXES['mkt_feed_shelf']], ',')
+        results = es.search(self.get_es_feed_element_query(feed_items),
+                            index=index)['hits']['hits']
+
+        # Rewrite FeedItems' feed element IDs with feed elements.
+        for feed_elm in results:
+            feed_elm = feed_elm['_source']
+            # For each feed element returned, look for its respective
+            # FeedItem.
+            for feed_item in feed_items:
+                item_type = feed_item['item_type']
+                if (item_type == feed_elm['item_type'] and
+                    feed_item[item_type] == feed_elm['id']):
+                    feed_item[item_type] = feed_elm
+                    break
+
+        return response.Response({'objects': feed_items},
+                                 status=status.HTTP_200_OK)

@@ -10,6 +10,7 @@ import amo.tests
 from amo.tests import app_factory
 
 import mkt.carriers
+import mkt.feed.constants as feed
 import mkt.regions
 from mkt.api.tests.test_oauth import RestOAuth
 from mkt.constants.carriers import CARRIER_MAP
@@ -1040,75 +1041,63 @@ class TestFeedView(BaseTestFeedItemViewSet, amo.tests.ESTestCase):
     def setUp(self):
         super(TestFeedView, self).setUp()
         self.url = reverse('api-v2:feed.get')
-        self.carrier = 'tmn'
-        self.carrier_id = CARRIER_MAP[self.carrier].id
-        self.region = 'us'
-        self.region_id = REGIONS_DICT[self.region].id
+        self.carrier = 'telefonica'
+        self.region = 'restofworld'
 
-    def create_feed(self, n):
-        self.feed_items = []
-        for i in xrange(n):
-            app = app_factory()
-            feedapp = self.feed_app_factory(app_id=app.id)
-            feeditem = FeedItem.objects.create(carrier=self.carrier_id,
-                app=feedapp, region=self.region_id, item_type='app')
-            self.feed_items.append(feeditem)
+    def tearDown(self):
+        for model in (FeedApp, FeedBrand, FeedCollection, FeedShelf,
+                      FeedItem):
+            model.get_indexer().unindexer(_all=True)
+        super(TestFeedView, self).tearDown()
 
-    def create_shelf(self):
-        feedshelf = self.feed_shelf_factory(carrier=self.carrier_id,
-                                            region=self.region_id)
-        self.shelf = FeedItem.objects.create(
-            carrier=self.carrier_id, region=self.region_id, item_type='shelf',
-            shelf=feedshelf)
+    def _refresh(self):
+        self.refresh('mkt_feed_app')
+        self.refresh('mkt_feed_brand')
+        self.refresh('mkt_feed_collection')
+        self.refresh('mkt_feed_shelf')
+        self.refresh('mkt_feed_item')
 
-    def get(self, client, **kwargs):
+    def _get(self, client=None, **kwargs):
+        client = client or self.anon
+        kwargs['carrier'] = kwargs.get('carrier', self.carrier)
+        kwargs['region'] = kwargs.get('region', self.region)
+
         res = client.get(self.url, kwargs)
         data = json.loads(res.content)
         return res, data
 
-    def test_get_anon(self):
-        res, data = self.get(self.anon, carrier=self.carrier,
-                             region=self.region)
+    def test_200(self):
+        res, data = self._get()
         eq_(res.status_code, 200)
-        return res, data
 
-    def test_get_authed(self):
-        res, data = self.get(self.client, carrier=self.carrier,
-                             region=self.region)
+    def test_200_authed(self):
+        res, data = self._get(self.client)
         eq_(res.status_code, 200)
-        return res, data
 
-    def test_get_shelf(self):
-        self.create_shelf()
-        res, data = self.test_get_anon()
-        eq_(data['shelf']['id'], self.shelf.id)
-        eq_(data['feed'], [])
+    def test_feed_basic(self):
+        feed_items = self.feed_factory()
+        self._refresh()
+        res, data = self._get()
+        eq_(len(data['objects']), len(feed_items))
 
-    def test_get_feed(self):
-        feed_size = 3
-        self.create_feed(feed_size)
-        res, data = self.test_get_anon()
-        eq_(data['shelf'], None)
-        eq_(len(data['feed']), feed_size)
+    def test_shelf_top(self):
+        feed_items = self.feed_factory()
+        self._refresh()
+        res, data = self._get()
+        eq_(data['objects'][0]['item_type'],
+            feed.FEED_TYPE_SHELF)
 
-    def test_get_both(self):
-        feed_size = 3
-        self.create_shelf()
-        self.create_feed(feed_size)
-        res, data = self.test_get_anon()
-        eq_(data['shelf']['id'], self.shelf.id)
-        eq_(len(data['feed']), feed_size)
-        return res, data
+    def test_region_filter(self):
+        # Test that changing region effects the whole feed.
+        feed_items = self.feed_factory()
+        self._refresh()
+        res, data = self._get(region='us')
+        eq_(len(data['objects']), 0)
 
-    def test_shelf_mismatch(self):
-        self.test_get_both()
-        self.shelf.update(region=0)
-        res, data = self.test_get_anon()
-        eq_(data['shelf'], None)
-
-    def test_feed_mismatch(self):
-        self.test_get_both()
-        for item in self.feed_items:
-            item.update(region=0)
-        res, data = self.test_get_anon()
-        eq_(data['feed'], [])
+    def test_carrier_filter(self):
+        # Test that changing carrier effects the opshelf.
+        feed_items = self.feed_factory()
+        self._refresh()
+        res, data = self._get(carrier='tmn')
+        eq_(len(data['objects']), 3)
+        ok_(data['objects'][0]['item_type'] != feed.FEED_TYPE_SHELF)

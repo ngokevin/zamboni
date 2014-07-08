@@ -17,7 +17,41 @@ from mkt.webapps.serializers import AppSerializer, SimpleAppSerializer
 from mkt.webapps.utils import dehydrate_content_rating
 
 
-class ESAppSerializer(AppSerializer):
+class BaseESSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super(BaseESSerializer, self).__init__(*args, **kwargs)
+
+        # Set all fields as read_only just in case.
+        for field_name in self.fields:
+            self.fields[field_name].read_only = True
+
+    @property
+    def data(self):
+        """
+        Returns the serialized data on the serializer.
+        """
+        if self._data is None:
+            if self.many:
+                self._data = [self.to_native(item) for item in self.object]
+            else:
+                self._data = self.to_native(self.object)
+        return self._data
+
+    def field_to_native(self, obj, field_name):
+        # DRF's field_to_native calls .all(), which we want to avoid, so we
+        # provide a simplified version that doesn't and just iterates on the
+        # object list.
+        return [self.to_native(item) for item in obj.object_list]
+
+    def to_native(self, es_data):
+        obj = self.mock_object(es_data['_source'])
+        return super(BaseESSerializer, self).to_native(obj)
+
+    def mock_object(self, data):
+        raise NotImplementedError
+
+
+class ESAppSerializer(AppSerializer, BaseESSerializer):
     # Fields specific to search.
     absolute_url = serializers.SerializerMethodField('get_absolute_url')
     reviewed = serializers.DateField()
@@ -52,33 +86,7 @@ class ESAppSerializer(AppSerializer):
         # Remove fields that we don't have in ES at the moment.
         self.fields.pop('upsold', None)
 
-        # Set all fields as read_only just in case.
-        for field_name in self.fields:
-            self.fields[field_name].read_only = True
-
-    @property
-    def data(self):
-        """
-        Returns the serialized data on the serializer.
-        """
-        if self._data is None:
-            if self.many:
-                self._data = [self.to_native(item) for item in self.object]
-            else:
-                self._data = self.to_native(self.object)
-        return self._data
-
-    def field_to_native(self, obj, field_name):
-        # DRF's field_to_native calls .all(), which we want to avoid, so we
-        # provide a simplified version that doesn't and just iterates on the
-        # object list.
-        return [self.to_native(item) for item in obj.object_list]
-
-    def to_native(self, obj):
-        app = self.create_fake_app(obj._source)
-        return super(ESAppSerializer, self).to_native(app)
-
-    def create_fake_app(self, data):
+    def mock_object(self, data):
         """Create a fake instance of Webapp and related models from ES data."""
         is_packaged = data['app_type'] != amo.ADDON_WEBAPP_HOSTED
         is_privileged = data['app_type'] == amo.ADDON_WEBAPP_PRIVILEGED

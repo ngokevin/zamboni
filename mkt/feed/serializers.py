@@ -12,6 +12,7 @@ from mkt.api.serializers import URLSerializerMixin
 from mkt.carriers import CARRIER_CHOICE_DICT
 from mkt.collections.serializers import SlugChoiceField, SlugModelChoiceField
 from mkt.regions import REGIONS_CHOICES_ID_DICT
+from mkt.search.serializers import BaseESSerializer
 from mkt.submit.serializers import PreviewSerializer
 from mkt.webapps.models import Category
 from mkt.webapps.serializers import AppSerializer
@@ -225,7 +226,6 @@ class FeedItemSerializer(URLSerializerMixin, serializers.ModelSerializer):
         choices_dict=mkt.regions.REGION_LOOKUP)
     category = SlugModelChoiceField(required=False,
         queryset=Category.objects.filter(type=amo.ADDON_WEBAPP))
-    item_type = serializers.SerializerMethodField('get_item_type')
 
     # Types of objects that are allowed to be a feed item.
     app = SplitField(relations.PrimaryKeyRelatedField(required=False),
@@ -259,12 +259,6 @@ class FeedItemSerializer(URLSerializerMixin, serializers.ModelSerializer):
             raise serializers.ValidationError(message)
         return attrs
 
-    def get_item_type(self, obj):
-        for item_type in self.Meta.item_types:
-            if getattr(obj, item_type):
-                return item_type
-        return
-
     def validate_shelf(self, attrs, source):
         """
         If `shelf` is defined, validate that the FeedItem's `carrier` and
@@ -285,3 +279,27 @@ class FeedItemSerializer(URLSerializerMixin, serializers.ModelSerializer):
                     'Feed item region does not match operator shelf region.')
 
         return attrs
+
+
+class FeedItemESSerializer(FeedItemSerializer, BaseESSerializer):
+    """
+    A serializer for the FeedItem class from an ES object, which wraps all
+    items that live on the feed.
+    """
+    app = serializers.Field(source='app_id')
+    brand = serializers.Field(source='brand_id')
+    collection = serializers.Field(source='collection_id')
+    shelf = serializers.Field(source='shelf_id')
+
+    def mock_object(self, data):
+        return FeedItem(
+            id=data['id'],
+            app_id=data['app'],
+            brand_id=data['brand'],
+            category=data['category'],
+            carrier=data['carrier'],
+            collection_id=data['collection'],
+            item_type=data['item_type'],
+            region=data['region'],
+            shelf_id=data['shelf'],
+        )

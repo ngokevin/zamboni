@@ -9,7 +9,8 @@ from nose.tools import eq_, ok_
 import amo.tests
 
 import mkt.feed.constants as feed
-from mkt.feed.models import FeedApp, FeedBrand, FeedCollection, FeedShelf
+from mkt.feed.models import (FeedApp, FeedBrand, FeedCollection, FeedItem,
+                             FeedShelf)
 from mkt.site.fixtures import fixture
 from mkt.webapps.models import Webapp
 
@@ -48,6 +49,39 @@ class FeedTestMixin(object):
             region=region, **kwargs)
         shelf.set_apps(app_ids or [337141])
         return shelf
+
+    def feed_item_factory(self, carrier=1, region=1,
+                          item_type=feed.FEED_TYPE_APP):
+        """Creates a single FeedItem of any feed element type specified."""
+        feed_item = FeedItem(carrier=carrier, region=region,
+                             item_type=item_type)
+
+        if item_type == feed.FEED_TYPE_APP:
+            feed_item.app = self.feed_app_factory()
+        elif item_type == feed.FEED_TYPE_BRAND:
+            feed_item.brand = self.feed_brand_factory()
+        elif item_type == feed.FEED_TYPE_COLL:
+            feed_item.collection = self.feed_collection_factory()
+        elif item_type == feed.FEED_TYPE_SHELF:
+            feed_item.shelf = self.feed_shelf_factory()
+
+        feed_item.save()
+        return feed_item
+
+    def feed_factory(self, carrier=1, region=1, item_types=None):
+        """
+        Takes a list of feed element types and creates FeedItems with those
+        types. Returns a list of FeedItems.
+        """
+        item_types = item_types or [feed.FEED_TYPE_APP, feed.FEED_TYPE_BRAND,
+                                    feed.FEED_TYPE_COLL, feed.FEED_TYPE_SHELF]
+
+        feed_items = []
+        for item_type in item_types:
+            feed_items.append(
+                self.feed_item_factory(carrier=carrier, region=region,
+                                       item_type=item_type))
+        return feed_items
 
 
 class FeedAppMixin(object):

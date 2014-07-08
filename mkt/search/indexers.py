@@ -3,7 +3,9 @@ import sys
 
 from django.conf import settings
 
+from celeryutils import task
 from elasticutils.contrib.django import Indexable, MappingType
+from pyelasticsearch.exceptions import ElasticHttpNotFoundError
 
 import amo
 from amo.decorators import write
@@ -125,6 +127,41 @@ class BaseIndexer(MappingType, Indexable):
     @classmethod
     def get_indexable(cls):
         return cls.get_model().objects.order_by('-id')
+
+    @classmethod
+    @task
+    def unindexer(cls, ids=None, _all=False, index=None):
+        """
+        Unindex objects. Useful for tearDowns.
+
+        ids -- list of IDs to unindex.
+        _all -- unindex all objects.
+        """
+        if _all:
+            ids = list(
+                cls.get_model().objects.order_by('id').values_list('id',
+                                                                   flat=True))
+        if not ids:
+            return
+
+        task_log.info('Unindexing %s %s-%s. [%s]' %
+                      (cls.get_model()._meta.model_name, ids[0], ids[-1],
+                       len(ids)))
+
+        index = index or cls.get_index()
+        # Note: If reindexing is currently occurring, `get_indices` will return
+        # more than one index.
+        indices = Reindexing.get_indices(index)
+
+        es = cls.get_es(urls=settings.ES_URLS)
+        for id_ in ids:
+            for idx in indices:
+                try:
+                    cls.unindex(id_=id_, es=es, index=idx)
+                except ElasticHttpNotFoundError:
+                    # Ignore if it's not there.
+                    task_log.info(u'[%s:%s] object not found in index' %
+                                  (cls.get_model()._meta.model_name, id_))
 
     @classmethod
     def run_indexing(cls, ids, ES, index=None, **kw):

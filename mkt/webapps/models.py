@@ -1500,6 +1500,10 @@ class Webapp(Addon):
             if not hasattr(self, '_geodata'):
                 Geodata.objects.create(addon=self)
 
+    @classmethod
+    def get_indexer(cls):
+        return WebappIndexer
+
     @staticmethod
     def transformer(apps):
         if not apps:
