@@ -1034,8 +1034,8 @@ class TestFeedShelfPublishView(BaseTestFeedItemViewSet, amo.tests.TestCase):
         eq_(res.status_code, 404)
 
 
-class TestFeedView(FeedTestMixin, RestOAuth):
-    fixtures = fixture('webapp_337141') + RestOAuth.fixtures
+class TestFeedView(BaseTestFeedItemViewSet, amo.tests.ESTestCase):
+    fixtures = BaseTestFeedItemViewSet.fixtures + FeedTestMixin.fixtures
 
     def setUp(self):
         super(TestFeedView, self).setUp()

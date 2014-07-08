@@ -145,7 +145,8 @@ class BaseIndexer(MappingType, Indexable):
                     cls.get_model()._meta.model_name, obj.id, e))
 
         # Index.
-        cls.bulk_index(docs, es=ES, index=index or cls.get_index())
+        if docs:
+            cls.bulk_index(docs, es=ES, index=index or cls.get_index())
 
 
 @post_request_task(acks_late=True)

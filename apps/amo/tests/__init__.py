@@ -38,12 +38,14 @@ import amo
 import mkt
 from amo.urlresolvers import get_url_prefix, Prefixer, reverse, set_url_prefix
 from constants.applications import DEVICE_TYPES
+from lib.es.management.commands import reindex_mkt
 from lib.post_request_task import task as post_request_task
 from mkt.access.acl import check_ownership
 from mkt.access.models import Group, GroupUser
 from mkt.constants import regions
 from mkt.feed.indexers import (FeedAppIndexer, FeedBrandIndexer,
-                               FeedCollectionIndexer, FeedShelfIndexer)
+                               FeedCollectionIndexer, FeedItemIndexer,
+                               FeedShelfIndexer)
 from mkt.files.helpers import copyfileobj
 from mkt.files.models import File, Platform
 from mkt.prices.models import AddonPremium, Price, PriceCurrency
@@ -821,8 +823,7 @@ class ESTestCase(TestCase):
             except pyelasticsearch.ElasticHttpNotFoundError as exc:
                 print 'Could not delete index %r: %s' % (index, exc)
 
-        for indexer in (WebappIndexer, FeedAppIndexer, FeedBrandIndexer,
-                        FeedCollectionIndexer, FeedShelfIndexer):
+        for index, indexer, batch in reindex_mkt.INDEXES:
             indexer.setup_mapping()
 
     @classmethod
