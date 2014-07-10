@@ -81,9 +81,9 @@ class FeedAppSerializer(ValidateSlugMixin, URLSerializerMixin,
     """
     app = SplitField(relations.PrimaryKeyRelatedField(required=True),
                      AppSerializer())
-    description = TranslationSerializerField(required=False)
     background_image = FeedImageField(
         source='*', view_name='api-v2:feed-app-image-detail', format='png')
+    description = TranslationSerializerField(required=False)
     preview = SplitField(relations.PrimaryKeyRelatedField(required=False),
                          PreviewSerializer())
     pullquote_rating = serializers.IntegerField(required=False)
