@@ -231,12 +231,19 @@ class WebappIndexer(BaseIndexer):
     @classmethod
     def extract_document(cls, pk, obj=None):
         """Extracts the ElasticSearch index document for this instance."""
-        from mkt.webapps.models import (AppFeatures, Geodata, Installed,
-                                        RatingDescriptors, RatingInteractives,
-                                        Webapp)
+        from mkt.webapps.models import (AppFeatures, attach_categories,
+                                        attach_devices, attach_prices,
+                                        attach_tags, attach_translations,
+                                        Geodata, Installed, RatingDescriptors,
+                                        RatingInteractives, Webapp)
 
         if obj is None:
             obj = cls.get_model().objects.no_cache().get(pk=pk)
+
+        # Attach everything we need to index apps.
+        for transform in (attach_categories, attach_devices, attach_prices,
+                          attach_tags, attach_translations):
+            transform([obj])
 
         latest_version = obj.latest_version
         version = obj.current_version

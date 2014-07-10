@@ -732,7 +732,7 @@ def file_factory(**kw):
     return f
 
 
-def req_factory_factory(url, user=None, post=False, data=None):
+def req_factory_factory(url, user=None, post=False, data=None, **kwargs):
     """Creates a request factory, logged in with the user."""
     req = RequestFactory()
     if post:
@@ -744,6 +744,11 @@ def req_factory_factory(url, user=None, post=False, data=None):
         req.user = user
         req.groups = user.groups.all()
     req.check_ownership = partial(check_ownership, req)
+    req.REGION = kwargs.pop('region', mkt.regions.REGIONS_CHOICES[0][1])
+    req.API_VERSION = 2
+
+    for key in kwargs:
+        setattr(req, key, kwargs[key])
     return req
 
 

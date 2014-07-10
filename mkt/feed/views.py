@@ -488,63 +488,56 @@ class FeedView(CORSMixin, APIView):
             carrier = mkt.carriers.CARRIER_MAP[q['carrier']].id
 
         # Fetch FeedItems.
-        results = (
+        feed_items = [
+            feed_item['_source'] for feed_item in
             es.search(self.get_es_feed_query(region=region, carrier=carrier),
-                      index=indexer.get_index())['hits']['hits'])
-        feed_items = FeedItemESSerializer(results, many=True).data
+                      index=indexer.get_index())['hits']['hits']]
 
         if not feed_items:
             return response.Response({'objects': []},
                                      status=status.HTTP_200_OK)
 
-        # Fetch feed elements to attach to FeedItems.
+        # Fetch feed elements to attach to FeedItems later.
+        apps = []
+        feed_element_map = {
+            feed.FEED_TYPE_APP: {},
+            feed.FEED_TYPE_BRAND: {},
+            feed.FEED_TYPE_COLL: {},
+            feed.FEED_TYPE_SHELF: {},
+        }
         index = string.join(
             [settings.ES_INDEXES['mkt_feed_app'],
              settings.ES_INDEXES['mkt_feed_brand'],
              settings.ES_INDEXES['mkt_feed_collection'],
              settings.ES_INDEXES['mkt_feed_shelf']], ',')
-        results = es.search(self.get_es_feed_element_query(feed_items),
-                            index=index)['hits']['hits']
-
-        apps = []
-        for feed_elm in results:
-            # Rewrite FeedItems' feed element IDs with feed elements.
+        feed_elms = es.search(self.get_es_feed_element_query(feed_items),
+                              index=index)['hits']['hits']
+        for feed_elm in feed_elms:
             feed_elm = feed_elm['_source']
-            for feed_item in feed_items:
-                item_type = feed_item['item_type']
-                if (item_type == feed_elm['item_type'] and
-                    feed_item[item_type] == feed_elm['id']):
-                    feed_item[item_type] = feed_elm
-                    # Store app IDs to retrieve later.
-                    if feed_elm.get('app'):
-                        apps.append(feed_elm['app'])
-                    elif feed_elm.get('apps'):
-                        apps += feed_elm['apps']
-                    # Attach.
-                    feed_item[item_type] = feed_elm
-                    break
+            # Store the feed elements to attach to FeedItems later.
+            feed_element_map[feed_elm['item_type']][feed_elm['id']] = feed_elm
+            # Store the apps to retrieve later.
+            if feed_elm.get('app'):
+                apps.append(feed_elm['app'])
+            elif feed_elm.get('apps'):
+                apps += feed_elm['apps']
 
-        # Fetch apps to attach to feed elements.
-        results = (
+        # Fetch apps to attach to feed elements later.
+        app_map = {}
+        apps = (
             es.search(self.get_es_apps_query(apps),
                       index=WebappIndexer.get_index())['hits']['hits'])
-        apps = {}
-        for result in results:
-            # Put the apps into a map.
-            result = result['_source']
-            apps[result['id']] = result
-        for feed_item in feed_items:
-            # Rewrite feed elements' app IDs with apps.
-            item_type = feed_item['item_type']
-            feed_elm = feed_item[item_type]
-            if feed_elm.get('app'):
-                # Single app.
-                feed_elm['app'] = apps[feed_elm['app']]
-            elif feed_elm.get('apps'):
-                # Multiple apps.
-                feed_elm['apps'] = [
-                    apps[app_id] for app_id in feed_elm['apps']
-                ]
+        for app in apps:
+            # Store the apps to attach to feed elements later.
+            app = app['_source']
+            app_map[app['id']] = app
+
+        # Super serialize.
+        feed_items = FeedItemESSerializer(feed_items, many=True, context={
+            'app_map': app_map,
+            'feed_element_map': feed_element_map,
+            'request': request
+        }).data
 
         return response.Response({'objects': feed_items},
                                  status=status.HTTP_200_OK)

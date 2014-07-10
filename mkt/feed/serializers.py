@@ -6,19 +6,21 @@ from rest_framework.reverse import reverse
 
 import amo
 import mkt.carriers
+import mkt.feed.constants as feed
 import mkt.regions
-from mkt.api.fields import SplitField, TranslationSerializerField
+from mkt.api.fields import (ESTranslationSerializerField, SplitField,
+                            TranslationSerializerField)
 from mkt.api.serializers import URLSerializerMixin
 from mkt.carriers import CARRIER_CHOICE_DICT
 from mkt.collections.serializers import SlugChoiceField, SlugModelChoiceField
 from mkt.regions import REGIONS_CHOICES_ID_DICT
-from mkt.search.serializers import BaseESSerializer
+from mkt.search.serializers import BaseESSerializer, ESAppSerializer
 from mkt.submit.serializers import PreviewSerializer
 from mkt.webapps.models import Category
 from mkt.webapps.serializers import AppSerializer
 
 from . import constants
-from .fields import FeedCollectionMembershipField
+from .fields import AppESField, FeedCollectionMembershipField
 from .models import (FeedApp, FeedBrand, FeedCollection,
                      FeedCollectionMembership, FeedItem, FeedShelf)
 
@@ -55,6 +57,14 @@ class BaseFeedCollectionSerializer(ValidateSlugMixin, URLSerializerMixin,
 
     class Meta:
         fields = ('apps', 'slug', 'url')
+
+
+class BaseFeedCollectionESSerializer(BaseESSerializer):
+    """
+    Base serializer for subclasses of BaseFeedCollection that serializes ES
+    representation.
+    """
+    apps = AppESField(source='_app_ids', many=True)
 
 
 class FeedImageField(serializers.HyperlinkedRelatedField):
@@ -107,6 +117,30 @@ class FeedAppSearchSerializer(FeedAppSerializer):
         fields = ('app', 'id', 'slug', 'type', 'url')
 
 
+class FeedAppESSerializer(FeedAppSerializer, BaseESSerializer):
+    """
+    A serializer for the FeedApp class that serializes ES representation.
+    """
+    app = AppESField(source='_app_id')
+    background_image = FeedImageField(
+        source='*', view_name='api-v2:feed-app-image-detail', format='png')
+    description = ESTranslationSerializerField(required=False)
+    preview = serializers.Field(source='preview')
+    pullquote_text = ESTranslationSerializerField(required=False)
+
+    def mock_object(self, data):
+        feed_app = self._attach_fields(FeedApp(), data, (
+            'id', 'background_color', 'image_hash', 'pullquote_attribution',
+            'pullquote_rating', 'slug', 'type'
+        ))
+        feed_app = self._attach_translation_fields(feed_app, data, (
+            'description', 'pullquote_text'
+        ))
+
+        feed_app._app_id = data.get('app')
+        return feed_app
+
+
 class FeedBrandSerializer(BaseFeedCollectionSerializer):
     """
     A serializer for the FeedBrand class, a type of collection that allows
@@ -123,6 +157,19 @@ class FeedBrandSerializer(BaseFeedCollectionSerializer):
         url_basename = 'feedbrands'
 
 
+class FeedBrandESSerializer(BaseFeedCollectionESSerializer,
+                            FeedBrandSerializer):
+    """
+    A serializer for the FeedBrand class for ES representation.
+    """
+    def mock_object(self, data):
+        brand = self._attach_fields(FeedBrand(), data, (
+            'id', 'layout', 'slug', 'type'
+        ))
+        brand._app_ids = data.get('apps')
+        return brand
+
+
 class FeedBrandSearchSerializer(FeedBrandSerializer):
     """
     A simpler serializer for the FeedBrand class that does not include apps.
@@ -130,34 +177,6 @@ class FeedBrandSearchSerializer(FeedBrandSerializer):
     class Meta(FeedBrandSerializer.Meta):
         fields = ('app_count', 'id', 'layout', 'preview_icon', 'slug', 'type',
                   'url')
-
-
-class FeedShelfSerializer(BaseFeedCollectionSerializer):
-    """
-    A serializer for the FeedBrand class, a type of collection that allows
-    editors to quickly create content without involving localizers.
-    """
-    background_image = FeedImageField(
-        source='*', view_name='api-v2:feed-shelf-image-detail', format='png')
-    carrier = SlugChoiceField(choices_dict=mkt.carriers.CARRIER_MAP)
-    description = TranslationSerializerField(required=False)
-    name = TranslationSerializerField()
-    region = SlugChoiceField(choices_dict=mkt.regions.REGION_LOOKUP)
-
-    class Meta:
-        fields = ('apps', 'background_color', 'background_image', 'carrier',
-                  'description', 'id', 'name', 'region', 'slug', 'url')
-        model = FeedShelf
-        url_basename = 'feedshelves'
-
-
-class FeedShelfSearchSerializer(FeedShelfSerializer):
-    """
-    A simpler serializer for the FeedShelf class that does not include apps.
-    """
-    class Meta(FeedShelfSerializer.Meta):
-        fields = ('app_count', 'carrier', 'id', 'name', 'preview_icon',
-                  'region', 'slug', 'url')
 
 
 class FeedCollectionSerializer(BaseFeedCollectionSerializer):
@@ -213,6 +232,75 @@ class FeedCollectionSearchSerializer(FeedCollectionSerializer):
     class Meta(FeedCollectionSerializer.Meta):
         fields = ('app_count', 'id', 'name', 'preview_icon', 'slug', 'type',
                   'url')
+
+
+class FeedCollectionESSerializer(BaseFeedCollectionESSerializer,
+                                 FeedCollectionSerializer):
+    """
+    A serializer for the FeedCollection class for ES representation.
+    """
+    description = ESTranslationSerializerField(required=False)
+    name = ESTranslationSerializerField(required=False)
+
+    def mock_object(self, data):
+        collection = self._attach_fields(FeedCollection(), data, (
+            'id', 'background_color', 'image_hash', 'slug', 'type'
+        ))
+        collection = self._attach_translation_fields(collection, data, (
+            'name', 'description'
+        ))
+
+        collection._app_ids = data.get('apps')
+        return collection
+
+
+class FeedShelfSerializer(BaseFeedCollectionSerializer):
+    """
+    A serializer for the FeedBrand class, a type of collection that allows
+    editors to quickly create content without involving localizers.
+    """
+    background_image = FeedImageField(
+        source='*', view_name='api-v2:feed-shelf-image-detail', format='png')
+    carrier = SlugChoiceField(choices_dict=mkt.carriers.CARRIER_MAP)
+    description = TranslationSerializerField(required=False)
+    name = TranslationSerializerField()
+    region = SlugChoiceField(choices_dict=mkt.regions.REGION_LOOKUP)
+
+    class Meta:
+        fields = ('apps', 'background_color', 'background_image', 'carrier',
+                  'description', 'id', 'name', 'region', 'slug', 'url')
+        model = FeedShelf
+        url_basename = 'feedshelves'
+
+
+class FeedShelfSearchSerializer(FeedShelfSerializer):
+    """
+    A simpler serializer for the FeedShelf class that does not include apps.
+    """
+    class Meta(FeedShelfSerializer.Meta):
+        fields = ('app_count', 'carrier', 'id', 'name', 'preview_icon',
+                  'region', 'slug', 'url')
+
+
+class FeedShelfESSerializer(BaseFeedCollectionESSerializer,
+                            FeedShelfSerializer):
+    """
+    A serializer for the FeedShelf class for ES representation.
+    """
+    description = ESTranslationSerializerField(required=False)
+    name = ESTranslationSerializerField(required=False)
+
+    def mock_object(self, data):
+        shelf = self._attach_fields(FeedShelf(), data, (
+            'id', 'background_color', 'carrier', 'image_hash', 'region',
+            'slug'
+        ))
+        shelf = self._attach_translation_fields(shelf, data, (
+            'description', 'name'
+        ))
+
+        shelf._app_ids = data.get('apps')
+        return shelf
 
 
 class FeedItemSerializer(URLSerializerMixin, serializers.ModelSerializer):
@@ -285,21 +373,32 @@ class FeedItemESSerializer(FeedItemSerializer, BaseESSerializer):
     """
     A serializer for the FeedItem class from an ES object, which wraps all
     items that live on the feed.
+
+    It will turn something like
+
+    >> {'item_type': 'app', 'carrier': 1, 'region': 1, 'app': 140L, 'id': 229L}
+
+    into a fully serialized FeedItem.
+
+    self.context['app_map'] -- mapping of app IDs to ES app objects.
+    self.context['feed_element_map'] -- mapping of feed element IDs to ES feed
+                                        element objects.
+    self.context['request'] -- Django request, mainly for translations.
     """
-    app = serializers.Field(source='app_id')
-    brand = serializers.Field(source='brand_id')
-    collection = serializers.Field(source='collection_id')
-    shelf = serializers.Field(source='shelf_id')
+    app = FeedAppESSerializer(required=False, source='_app')
+    brand = FeedBrandESSerializer(required=False, source='_brand')
+    collection = FeedCollectionESSerializer(required=False,
+                                            source='_collection')
+    shelf = FeedShelfESSerializer(required=False, source='_shelf')
 
     def mock_object(self, data):
-        return FeedItem(
-            id=data['id'],
-            app_id=data['app'],
-            brand_id=data['brand'],
-            category=data['category'],
-            carrier=data['carrier'],
-            collection_id=data['collection'],
-            item_type=data['item_type'],
-            region=data['region'],
-            shelf_id=data['shelf'],
-        )
+        feed_item = self._attach_fields(FeedItem(), data, (
+            'id', 'carrier', 'category', 'item_type', 'region',
+        ))
+
+        # Already fetched the feed element from ES. Set it to deserialize.
+        for item_type in self.Meta.item_types:
+            setattr(feed_item, '_%s' % item_type,
+                    self.context['feed_element_map'].get(data.get(item_type)))
+
+        return feed_item

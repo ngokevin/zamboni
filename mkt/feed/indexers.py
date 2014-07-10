@@ -31,7 +31,8 @@ class FeedAppIndexer(BaseIndexer):
                                          'index': 'not_analyzed'},
                     'description': {'type': 'string',
                                     'analyzer': 'default_icu'},
-                    'has_image': {'type': 'boolean'},
+                    'image_hash': {'type': 'string',
+                                   'index': 'not_analyzed'},
                     'preview': {'type': 'object', 'dynamic': 'true'},
                     'pullquote_attribution': {'type': 'string',
                                               'index': 'not_analyzed'},
@@ -136,7 +137,8 @@ class FeedCollectionIndexer(BaseIndexer):
             doc_type: {
                 'properties': {
                     'id': {'type': 'long'},
-                    'has_image': {'type': 'boolean'},
+                    'image_hash': {'type': 'string',
+                                   'index': 'not_analyzed'},
                     'name': {'type': 'string', 'analyzer': 'default_icu'},
                     'slug': {'type': 'string'},
                     'type': {'type': 'string', 'index': 'not_analyzed'},
@@ -158,7 +160,7 @@ class FeedCollectionIndexer(BaseIndexer):
 
         doc = {
             'id': obj.id,
-            'has_image': obj.has_image,
+            'image_hash': obj.image_hash,
             'slug': obj.slug,
             'type': obj.type,
 
@@ -210,7 +212,7 @@ class FeedShelfIndexer(BaseIndexer):
 
         doc = {
             'id': obj.id,
-            'has_image': obj.has_image,
+            'image_hash': obj.image_hash,
             'name': list(set(string for _, string
                              in obj.translations[obj.name_id])),
             'slug': obj.slug,
