@@ -1056,6 +1056,7 @@ class TestFeedView(BaseTestFeedItemViewSet, amo.tests.ESTestCase):
         self.refresh('mkt_feed_collection')
         self.refresh('mkt_feed_shelf')
         self.refresh('mkt_feed_item')
+        self.refresh('webapp')
 
     def _get(self, client=None, **kwargs):
         client = client or self.anon
@@ -1101,3 +1102,18 @@ class TestFeedView(BaseTestFeedItemViewSet, amo.tests.ESTestCase):
         res, data = self._get(carrier='tmn')
         eq_(len(data['objects']), 3)
         ok_(data['objects'][0]['item_type'] != feed.FEED_TYPE_SHELF)
+
+    def test_apps(self):
+        # Test that apps are deserialized.
+        feed_items = self.feed_factory()
+        self._refresh()
+        res, data = self._get()
+        for feed_item in data['objects']:
+            item_type = feed_item['item_type']
+            feed_elm = feed_item[item_type]
+            if feed_elm.get('app'):
+                ok_(feed_elm['app']['id'])
+            else:
+                ok_(len(feed_elm['apps']))
+                for app in feed_elm['apps']:
+                    ok_(app['id'])
