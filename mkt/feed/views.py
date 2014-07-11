@@ -315,13 +315,6 @@ class FeedElementSearchView(CORSMixin, APIView):
             'slop': 4,
         }
 
-    def _fuzzy(self, q):
-        return {
-            'query': q,
-            'type': 'fuzzy',
-            'fuzziness': 4,
-        }
-
     def get(self, request, *args, **kwargs):
         q = request.GET.get('q')
 
@@ -332,13 +325,13 @@ class FeedElementSearchView(CORSMixin, APIView):
             'should': True
         }
         feed_app_ids = ([pk[0] for pk in S(FeedAppIndexer).query(
-            name__match=self._fuzzy(q), **query).values_list('id')])
+            name__fuzzy=q, **query).values_list('id')])
         feed_brand_ids = [pk[0] for pk in S(FeedBrandIndexer).query(
             **query).values_list('id')]
         feed_collection_ids = ([pk[0] for pk in S(FeedCollectionIndexer).query(
-            name__match=self._fuzzy(q), **query).values_list('id')])
+            name__fuzzy=q, **query).values_list('id')])
         feed_shelf_ids = ([pk[0] for pk in S(FeedShelfIndexer).query(
-            name__match=self._fuzzy(q), slug__match=self._fuzzy(q),
+            name__fuzzy=q, slug__fuzzy=q,
             carrier__prefix=q, region=q, should=True).values_list('id')])
 
         # Dehydrate.

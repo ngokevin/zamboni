@@ -398,7 +398,9 @@ class FeedItemESSerializer(FeedItemSerializer, BaseESSerializer):
 
         # Already fetched the feed element from ES. Set it to deserialize.
         for item_type in self.Meta.item_types:
-            setattr(feed_item, '_%s' % item_type,
-                    self.context['feed_element_map'].get(data.get(item_type)))
+            setattr(
+                feed_item, '_%s' % item_type,
+                self.context['feed_element_map'][item_type].get(
+                    data.get(item_type)))
 
         return feed_item

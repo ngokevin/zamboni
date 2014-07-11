@@ -61,7 +61,6 @@ class TestFeedCollectionIndexer(FeedTestMixin, BaseFeedIndexerTest,
     def test_extract(self):
         doc = self._get_doc()
         eq_(doc['id'], self.obj.id)
-        assert self.obj.name.localized_string in doc['name']
         eq_(doc['slug'], self.obj.slug)
         eq_(doc['type'], self.obj.type)
 

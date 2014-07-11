@@ -123,6 +123,7 @@ class TestFeedItemViewSetCreate(FeedAppMixin, BaseTestFeedItemViewSet):
     def test_create_with_permission(self):
         self.feed_permission()
         res, data = self.create(self.client, app=self.feedapps[0].pk,
+                                item_type=feed.FEED_TYPE_APP,
                                 carrier=mkt.carriers.TELEFONICA.id,
                                 region=mkt.regions.BR.id)
         eq_(res.status_code, 201)
@@ -199,7 +200,8 @@ class TestFeedItemViewSetUpdate(FeedAppMixin, BaseTestFeedItemViewSet):
 
     def test_update_with_permission(self):
         self.feed_permission()
-        res, data = self.update(self.client, region=mkt.regions.US.id)
+        res, data = self.update(self.client, item_type=feed.FEED_TYPE_APP,
+                                region=mkt.regions.US.id)
         eq_(res.status_code, 200)
         eq_(data['id'], self.item.pk)
         eq_(data['region'], mkt.regions.US.slug)
@@ -1089,22 +1091,22 @@ class TestFeedView(BaseTestFeedItemViewSet, amo.tests.ESTestCase):
             feed.FEED_TYPE_SHELF)
 
     def test_region_filter(self):
-        # Test that changing region effects the whole feed.
+        """Test that changing region effects the whole feed."""
         feed_items = self.feed_factory()
         self._refresh()
         res, data = self._get(region='us')
         eq_(len(data['objects']), 0)
 
     def test_carrier_filter(self):
-        # Test that changing carrier effects the opshelf.
+        """Test that changing carrier effects the opshelf."""
         feed_items = self.feed_factory()
         self._refresh()
         res, data = self._get(carrier='tmn')
         eq_(len(data['objects']), 3)
         ok_(data['objects'][0]['item_type'] != feed.FEED_TYPE_SHELF)
 
-    def test_apps(self):
-        # Test that apps are deserialized.
+    def test_deserialized(self):
+        """Test that feed elements and apps are deserialized."""
         feed_items = self.feed_factory()
         self._refresh()
         res, data = self._get()

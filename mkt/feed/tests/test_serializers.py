@@ -288,10 +288,11 @@ class TestFeedItemESSerializer(FeedTestMixin, amo.tests.TestCase):
 
         # Denormalize feed elements into the serializer context.
         self.app_map = {}
-        self.feed_element_map = {}
+        self.feed_element_map = {'app': {}, 'brand': {}, 'collection': {},
+                                 'shelf': {}}
         for i, feed_item in enumerate(self.data_es):
             feed_element = getattr(self.feed[i], feed_item['item_type'])
-            self.feed_element_map[feed_element.id] = (
+            self.feed_element_map[feed_item['item_type']][feed_element.id] = (
                 feed_element.get_indexer().extract_document(None,
                                                             obj=feed_element))
 
