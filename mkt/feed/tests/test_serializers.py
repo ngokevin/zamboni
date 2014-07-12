@@ -49,7 +49,7 @@ class TestFeedAppESSerializer(FeedTestMixin, amo.tests.TestCase):
                 self.feedapp.app_id)
         }
 
-    def test_serialization(self):
+    def test_deserialize(self):
         data = serializers.FeedAppESSerializer(self.data_es, context={
             'app_map': self.app_map,
             'request': amo.tests.req_factory_factory('')
@@ -57,7 +57,7 @@ class TestFeedAppESSerializer(FeedTestMixin, amo.tests.TestCase):
         eq_(data['app']['id'], self.feedapp.app_id)
         eq_(data['description']['en-US'], 'test')
 
-    def test_serialization_many(self):
+    def test_deserialize_many(self):
         data = serializers.FeedAppESSerializer(
             [self.data_es, self.data_es], context={
                 'app_map': self.app_map,
@@ -74,7 +74,7 @@ class TestFeedBrandSerializer(FeedTestMixin, amo.tests.TestCase):
         self.brand = self.feed_brand_factory(app_ids=self.app_ids)
         super(TestFeedBrandSerializer, self).setUp()
 
-    def test_serialization(self):
+    def test_deserialize(self):
         data = serializers.FeedBrandSerializer(self.brand).data
         eq_(data['slug'], self.brand.slug)
         eq_(data['layout'], self.brand.layout)
@@ -101,7 +101,7 @@ class TestFeedBrandESSerializer(FeedTestMixin, amo.tests.TestCase):
         self.app_map = dict((app.id, WebappIndexer.extract_document(app.id))
                             for app in self.apps)
 
-    def test_serialization(self):
+    def test_deserialize(self):
         data = serializers.FeedBrandESSerializer(self.data_es, context={
             'app_map': self.app_map,
             'request': amo.tests.req_factory_factory('')
@@ -167,7 +167,7 @@ class TestFeedCollectionESSerializer(FeedTestMixin, amo.tests.TestCase):
         self.app_map = dict((app.id, WebappIndexer.extract_document(app.id))
                             for app in self.apps)
 
-    def test_serialization(self):
+    def test_deserialize(self):
         data = serializers.FeedCollectionESSerializer(self.data_es, context={
             'app_map': self.app_map,
             'request': amo.tests.req_factory_factory('')
@@ -176,6 +176,21 @@ class TestFeedCollectionESSerializer(FeedTestMixin, amo.tests.TestCase):
                             [app.id for app in self.apps])
         eq_(data['description']['de'], 'test')
         eq_(data['name']['en-US'], 'test')
+        return data
+
+    def test_deserialize_grouped_apps(self):
+        self.collection = self.feed_collection_factory(
+            app_ids=self.app_ids, grouped=True, description={'de': 'test'},
+            name={'en-US': 'test'})
+        self.data_es = self.collection.get_indexer().extract_document(
+            None, obj=self.collection)
+        data = self.test_deserialize()
+        for i, app in enumerate(data['apps']):
+            group = app['group']['en-US']
+            if not i == 2:
+                eq_(group, 'first-group')
+            else:
+                eq_(group, 'second-group')
 
 
 class TestFeedShelfSerializer(FeedTestMixin, amo.tests.TestCase):
@@ -185,7 +200,7 @@ class TestFeedShelfSerializer(FeedTestMixin, amo.tests.TestCase):
         self.shelf = self.feed_shelf_factory(app_ids=self.app_ids)
         super(TestFeedShelfSerializer, self).setUp()
 
-    def test_serialization(self):
+    def test_deserialize(self):
         data = serializers.FeedShelfSerializer(self.shelf).data
         eq_(data['slug'], self.shelf.slug)
         self.assertSetEqual([app['id'] for app in data['apps']], self.app_ids)
@@ -212,7 +227,7 @@ class TestFeedShelfESSerializer(FeedTestMixin, amo.tests.TestCase):
         self.app_map = dict((app.id, WebappIndexer.extract_document(app.id))
                             for app in self.apps)
 
-    def test_serialization(self):
+    def test_deserialize(self):
         data = serializers.FeedShelfESSerializer(self.data_es, context={
             'app_map': self.app_map,
             'request': amo.tests.req_factory_factory('')
@@ -288,11 +303,10 @@ class TestFeedItemESSerializer(FeedTestMixin, amo.tests.TestCase):
 
         # Denormalize feed elements into the serializer context.
         self.app_map = {}
-        self.feed_element_map = {'app': {}, 'brand': {}, 'collection': {},
-                                 'shelf': {}}
+        self.feed_element_map = {}
         for i, feed_item in enumerate(self.data_es):
             feed_element = getattr(self.feed[i], feed_item['item_type'])
-            self.feed_element_map[feed_item['item_type']][feed_element.id] = (
+            self.feed_element_map[feed_element.id] = (
                 feed_element.get_indexer().extract_document(None,
                                                             obj=feed_element))
 
@@ -305,7 +319,7 @@ class TestFeedItemESSerializer(FeedTestMixin, amo.tests.TestCase):
                 self.app_map[feed_element.app_id] = (
                     WebappIndexer.extract_document(feed_element.app_id))
 
-    def test_serialization_many(self):
+    def test_deserialize_many(self):
         data = serializers.FeedItemESSerializer(self.data_es, context={
             'app_map': self.app_map,
             'feed_element_map': self.feed_element_map,

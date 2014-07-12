@@ -34,11 +34,21 @@ class FeedTestMixin(object):
         return brand
 
     def feed_collection_factory(self, app_ids=None, name='test-coll',
-                                coll_type=feed.COLLECTION_LISTING, **kwargs):
+                                coll_type=feed.COLLECTION_LISTING,
+                                grouped=False, **kwargs):
         count = FeedCollection.objects.count()
         coll = FeedCollection.objects.create(
             name=name, slug='feed-coll-%s' % count, type=coll_type, **kwargs)
         coll.set_apps(app_ids or [337141])
+
+        if grouped:
+            for i, mem in enumerate(coll.feedcollectionmembership_set.all()):
+                if i == len(app_ids) - 1 and len(app_ids) > 1:
+                    mem.group = 'second-group'
+                else:
+                    mem.group = 'first-group'
+                mem.save()
+
         return coll
 
     def feed_shelf_factory(self, app_ids=None, name='test-shelf',

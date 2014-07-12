@@ -1,6 +1,9 @@
 """
-Indexers for FeedApp, FeedBrand, FeedCollection are for Curator Tools search.
+Indexers for FeedApp, FeedBrand, FeedCollection, FeedShelf, FeedItem for
+feed homepage and curation tool search.
 """
+from collections import defaultdict
+
 from amo.utils import attach_trans_dict
 
 import mkt.carriers
@@ -144,6 +147,7 @@ class FeedCollectionIndexer(BaseIndexer):
                     'type': {'type': 'string', 'index': 'not_analyzed'},
 
                     'apps': {'type': 'long'},
+                    'groups': {'type': 'object', 'dynamic': 'true'},
                     'item_type': {'type': 'string', 'index': 'not_analyzed'},
                 }
             }
@@ -151,7 +155,7 @@ class FeedCollectionIndexer(BaseIndexer):
 
     @classmethod
     def extract_document(cls, obj_id, obj=None):
-        from mkt.feed.models import FeedCollection
+        from mkt.feed.models import FeedCollection, FeedCollectionMembership
 
         if obj is None:
             obj = cls.get_model().get(pk=obj_id)
@@ -165,8 +169,22 @@ class FeedCollectionIndexer(BaseIndexer):
             'type': obj.type,
 
             'apps': list(obj.apps().values_list('id', flat=True)),
+            'group_apps': {},  # Map of app IDs to index in group_names below.
+            'group_names': [],  # List of ES-serialized group names.
             'item_type': feed.FEED_TYPE_COLL,
         }
+
+        # Grouped apps. Key off of translation, pointed to app IDs.
+        memberships = obj.feedcollectionmembership_set.all()
+        attach_trans_dict(FeedCollectionMembership, memberships)
+        for member in memberships:
+            if member.group:
+                grp_translation = format_translation_es(member, 'group')
+                if grp_translation not in doc['group_names']:
+                    doc['group_names'].append(grp_translation)
+
+                doc['group_apps'][member.app_id] = doc['group_names'].index(
+                    grp_translation)
 
         # Handle localized fields.
         for field in ('description', 'name'):

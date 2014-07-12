@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from mkt.api.fields import ESTranslationSerializerField
 from mkt.search.serializers import ESAppSerializer
 from mkt.webapps.serializers import AppSerializer
 
@@ -28,13 +29,15 @@ class AppESField(serializers.Field):
     def to_native(self, app_ids):
         """App ID to serialized app."""
         if self.many:
-            return ESAppSerializer(
+            apps = ESAppSerializer(
                 [self.context['app_map'][app_id] for app_id in app_ids],
-                many=True)
+                many=True, context=self.context).data
+            return apps
         else:
-            # App IDs here is actually only one app ID.
-            return ESAppSerializer(self.context['app_map'][app_ids],
-                                   context=self.context).data
+            # Single object, app_ids is only one app ID.
+            app = ESAppSerializer(self.context['app_map'][app_ids],
+                                  context=self.context).data
+            return app
 
     def from_native(self, data):
         if self.many:

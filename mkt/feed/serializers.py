@@ -14,7 +14,7 @@ from mkt.api.serializers import URLSerializerMixin
 from mkt.carriers import CARRIER_CHOICE_DICT
 from mkt.collections.serializers import SlugChoiceField, SlugModelChoiceField
 from mkt.regions import REGIONS_CHOICES_ID_DICT
-from mkt.search.serializers import BaseESSerializer, ESAppSerializer
+from mkt.search.serializers import BaseESSerializer
 from mkt.submit.serializers import PreviewSerializer
 from mkt.webapps.models import Category
 from mkt.webapps.serializers import AppSerializer
@@ -157,8 +157,8 @@ class FeedBrandSerializer(BaseFeedCollectionSerializer):
         url_basename = 'feedbrands'
 
 
-class FeedBrandESSerializer(BaseFeedCollectionESSerializer,
-                            FeedBrandSerializer):
+class FeedBrandESSerializer(FeedBrandSerializer,
+                            BaseFeedCollectionESSerializer):
     """
     A serializer for the FeedBrand class for ES representation.
     """
@@ -234,8 +234,8 @@ class FeedCollectionSearchSerializer(FeedCollectionSerializer):
                   'url')
 
 
-class FeedCollectionESSerializer(BaseFeedCollectionESSerializer,
-                                 FeedCollectionSerializer):
+class FeedCollectionESSerializer(FeedCollectionSerializer,
+                                 BaseFeedCollectionESSerializer):
     """
     A serializer for the FeedCollection class for ES representation.
     """
@@ -251,6 +251,12 @@ class FeedCollectionESSerializer(BaseFeedCollectionESSerializer,
         ))
 
         collection._app_ids = data.get('apps')
+
+        # Attach groups.
+        if 'group_apps' in data:
+            for app_id, app in self.context['app_map'].items():
+                app.update(data['group_names'][data['group_apps'][app_id]])
+
         return collection
 
 
@@ -282,8 +288,8 @@ class FeedShelfSearchSerializer(FeedShelfSerializer):
                   'region', 'slug', 'url')
 
 
-class FeedShelfESSerializer(BaseFeedCollectionESSerializer,
-                            FeedShelfSerializer):
+class FeedShelfESSerializer(FeedShelfSerializer,
+                            BaseFeedCollectionESSerializer):
     """
     A serializer for the FeedShelf class for ES representation.
     """
@@ -398,9 +404,7 @@ class FeedItemESSerializer(FeedItemSerializer, BaseESSerializer):
 
         # Already fetched the feed element from ES. Set it to deserialize.
         for item_type in self.Meta.item_types:
-            setattr(
-                feed_item, '_%s' % item_type,
-                self.context['feed_element_map'][item_type].get(
-                    data.get(item_type)))
+            setattr(feed_item, '_%s' % item_type,
+                    self.context['feed_element_map'].get(data.get(item_type)))
 
         return feed_item

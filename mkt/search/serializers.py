@@ -100,8 +100,12 @@ class ESAppSerializer(AppSerializer, BaseESSerializer):
     support_email = ESTranslationSerializerField()
     support_url = ESTranslationSerializerField()
 
+    # Feed collection.
+    group = ESTranslationSerializerField(required=False)
+
     class Meta(AppSerializer.Meta):
-        fields = AppSerializer.Meta.fields + ['absolute_url', 'reviewed']
+        fields = AppSerializer.Meta.fields + ['absolute_url', 'group',
+                                              'reviewed']
 
     def __init__(self, *args, **kwargs):
         super(ESAppSerializer, self).__init__(*args, **kwargs)
@@ -151,6 +155,10 @@ class ESAppSerializer(AppSerializer, BaseESSerializer):
                            'support_url'):
             ESTranslationSerializerField.attach_translations(obj,
                 data, field_name)
+        if 'group_translations' in data:
+            # Feed group.
+            ESTranslationSerializerField.attach_translations(obj,
+                data, 'group')
         ESTranslationSerializerField.attach_translations(obj._geodata,
             data, 'banner_message')
         ESTranslationSerializerField.attach_translations(obj._current_version,
