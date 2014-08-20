@@ -29,41 +29,28 @@
     }
     getInstallers();
 
-
-    // Message handler.
-    var origin_whitelist = [
+    // Hardcode the whitelist for app origins since an attacker can easily set
+    // an app origin. But use a simple regex for https origins.
+    var app_origin_whitelist = [
         'app://packaged.marketplace-dev.allizom.org',
         'app://packaged.marketplace-altdev.allizom.org',
-        'app://packaged.payments-alt.allizom.org',
         'app://packaged.marketplace.allizom.org',
         'app://packaged.marketplace.firefox.com',
         'app://packaged.marketplace-feed-dev.allizom.org',
         'app://packaged.marketplace-feed.allizom.org',
         'app://packaged.marketplace-feed.firefox.com',
-
+        'app://packaged.payments-alt.allizom.org',
         'app://marketplace.firefox.com',
-
-        'http://localhost:8675',
-        'https://localhost:8675',
-
-        'http://localhost',
-        'https://localhost',
-
-        'https://marketplace-altdev.allizom.org',
-        'https://marketplace-dev.allizom.org',
-        'https://marketplace-feed-dev.allizom.org',
-        'https://marketplace.allizom.org',
-        'https://marketplace-feed.allizom.org',
-        'https://payments-alt.allizom.org',
-        'https://marketplace.firefox.com',
-
-        'https://hello.firefox.com',
-        'https://call.firefox.com'
     ];
+    var https_origin_whitelist = /\.firefox.com$|\.allizom.org$|localhost:8675$|\/localhost$/;
+
+    // Message handler.
     window.addEventListener('message', function(e) {
         console.log('[iframe-install] Received message: ' + JSON.stringify(e.data));
 
-        if (origin_whitelist.indexOf(e.origin) === -1) {
+        var is_app_origin = e.origin.indexOf('app://') === 0;
+        if ((!is_app_origin && !e.origin.match(https_origin_whitelist)) &&
+            (is_app_origin && app_origin_whitelist.indexOf(e.origin) === -1)) {
             console.log('[iframe-install] message from ' + e.origin + ' not allowed');
             return;
         }
