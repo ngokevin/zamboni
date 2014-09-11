@@ -29,8 +29,13 @@ class CommEmailParser(object):
         """Decode base64 email and turn it into a Django email object."""
         try:
             log.info('CommEmailParser received email: ' + email_text)
-            email_text = base64.standard_b64decode(
-                urllib2.unquote(email_text.rstrip()))
+            email_text = urllib2.unquote(email_text.rstrip())
+
+            while len(email_text) % 4 != 0:
+                # Add padding if needed.
+                email_text += '='
+
+            email_text = base64.standard_b64decode(email_text)
         except TypeError:
             # Corrupt or invalid base 64.
             self.decode_error = True

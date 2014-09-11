@@ -26,6 +26,9 @@ sample_email = os.path.join(settings.ROOT, 'mkt', 'comm', 'tests',
 multi_email = os.path.join(settings.ROOT, 'mkt', 'comm', 'tests',
                            'email_multipart.txt')
 
+unpadded_email = os.path.join(settings.ROOT, 'mkt', 'comm', 'tests',
+                              'email_unpadded.txt')
+
 
 class TestEmailReplySaving(TestCase):
     fixtures = fixture('user_999')
@@ -95,6 +98,12 @@ class TestEmailParser(TestCase):
         parser = CommEmailParser(payload)
         eq_(parser.get_body(), 'this is the body text\n')
         eq_(parser.get_uuid(), 'abc123')
+
+    def test_missing_padding(self):
+        unpad_email = open(unpadded_email).read()
+        parser = CommEmailParser(unpad_email)
+        eq_(parser.get_body(), 'TEST REPLY')
+        eq_(parser.get_uuid(), '51efbd4b4f5e4a839ce7d7fb6d934815')
 
 
 class TestCreateCommNote(TestCase, AttachmentManagementMixin):
