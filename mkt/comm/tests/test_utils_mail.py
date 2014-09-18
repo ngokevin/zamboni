@@ -7,12 +7,14 @@ from nose.tools import eq_
 
 import amo
 from amo.tests import app_factory, TestCase
-from mkt.users.models import UserProfile
 
 from mkt.comm.models import CommunicationThread, CommunicationThreadToken
-from mkt.comm.utils_mail import CommEmailParser, save_from_email_reply
+from mkt.comm.tests.test_views import CommTestMixin
+from mkt.comm.utils_mail import (CommEmailParser, get_recipients,
+                                 save_from_email_reply)
 from mkt.constants import comm
 from mkt.site.fixtures import fixture
+from mkt.users.models import UserProfile
 
 
 sample_email = os.path.join(settings.ROOT, 'mkt', 'comm', 'tests',
@@ -20,6 +22,15 @@ sample_email = os.path.join(settings.ROOT, 'mkt', 'comm', 'tests',
 
 multi_email = os.path.join(settings.ROOT, 'mkt', 'comm', 'tests',
                            'email_multipart.txt')
+
+
+class TestSendMailComm(TestCase, CommTestMixin):
+
+    def setUp(self):
+        self.addon = amo.tests.app_factory()
+        self.profile = amo.tests.user_factory()
+        self.thread = self._thread_factory()
+        self.note = self._note_factory(self.thread)
 
 
 class TestEmailReplySaving(TestCase):
