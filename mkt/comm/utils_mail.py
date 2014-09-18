@@ -60,29 +60,13 @@ def get_recipients(note):
     Returns user_id/user_email tuples.
     """
     thread = note.thread
-    developers = list(thread.addon.authors.values_list('id', 'email'))
-
-    # Reviewers that have participated.
-    recipients = list(thread.notes.filter(author__isnull=False).values_list(
-        'author__id', 'author__email'))
-
-    # Developers.
-    recipients += developers
-
-    # Mozilla contact.
-    mozilla_contact = thread.addon.mozilla_contact
-    for email in thread.addon.get_mozilla_contacts():
-        try:
-            mozilla_contact = UserProfile.objects.get(email=email)
-        except UserProfile.DoesNotExist:
-            continue
-        recipients += (mozilla_contact.id, mozilla_contact.email)
+    recipients = thread.thread_cc.values_list('user__id', 'user__email')
 
     # Exclusions.
     excludes = []
     if not note.read_permission_developer:
         # Exclude developer.
-        excludes += developers
+        excludes += list(thread.addon.authors.values_list('id', 'email'))
     if note.author:
         # Exclude note author.
         excludes.append((note.author.id, note.author.email))
