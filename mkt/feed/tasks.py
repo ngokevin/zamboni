@@ -25,7 +25,7 @@ def _migrate_collection_colors(ids, model):
                     '#1E1E9C': 'sapphire',
                     '#5A197E': 'amethyst',
                     '#A20D55': 'garnet'
-                }
+                }.get(obj.background_color, 'aquamarine')
             except KeyError:
                 continue
             obj.update(color=color)
