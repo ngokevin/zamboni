@@ -84,33 +84,35 @@ class TestRatingResource(RestOAuth, mkt.site.tests.MktPaths):
         eq_(data['user']['has_rated'], True)
         eq_(len(data['objects']), 1)
         self.assertApiUrlEqual(data['objects'][0]['app'], '/apps/app/337141/')
-        eq_(data['objects'][0]['body'], rev.body)
-        self.assertCloseToNow(data['objects'][0]['created'], now=rev.created)
-        eq_(data['objects'][0]['is_author'], True)
-        self.assertCloseToNow(data['objects'][0]['modified'], now=rev.modified)
-        eq_(data['objects'][0]['rating'], rev.rating)
-        eq_(data['objects'][0]['report_spam'],
-            reverse('ratings-flag', kwargs={'pk': pk}))
-        eq_(data['objects'][0]['resource_uri'],
-            reverse('ratings-detail', kwargs={'pk': pk}))
-        eq_(data['objects'][0]['user']['display_name'], self.user.display_name)
-        eq_(data['objects'][0]['version']['version'], first_version.version)
-        eq_(data['objects'][0]['version']['resource_uri'],
+
+        review = data['objects'][0]
+        eq_(review['body'], rev.body)
+        self.assertCloseToNow(review['created'], now=rev.created)
+        eq_(review['id'], rev.id)
+        eq_(review['is_author'], True)
+        self.assertCloseToNow(review['modified'], now=rev.modified)
+        eq_(review['rating'], rev.rating)
+        eq_(review['report_spam'], reverse('ratings-flag', kwargs={'pk': pk}))
+        eq_(review['resource_uri'], reverse('ratings-detail',
+                                            kwargs={'pk': pk}))
+        eq_(review['user']['display_name'], self.user.display_name)
+        eq_(review['version']['version'], first_version.version)
+        eq_(review['version']['resource_uri'],
             reverse('version-detail', kwargs={'pk': first_version.pk}))
 
-    def test_is_flagged_false(self):
+    def test_has_flagged_false(self):
         Review.objects.create(addon=self.app, user=self.user2, body='yes')
         res, data = self._get_url(self.list_url, app=self.app.pk)
         eq_(data['objects'][0]['is_author'], False)
         eq_(data['objects'][0]['has_flagged'], False)
 
-    def test_is_flagged_is_author(self):
+    def test_has_flagged_is_author(self):
         Review.objects.create(addon=self.app, user=self.user, body='yes')
         res, data = self._get_url(self.list_url, app=self.app.pk)
         eq_(data['objects'][0]['is_author'], True)
         eq_(data['objects'][0]['has_flagged'], False)
 
-    def test_is_flagged_true(self):
+    def test_has_flagged_true(self):
         rat = Review.objects.create(addon=self.app, user=self.user2, body='ah')
         ReviewFlag.objects.create(review=rat, user=self.user,
                                   flag=ReviewFlag.SPAM)
@@ -675,11 +677,7 @@ class TestReviewFlagResource(RestOAuth, mkt.site.tests.MktPaths):
     def test_flag_anon(self):
         data = json.dumps({'flag': ReviewFlag.SPAM})
         res = self.anon.post(self.flag_url, data=data)
-        eq_(res.status_code, 201)
-        rf = ReviewFlag.objects.get(review=self.rating)
-        eq_(rf.user, None)
-        eq_(rf.flag, ReviewFlag.SPAM)
-        eq_(rf.note, '')
+        eq_(res.status_code, 403)
 
     def test_flag_conflict(self):
         data = json.dumps({'flag': ReviewFlag.SPAM})

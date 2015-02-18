@@ -20,6 +20,7 @@ class RatingSerializer(serializers.ModelSerializer):
         serializers.HyperlinkedRelatedField(view_name='app-detail',
                                             read_only=True, source='addon'))
     body = serializers.CharField()
+    id = serializers.IntegerField(source='pk', read_only=True)
     user = AccountSerializer(read_only=True)
     report_spam = serializers.SerializerMethodField('get_report_spam_link')
     resource_uri = serializers.HyperlinkedIdentityField(
@@ -30,7 +31,7 @@ class RatingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ('app', 'body', 'created', 'has_flagged', 'is_author',
+        fields = ('app', 'body', 'created', 'has_flagged', 'id', 'is_author',
                   'modified', 'rating', 'report_spam', 'resource_uri', 'user',
                   'version')
 
@@ -121,11 +122,19 @@ class RatingFlagSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         user = self.context['request'].user
-        attrs['user'] = user if user.is_authenticated() else None
+
+        if not user.is_authenticated():
+            # Only logged-in user can flag a review (bug 1131597).
+            raise PermissionDenied('You must be logged in to flag a review')
+
+        attrs['user'] = user
         attrs['review_id'] = self.context['view'].kwargs['review']
         if 'note' in attrs and attrs['note'].strip():
             attrs['flag'] = ReviewFlag.OTHER
+
+        # A user can only flag a review once.
         if ReviewFlag.objects.filter(review_id=attrs['review_id'],
                                      user=attrs['user']).exists():
             raise Conflict('You have already flagged this review.')
+
         return attrs

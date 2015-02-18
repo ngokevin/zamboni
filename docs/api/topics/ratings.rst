@@ -48,6 +48,7 @@ _`List`
                     "app": "/api/v2/apps/app/18/",
                     "body": "This app is top notch. Aces in my book!",
                     "created": "2013-04-17T15:25:16",
+                    "has_flagged": false,
                     "is_author": true,
                     "modified": "2013-04-17T15:34:19",
                     "rating": 5,
@@ -91,6 +92,7 @@ _`Detail`
             "app": "/api/v2/apps/app/18/",
             "body": "This app is top notch. Aces in my book!",
             "created": "2013-04-17T15:25:16",
+            "has_flagged": false,
             "is_author": true,
             "modified": "2013-04-17T15:34:19",
             "rating": 5,
@@ -105,8 +107,12 @@ _`Detail`
             }
         }
 
+    :param has_flagged: whether the authenticated user has already flagged this
+                        review.
+                        Parameter not present in anonymous requests.
+    :type has_flagged: boolean
     :param is_author: whether the authenticated user is the author of the rating.
-                     Parameter not present in anonymous requests.
+                      Parameter not present in anonymous requests.
     :type is_author: boolean
 
     :status 200: success.
