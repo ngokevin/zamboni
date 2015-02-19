@@ -21,6 +21,7 @@ class RatingSerializer(serializers.ModelSerializer):
                                             read_only=True, source='addon'))
     body = serializers.CharField()
     user = UserSerializer(read_only=True)
+    id = serializers.IntegerField(source='pk', required=False)
     report_spam = serializers.SerializerMethodField('get_report_spam_link')
     resource_uri = serializers.HyperlinkedIdentityField(
         view_name='ratings-detail')
@@ -30,7 +31,7 @@ class RatingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ('app', 'body', 'created', 'has_flagged', 'is_author',
+        fields = ('app', 'body', 'created', 'has_flagged', 'id', 'is_author',
                   'modified', 'rating', 'report_spam', 'resource_uri', 'user',
                   'version')
 
@@ -46,7 +47,6 @@ class RatingSerializer(serializers.ModelSerializer):
 
         if not self.request or not self.request.user.is_authenticated():
             self.fields.pop('is_author')
-            self.fields.pop('has_flagged')
 
         if self.request and self.request.method in ('PUT', 'PATCH'):
             # Don't let users modify 'app' field at edit time
@@ -68,8 +68,12 @@ class RatingSerializer(serializers.ModelSerializer):
         return obj.user.pk == self.request.user.pk
 
     def get_has_flagged(self, obj):
+        user = self.request.user
+        if user.is_anonymous():
+            user = None
+
         return (not self.get_is_author(obj) and
-                obj.reviewflag_set.filter(user=self.request.user).exists())
+                obj.reviewflag_set.filter(user=user).exists())
 
     def validate(self, attrs):
         if not getattr(self, 'object'):
@@ -135,9 +139,15 @@ class RatingFlagSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         attrs['user'] = user if user.is_authenticated() else None
         attrs['review_id'] = self.context['view'].kwargs['review']
+
         if 'note' in attrs and attrs['note'].strip():
             attrs['flag'] = ReviewFlag.OTHER
+
         if ReviewFlag.objects.filter(review_id=attrs['review_id'],
                                      user=attrs['user']).exists():
+            # Note that this will arise for anon users. If one anon user flags
+            # a review and then will conflict if another anon user tries to
+            # flag it. We expose has_flagged to anon users so that it will be
+            # marked as flagged. That's fine.
             raise Conflict('You have already flagged this review.')
         return attrs

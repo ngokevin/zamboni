@@ -53,6 +53,7 @@ class TestRatingResource(RestOAuth, mkt.site.tests.MktPaths):
         eq_(data['body'], review.body)
         self.assertCloseToNow(data['created'], now=review.created)
         self.assertCloseToNow(data['modified'], now=review.modified)
+        eq_(data['id'], review.id)
         eq_(data['rating'], review.rating)
         eq_(data['report_spam'],
             reverse('ratings-flag', kwargs={'pk': review.pk}))
@@ -120,6 +121,7 @@ class TestRatingResource(RestOAuth, mkt.site.tests.MktPaths):
         eq_(data['info']['average'], self.app.average_rating)
         eq_(data['info']['slug'], self.app.app_slug)
         eq_(data['info']['current_version'], ver.version)
+
         if client != self.anon:
             eq_(data['user']['can_rate'], True)
             eq_(data['user']['has_rated'], True)
@@ -148,11 +150,12 @@ class TestRatingResource(RestOAuth, mkt.site.tests.MktPaths):
         self.app.update_version()
 
         reset_queries()
-        with self.assertNumQueries(5):
-            # 5 queries:
+        with self.assertNumQueries(7):
+            # 7 queries:
             # - 2 for the Reviews queryset and the translations
             # - 2 for the Version associated to the reviews (qs + translations)
             # - 1 for the File attached to the Version
+            # - 2 for the has_flagged field
             #
             # Note: We patch get_app() to avoid the app queries to pollute the
             # queries count.
