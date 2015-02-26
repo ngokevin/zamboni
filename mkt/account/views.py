@@ -78,6 +78,7 @@ class InstalledViewSet(CORSMixin, MarketplaceView, ListModelMixin,
 
     def get_queryset(self):
         return Webapp.objects.no_cache().filter(
+            status__in=mkt.LISTED_STATUSES,
             installed__user=self.request.user,
             installed__install_type=INSTALL_TYPE_USER).order_by(
                 '-installed__created')

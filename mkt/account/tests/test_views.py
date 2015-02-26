@@ -276,6 +276,14 @@ class TestInstalled(RestOAuth):
         eq_(data['objects'][0]['user'],
             {'developed': False, 'purchased': False, 'installed': True})
 
+    def test_installed_delisted_app(self):
+        Webapp.objects.all().update(status=mkt.STATUS_DISABLED)
+        ins = Installed.objects.create(user=self.user, addon_id=337141)
+        res = self.client.get(self.list_url)
+        eq_(res.status_code, 200, res.content)
+        data = json.loads(res.content)
+        eq_(data['meta']['total_count'], 0)
+
     def test_installed_pagination(self):
         ins1 = Installed.objects.create(user=self.user, addon=app_factory())
         ins1.update(created=self.days_ago(1))
