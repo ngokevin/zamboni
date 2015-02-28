@@ -57,8 +57,18 @@ def get_recipients(note):
     if note.note_type in comm.EMAIL_SENIOR_REVIEWERS:
         return get_senior_reviewers()
 
+    def transform_thread_ccs(recipient):
+        # If the CC represents a user, return (id, email).
+        # If the CC represents a non-user (e.g., Moz contact), return
+        # (None, email).
+        user_id, user_email, nonuser_email = recipient
+        return ((user_id, user_email) if not recipient[2]
+                else (None, nonuser_email))
+
     thread = note.thread
-    recipients = thread.thread_cc.values_list('user__id', 'user__email')
+    recipients = map(transform_thread_ccs,
+                     thread.thread_cc.values_list('user__id', 'user__email',
+                                                  'nonuser_email'))
 
     excludes = []
     if not note.read_permission_developer:
@@ -74,9 +84,13 @@ def get_recipients(note):
 def tokenize_recipients(recipients, thread):
     """[(user_id, user_email)] -> [(user_email, token)]."""
     tokenized_recipients = []
-    for user_id, user_email in recipients:
-        tok = get_reply_token(thread, user_id)
-        tokenized_recipients.append((user_email, tok.uuid))
+    for user_id, email in recipients:
+        if not user_id:
+            # Flat emails for non-users don't need to be tokenized.
+            tokenized_recipients.append((email, ''))
+        else:
+            tok = get_reply_token(thread, user_id)
+            tokenized_recipients.append((email, tok.uuid))
     return tokenized_recipients
 
 
@@ -90,8 +104,10 @@ def email_recipients(recipients, note, template=None):
                           note.thread.addon.name)
 
     for email, tok in tokenize_recipients(recipients, note.thread):
-        reply_to = '{0}{1}@{2}'.format(comm.REPLY_TO_PREFIX, tok,
-                                       settings.POSTFIX_DOMAIN)
+        headers = {}
+        if tok:
+            headers['Reply-To'] = '{0}{1}@{2}'.format(
+                comm.REPLY_TO_PREFIX, tok, settings.POSTFIX_DOMAIN)
 
         # Get the appropriate mail template.
         mail_template = template or comm.COMM_MAIL_MAP.get(note.note_type,
@@ -101,8 +117,7 @@ def email_recipients(recipients, note, template=None):
         send_mail_jinja(subject, 'comm/emails/%s.html' % mail_template,
                         get_mail_context(note), recipient_list=[email],
                         from_email=settings.MKT_REVIEWERS_EMAIL,
-                        perm_setting='app_reviewed',
-                        headers={'Reply-To': reply_to})
+                        perm_setting='app_reviewed', headers=headers)
 
     # Also send mail to the fallback emailing list.
     if note.note_type == comm.DEVELOPER_COMMENT:

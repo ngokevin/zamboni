@@ -137,6 +137,20 @@ class TestCommunicationThread(PermissionTestMixin, TestCase):
         ok_(user_has_perm_app(self.user, self.addon))
 
 
+class TestCommunicationThreadCC(TestCase, CommTestMixin):
+    fixtures = fixture('webapp_337141')
+
+    def setUp(self):
+        self.addon = Webapp.objects.get()
+        self.thread = self._thread_factory()
+
+    def test_create_user_ok(self):
+        ok_(self.thread.thread_cc.create(user=user_factory()))
+
+    def test_create_nonuser_email_ok(self):
+        ok_(self.thread.thread_cc.create(nonuser_email='lol@lol.com'))
+
+
 class TestThreadTokenModel(TestCase):
     fixtures = fixture('user_999', 'webapp_337141')
 

@@ -64,8 +64,12 @@ def post_create_comm_note(note):
         try:
             moz_contact = UserProfile.objects.get(email=email)
             thread.join_thread(moz_contact)
+            # If Mozilla contact wasn't user before, delete old reference.
+            thread.thread_cc.filter(nonuser_email=email).delete()
         except UserProfile.DoesNotExist:
-            pass
+            # Mozilla contact not a user.
+            if email:
+                thread.thread_cc.create(nonuser_email=email)
 
     # Add note author to thread.
     author = note.author

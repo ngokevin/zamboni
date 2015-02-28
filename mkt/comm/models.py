@@ -168,11 +168,13 @@ class CommunicationThreadCC(ModelBase):
     thread = models.ForeignKey(CommunicationThread,
                                related_name='thread_cc')
     user = models.ForeignKey('users.UserProfile',
-                             related_name='comm_thread_cc')
+                             related_name='comm_thread_cc', blank=True,
+                             null=True)
+    nonuser_email = models.EmailField(null=True)
 
     class Meta:
         db_table = 'comm_thread_cc'
-        unique_together = ('user', 'thread',)
+        unique_together = ('user', 'thread', 'nonuser_email')
 
 
 class CommunicationNoteManager(models.Manager):

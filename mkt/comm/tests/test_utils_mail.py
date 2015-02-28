@@ -9,7 +9,8 @@ from nose import SkipTest
 from nose.tools import eq_, ok_
 
 import mkt
-from mkt.comm.models import CommunicationThread, CommunicationThreadToken
+from mkt.comm.models import (CommunicationThread, CommunicationThreadCC,
+                             CommunicationThreadToken)
 from mkt.comm.tests.test_views import CommTestMixin
 from mkt.comm.utils import create_comm_note
 from mkt.comm.utils_mail import CommEmailParser, save_from_email_reply
@@ -264,3 +265,62 @@ class TestEmailParser(TestCase):
             body = parser.get_body()
             ok_('Body inspection' in body)
             eq_(parser.get_uuid(), 'abc123')
+
+
+class TestEmailNonUsers(TestCase, CommTestMixin):
+
+    def setUp(self):
+        self.app = app_factory(
+            mozilla_contact='tobias@funke.blue, mae@be.com,')
+        self.author = user_factory()
+
+    def _create(self):
+        return create_comm_note(self.app, self.app.current_version,
+                                self.author, '@ngokevin_')
+
+    def _recipients(self, email_mock):
+        recipients = []
+        for call in email_mock.call_args_list:
+            recipients += call[1]['recipient_list']
+        return recipients
+
+    @mock.patch('mkt.comm.utils_mail.send_mail_jinja')
+    def test_basic(self, email):
+        eq_(CommunicationThreadCC.objects.count(), 0)
+        self._create()
+        eq_(CommunicationThreadCC.objects.count(), 3)
+        ok_(CommunicationThreadCC.objects.filter(
+                user=None, nonuser_email='tobias@funke.blue').exists())
+        ok_(CommunicationThreadCC.objects.filter(
+                user=None, nonuser_email='mae@be.com').exists())
+
+        # One for Tobias, one for Maebe.
+        eq_(email.call_count, 2)
+
+        recipients = self._recipients(email)
+        assert not self.author.email in recipients
+        assert 'tobias@funke.blue' in recipients
+        assert 'mae@be.com' in recipients
+
+        for call in email.call_args_list:
+            ok_('Reply-To' not in call[1]['headers'])
+
+    @mock.patch('mkt.comm.utils_mail.send_mail_jinja')
+    def test_mozcontact_became_user(self, email):
+        user = user_factory(email='tobias@funke.blue')
+        thread = self.app.threads.create(_version=self.app.current_version)
+        thread.thread_cc.create(nonuser_email='tobias@funke.blue')
+        thread.thread_cc.create(user=user)
+
+        # 1 for user Tobias. 1 for nonuser Tobias.
+        eq_(thread.thread_cc.count(), 2)
+        self._create()
+        # 1 for user Tobias. 1 for Maebe. 1 for note author.
+        eq_(thread.thread_cc.count(), 3)
+        ok_(thread.thread_cc.filter(
+            user__email='tobias@funke.blue').exists())
+        ok_(not thread.thread_cc.filter(
+            nonuser_email='tobias@funke.blue').exists())
+
+        # One for Tobias, one for Maebe.
+        eq_(email.call_count, 2)
