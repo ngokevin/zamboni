@@ -100,7 +100,9 @@ class FeedPreviewESSerializer(PreviewSerializer):
     scale feed app tiles appropriately.
     """
     id = serializers.IntegerField(source='id')
+    image_size = serializers.Field(source='image_size')
     thumbnail_size = serializers.Field(source='thumbnail_size')
 
     class Meta(PreviewSerializer.Meta):
-        fields = ['id', 'thumbnail_size', 'thumbnail_url']
+        fields = ['id', 'image_size', 'image_url', 'thumbnail_size',
+                  'thumbnail_url']

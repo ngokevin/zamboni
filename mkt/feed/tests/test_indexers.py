@@ -41,7 +41,8 @@ class TestFeedAppIndexer(FeedTestMixin, BaseFeedIndexerTest,
             pullquote_rating=4, pullquote_text=self._get_test_l10n(),
             app_type=feed.FEEDAPP_QUOTE)
         self.obj.update(preview=Preview.objects.create(
-            addon=self.app, sizes={'thumbnail': [50, 50]}))
+            addon=self.app, sizes={'image': [100, 100],
+                                   'thumbnail': [50, 50]}))
 
         self.indexer = self.obj.get_indexer()()
         self.model = FeedApp
@@ -54,9 +55,13 @@ class TestFeedAppIndexer(FeedTestMixin, BaseFeedIndexerTest,
         self._assert_test_l10n(doc['description_translations'])
         eq_(doc['image_hash'], 'LOL')
         eq_(doc['item_type'], feed.FEED_TYPE_APP)
-        eq_(doc['preview'], {'id': self.obj.preview.id,
-                             'thumbnail_size': [50, 50],
-                             'thumbnail_url': self.obj.preview.thumbnail_url})
+        eq_(doc['preview'], {
+            'id': self.obj.preview.id,
+            'image_size': [100, 100],
+            'image_url': self.obj.preview.image_url,
+            'thumbnail_size': [50, 50],
+            'thumbnail_url': self.obj.preview.thumbnail_url
+        })
         eq_(doc['pullquote_attribution'], 'mscott')
         eq_(doc['pullquote_rating'], 4)
         self._assert_test_l10n(doc['pullquote_text_translations'])

@@ -76,9 +76,13 @@ class FeedAppIndexer(BaseIndexer):
             'created': obj.created,
             'image_hash': obj.image_hash,
             'item_type': feed.FEED_TYPE_APP,
-            'preview': {'id': obj.preview.id,
-                        'thumbnail_size': obj.preview.thumbnail_size,
-                        'thumbnail_url': obj.preview.thumbnail_url}
+            'preview': {
+                'id': obj.preview.id,
+                'image_size': obj.preview.image_size,
+                'image_url': obj.preview.image_url,
+                'thumbnail_size': obj.preview.thumbnail_size,
+                'thumbnail_url': obj.preview.thumbnail_url
+            }
             if getattr(obj, 'preview') else None,
             'pullquote_attribution': obj.pullquote_attribution,
             'pullquote_rating': obj.pullquote_rating,

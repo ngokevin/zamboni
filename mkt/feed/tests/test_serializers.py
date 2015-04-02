@@ -42,7 +42,8 @@ class TestFeedAppESSerializer(FeedTestMixin, mkt.site.tests.TestCase):
         self.feedapp = self.feed_app_factory(
             app_type=feed.FEEDAPP_DESC, description={'en-US': 'test'})
         self.feedapp.update(preview=Preview.objects.create(
-            addon=self.feedapp.app, sizes={'thumbnail': [50, 50]}))
+            addon=self.feedapp.app, sizes={'image': [100, 100],
+                                           'thumbnail': [50, 50]}))
 
         self.data_es = self.feedapp.get_indexer().extract_document(
             None, obj=self.feedapp)
@@ -63,8 +64,10 @@ class TestFeedAppESSerializer(FeedTestMixin, mkt.site.tests.TestCase):
         eq_(data['description']['en-US'], 'test')
         eq_(data['preview'], {
             'id': self.feedapp.preview.id,
+            'image_size': [100, 100],
+            'image_url': self.feedapp.preview.image_url,
             'thumbnail_size': [50, 50],
-            'thumbnail_url': self.feedapp.preview.thumbnail_url})
+            'thumbnail_url': self.obj.preview.thumbnail_url})
 
     def test_deserialize_many(self):
         data = serializers.FeedAppESSerializer(
