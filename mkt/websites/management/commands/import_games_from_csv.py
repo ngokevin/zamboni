@@ -121,8 +121,11 @@ class Command(BaseCommand):
                         self.set_icon(website, row)
                         self.set_promo_imgs(website, row)
                     except Exception as e:
-                        website.delete()
                         print e
+                        try:
+                            website.delete()
+                        except:
+                            pass
                         raise e
 
                     created_count += 1
