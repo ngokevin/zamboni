@@ -54,11 +54,17 @@ class ValidationViewSet(SubmitValidationViewSet):
         serializer = self.get_serializer(upload)
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
+    def _get_content_type(self, file_obj):
+        """Split out for easier mock-testing."""
+        return file_obj.content_type
+
     def validate_upload(self, file_obj):
         # Do a basic check : is it a zipfile, and does it contain a manifest ?
         # Be careful to keep this as in-memory zip reading.
-        if file_obj.content_type not in ('application/octet-stream',
-                                         'application/zip'):
+
+        # Strip charset before check(e.g., application/zip; charset=UTF-8).
+        content_type = self._get_content_type(file_obj).split(';')[0]
+        if content_type not in ('application/octet-stream', 'application/zip'):
             raise ParseError(
                 _('The file sent has an unsupported content-type'))
         try:

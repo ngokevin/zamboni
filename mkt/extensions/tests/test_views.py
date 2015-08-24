@@ -3,6 +3,7 @@ import json
 
 from django.core.urlresolvers import reverse
 
+import mock
 from nose.tools import eq_, ok_
 
 from mkt.api.tests.test_oauth import RestOAuth
@@ -49,6 +50,12 @@ class TestExtensionValidationViewSet(MktPaths, RestOAuth):
         eq_(upload.user, None)
 
     def test_create_logged_in(self):
+        upload = self._test_create_success(client=self.client)
+        eq_(upload.user, self.user)
+
+    @mock.patch('mkt.extensions.views.ValidationViewSet._get_content_type')
+    def test_content_type_with_charset(self, content_mock):
+        content_mock.return_value = 'application/zip; charset=UTF-8'
         upload = self._test_create_success(client=self.client)
         eq_(upload.user, self.user)
 
