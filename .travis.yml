@@ -11,12 +11,15 @@ install:
   - pip install -U pip wheel
   - pip install --no-deps -r requirements/test.txt --find-links https://pyrepo.addons.mozilla.org/wheelhouse/
   - npm install
-before_script:
-  - mysql -e 'create database zamboni;'
-  - flake8 . --exclude='node_modules,commonplace_projects,docs,.git,migrations'
-  - ./manage.py compress_assets
+env:
+  matrix:
+  - RUN_TEST=assets
+  - RUN_TEST=lint
+  - RUN_TEST=unit
 script:
-  - REUSE_DB=1 ./manage.py test lib mkt --noinput --logging-clear-handlers --with-blockage --with-nicedots
+  - if [ $RUN_TEST = 'assets' ]; then - ./manage.py compress_assets; fi
+  - if [ $RUN_TEST = 'lint' ]; then flake8 . --exclude='node_modules,commonplace_projects,docs,.git,migrations'; fi
+  - if [ $RUN_TEST = 'unit' ]; then mysql -e 'create database zamboni;'; REUSE_DB=1 ./manage.py test lib mkt --noinput --logging-clear-handlers --with-blockage --with-nicedots; fi
 notifications:
   irc:
     channels:
