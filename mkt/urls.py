@@ -18,7 +18,7 @@ from mkt.langpacks.views import manifest as mini_langpack_manifest
 from mkt.operators.urls import url_patterns as operator_patterns
 from mkt.purchase.urls import webpay_services_patterns
 from mkt.reviewers.urls import url_patterns as reviewer_url_patterns
-from mkt.users.views import logout
+from mkt.users.views import logout, user_session
 
 
 # Hardcore monkeypatching action.
@@ -63,6 +63,7 @@ urlpatterns = patterns(
 
     # Users.
     ('^users/', include(user_patterns)),
+    url('^users/session/$', user_session, name='users.session'),
 
     # Reviewer tools.
     ('^reviewers/', include(reviewer_url_patterns)),

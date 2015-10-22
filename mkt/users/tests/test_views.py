@@ -9,6 +9,7 @@ from nose.tools import eq_, ok_
 from pyquery import PyQuery as pq
 from waffle import helpers  # NOQA
 
+from mkt.api.tests.test_oauth import RestOAuth
 from mkt.site.fixtures import fixture
 from mkt.site.tests import TestCase
 from mkt.users.models import UserProfile
@@ -110,3 +111,27 @@ class TestLogout(TestCase):
         res = self.client.get(reverse('users.logout'))
         ok_('has_logged_in' in res.cookies)
         eq_(res.cookies['has_logged_in'].value, '1')
+
+
+class TestUserSessionView(TestCase):
+    fixtures = fixture('user_999',)
+
+    def setUp(self):
+        super(TestUserSessionView, self).setUp()
+        self.user = UserProfile.objects.get(email='regular@mozilla.com')
+        self.url = reverse('users.session')
+
+    def test_no_cors(self):
+        response = self.client.get(self.url)
+        assert 'Access-Control-Allow-Origin' not in response
+
+    def test_no_session(self):
+        response = self.client.get(self.url)
+        eq_(response.status_code, 200)
+        eq_(json.loads(response.content)['has_session'], False)
+
+    def test_session(self):
+        self.login(self.user.email)
+        response = self.client.get(self.url)
+        eq_(response.status_code, 200)
+        eq_(json.loads(response.content)['has_session'], True)

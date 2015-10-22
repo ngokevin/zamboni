@@ -5,6 +5,7 @@ from django.utils.http import is_safe_url
 
 import commonware.log
 from django_browserid import BrowserIDBackend, get_audience
+from django.http import JsonResponse
 from tower import ugettext as _
 
 import mkt
@@ -148,3 +149,9 @@ def logout(request):
     # Fire logged out signal.
     logged_out.send(None, request=request, response=response)
     return response
+
+
+def user_session(request):
+    return JsonResponse({
+        'has_session': request.user.is_authenticated()
+    })
