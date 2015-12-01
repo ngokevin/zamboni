@@ -5,7 +5,7 @@ from rest_framework.exceptions import ParseError
 
 import mkt.site.tests
 from mkt.constants import ratingsbodies
-from lib.iarc.serializers import IARCV2RatingListSerializer
+from lib.iarc_v2.serializers import IARCV2RatingListSerializer
 
 
 class TestIARCV2RatingListSerializer(mkt.site.tests.TestCase):
