@@ -551,6 +551,7 @@ class Webapp(UUIDModelMixin, OnChangeMixin, ModelBase):
             'msg': msg,
             'reason': reason,
             'name': self.name,
+            'popularity': self.popularity.value,
             'app_slug': self.app_slug,
             'url': absolutify(self.get_url_path()),
             'user_str': ("%s, %s (%s)" % (user.name, user.email, user.id)
@@ -565,6 +566,7 @@ class Webapp(UUIDModelMixin, OnChangeMixin, ModelBase):
         ID: %(id)s
         GUID: %(guid)s
         AUTHORS: %(authors)s
+        90 DAY POPULARITY: %(popularity) installs
         NOTES: %(msg)s
         REASON GIVEN BY USER FOR DELETION: %(reason)s
         """ % context
